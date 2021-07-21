@@ -1,0 +1,33 @@
+{% interface Page {
+  Lang()
+	Title()
+	Head()
+	Body()
+} %}
+
+{% code
+  type BaseOf struct {}
+%}
+
+{% func (p *BaseOf) Lang() %}en{% endfunc %}
+
+{% func (p *BaseOf) Title() %}Title{% endfunc %}
+
+{% func (p *BaseOf) Head() %}{% endfunc %}
+
+{% func (p *BaseOf) Body() %}{% endfunc %}
+
+{% func PageTemplate(p Page) %}
+<!DOCTYPE html>
+<html lang="{%= p.Lang() %}">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{%= p.Title() %}</title>
+    {%= p.Head() %}
+  </head>
+  <body>
+    {%= p.Body() %}
+  </body>
+</html>
+{% endfunc %}

@@ -1,0 +1,120 @@
+{% import "gitlab.com/toby3d/indieauth/internal/model" %}
+
+{% code
+  type AuthPage struct {
+    Client *model.Client
+    CodeChallenge string
+    CodeChallengeMethod string
+    CSRF []byte
+    Me string
+    RedirectURI string
+    ResponseType string
+    Scope string
+    State []byte
+  }
+%}
+
+{% func (p *AuthPage) Lang() %}
+  en
+{% endfunc %}
+
+{% func (p *AuthPage) Title() %}
+  Authorize {%s p.Client.Name %}
+{% endfunc %}
+
+{% func (p *AuthPage) Head() %}
+{% endfunc %}
+
+{% func (p *AuthPage) Body() %}
+  {% if p.Client.Logo != "" %}
+    <img
+      alt="{%s p.Client.Name %}"
+      crossorigin="anonymous"
+      decoding="async"
+      height="140"
+      importance="high"
+      loading="lazy"
+      referrerpolicy="no-referrer-when-downgrade"
+      src="{%s p.Client.Logo %}"
+      width="140">
+  {% endif %}
+
+  <h2>{%s p.Client.Name %}</h2>
+
+  <form
+    accept-charset="utf-8"
+    action="/authorize"
+    autocomplete="off"
+    enctype="application/x-www-form-urlencoded"
+    method="post"
+    novalidate="true"
+    target="_self">
+
+    {% if p.CSRF != nil %}
+      <input
+        name="_csrf"
+        type="hidden"
+        value="{%z p.CSRF %}">
+    {% endif %}
+
+    <input
+      name="response_type"
+      type="hidden"
+      value="code">
+
+    <input
+      name="client_id"
+      type="hidden"
+      value="{%s p.Client.URL %}">
+
+    <input
+      name="redirect_uri"
+      type="hidden"
+      value="{%s p.RedirectURI %}">
+
+    <input
+      name="state"
+      type="hidden"
+      value="{%z p.State %}">
+
+    {% if p.CodeChallenge != "" %}
+      <input
+        name="code_challenge"
+        type="hidden"
+        value="{%s p.CodeChallenge %}">
+
+      <input
+        name="code_challenge_method"
+        type="hidden"
+        value="{%s p.CodeChallengeMethod %}">
+    {% endif %}
+
+    {% if p.Scope != "" %}
+      <input
+        name="scope"
+        type="hidden"
+        value="{%s p.Scope %}">
+    {% endif %}
+
+    {% if p.Me != "" %}
+      <input
+        name="me"
+        type="hidden"
+        value="{%s p.Me %}">
+    {% endif %}
+
+    <button
+      name="authorize"
+      type="submit"
+      value="deny">
+      Deny
+    </button>
+
+    <button
+      name="authorize"
+      type="submit"
+      value="allow">
+      Allow
+    </button>
+  </form>
+{% endfunc %}
