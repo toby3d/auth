@@ -1,0 +1,12 @@
+[Unit]
+Description=IndieAuth
+After=multi-user.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5s
+ExecStart=/usr/local/bin/indieauth
+
+[Install]
+WantedBy=multi-user.target
