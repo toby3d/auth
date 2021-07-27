@@ -1,7 +1,56 @@
 ---
-image: alpine:latest
+image: golang:latest
+
+variables:
+  REPO_NAME: gitlab.com/$CI_PROJECT_PATH
+  CGO_ENABLED: 0
+
+cache:
+  paths:
+    - .go/pkg/mod/
+
+before_script:
+  - mkdir -p $GOPATH/src/$(dirname $REPO_NAME)
+  - ln -svf $CI_PROJECT_DIR $GOPATH/src/$REPO_NAME
+  - cd $GOPATH/src/$REPO_NAME
+
+stages:
+  - test
+  - build
+  - deploy
+
+test:
+  stage: test
+  before_script:
+    - go get gotest.tools/gotestsum
+  script:
+    - gotestsum --junitfile report.xml --format testname
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
+
+cover:
+  stage: test
+  before_script:
+    - go get github.com/t-yuki/gocover-cobertura
+  script:
+    - go test -coverprofile=coverage.txt -covermode count $REPO_NAME/...
+    - gocover-cobertura < coverage.txt > coverage.xml
+  artifacts:
+    reports:
+      cobertura: coverage.xml
+
+build:
+  stage: build
+  script:
+    - go build -ldflags "-extldflags '-static'" -o $CI_PROJECT_DIR/indieauth $REPO_NAME/cmd/indieauth
+  artifacts:
+    paths:
+      - indieauth
 
 pages:
+  image: alpine:latest
   stage: deploy
   script:
     - mv website public
