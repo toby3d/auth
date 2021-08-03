@@ -1,0 +1,24 @@
+---
+name: default
+type: docker
+kind: pipeline
+steps:
+  - name: test
+    image: golang
+    volumes:
+      - name: deps
+        path: /go
+    commands: 
+      - go test -v -cover -race ./...
+  - name: build
+    image: golang
+    volumes:
+      - name: deps
+        path: /go
+    commands:
+      - go build -ldflags "-extldflags '-static'" -o ./indieauth ./cmd/indieauth
+    depends_on:
+      - test
+volumes:
+  - name: deps
+    temp: {}
