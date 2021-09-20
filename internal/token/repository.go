@@ -3,7 +3,7 @@ package token
 import (
 	"context"
 
-	"gitlab.com/toby3d/indieauth/internal/model"
+	"source.toby3d.me/website/oauth/internal/model"
 )
 
 type Repository interface {

@@ -4,37 +4,72 @@ import (
 	"context"
 	"sync"
 
-	"gitlab.com/toby3d/indieauth/internal/model"
-	"gitlab.com/toby3d/indieauth/internal/token"
+	"source.toby3d.me/website/oauth/internal/model"
+	"source.toby3d.me/website/oauth/internal/token"
 )
 
 type memoryTokenRepository struct {
-	tokens *sync.Map
+	mutex  *sync.RWMutex
+	tokens []*model.Token
 }
 
 func NewMemoryTokenRepository() token.Repository {
 	return &memoryTokenRepository{
-		tokens: new(sync.Map),
+		mutex:  new(sync.RWMutex),
+		tokens: make([]*model.Token, 0),
 	}
 }
 
 func (repo *memoryTokenRepository) Create(ctx context.Context, token *model.Token) error {
-	repo.tokens.Store(token.AccessToken, token)
+	repo.mutex.Lock()
 
-	return nil
-}
+	repo.tokens = append(repo.tokens, token)
 
-func (repo *memoryTokenRepository) Delete(ctx context.Context, token string) error {
-	repo.tokens.Delete(token)
+	repo.mutex.Unlock()
 
 	return nil
 }
 
 func (repo *memoryTokenRepository) Get(ctx context.Context, token string) (*model.Token, error) {
-	t, ok := repo.tokens.Load(token)
-	if !ok {
-		return nil, nil
+	repo.mutex.RLock()
+	defer repo.mutex.RUnlock()
+
+	for i := range repo.tokens {
+		if repo.tokens[i].AccessToken != token {
+			continue
+		}
+
+		return repo.tokens[i], nil
 	}
 
-	return t.(*model.Token), nil
+	return nil, nil
+}
+
+func (repo *memoryTokenRepository) Delete(ctx context.Context, token string) error {
+	repo.mutex.RLock()
+
+	for i := range repo.tokens {
+		if repo.tokens[i].AccessToken != token {
+			continue
+		}
+
+		repo.mutex.RUnlock()
+		repo.mutex.Lock()
+
+		if i < len(repo.tokens)-1 {
+			copy(repo.tokens[i:], repo.tokens[i+1:])
+		}
+
+		repo.tokens[len(repo.tokens)-1] = nil
+		repo.tokens = repo.tokens[:len(repo.tokens)-1]
+
+		repo.mutex.Unlock()
+		repo.mutex.RLock()
+
+		break
+	}
+
+	repo.mutex.RUnlock()
+
+	return nil
 }
