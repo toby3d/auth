@@ -13,6 +13,28 @@ import (
 	"source.toby3d.me/website/oauth/internal/token/usecase"
 )
 
+func TestVerify(t *testing.T) {
+	t.Parallel()
+
+	require := require.New(t)
+	assert := assert.New(t)
+	repo := repository.NewMemoryTokenRepository()
+	ucase := usecase.NewTokenUseCase(repo)
+	accessToken := &model.Token{
+		AccessToken: gofakeit.Password(true, true, true, true, false, 32),
+		Type:        "Bearer",
+		ClientID:    "https://app.example.com/",
+		Me:          "https://user.example.net/",
+		Scopes:      []string{"create", "update", "delete"},
+	}
+
+	require.NoError(repo.Create(context.TODO(), accessToken))
+
+	token, err := ucase.Verify(context.TODO(), accessToken.AccessToken)
+	require.NoError(err)
+	assert.Equal(accessToken, token)
+}
+
 func TestRevoke(t *testing.T) {
 	t.Parallel()
 

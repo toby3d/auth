@@ -1,6 +1,7 @@
 package http
 
 import (
+	"bytes"
 	"strings"
 
 	"github.com/fasthttp/router"
@@ -22,6 +23,12 @@ type (
 		Token  string
 	}
 
+	VerificationResponse struct {
+		Me       string `json:"me"`
+		ClientID string `json:"client_id"`
+		Scope    string `json:"scope"`
+	}
+
 	RevocationResponse struct{}
 )
 
@@ -37,12 +44,42 @@ func NewRequestHandler(useCase token.UseCase) *RequestHandler {
 }
 
 func (h *RequestHandler) Register(r *router.Router) {
+	r.GET("/token", h.Read)
 	r.POST("/token", h.Update)
 }
 
-func (h *RequestHandler) Update(ctx *http.RequestCtx) {
-	ctx.SetStatusCode(http.StatusBadRequest)
+func (h *RequestHandler) Read(ctx *http.RequestCtx) {
+	ctx.SetContentType(common.MIMEApplicationJSON)
+	ctx.SetStatusCode(http.StatusOK)
 
+	encoder := json.NewEncoder(ctx)
+	rawToken := ctx.Request.Header.Peek(http.HeaderAuthorization)
+
+	token, err := h.useCase.Verify(ctx, string(bytes.TrimSpace(bytes.TrimPrefix(rawToken, []byte("Bearer")))))
+	if err != nil {
+		ctx.SetStatusCode(http.StatusBadRequest)
+		encoder.Encode(err)
+
+		return
+	}
+
+	if token == nil {
+		ctx.SetStatusCode(http.StatusUnauthorized)
+
+		return
+	}
+
+	if err := encoder.Encode(&VerificationResponse{
+		Me:       token.Me,
+		ClientID: token.ClientID,
+		Scope:    strings.Join(token.Scopes, " "),
+	}); err != nil {
+		ctx.SetStatusCode(http.StatusInternalServerError)
+		encoder.Encode(err)
+	}
+}
+
+func (h *RequestHandler) Update(ctx *http.RequestCtx) {
 	switch string(ctx.FormValue(Action)) {
 	case ActionRevoke:
 		h.Revocation(ctx)
@@ -70,11 +107,9 @@ func (h *RequestHandler) Revocation(ctx *http.RequestCtx) {
 		return
 	}
 
-	if err := encoder.Encode(RevocationResponse{}); err != nil {
+	if err := encoder.Encode(&RevocationResponse{}); err != nil {
 		ctx.SetStatusCode(http.StatusInternalServerError)
 		encoder.Encode(err)
-
-		return
 	}
 }
 
