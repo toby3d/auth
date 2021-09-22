@@ -22,5 +22,5 @@ func (useCase *tokenUseCase) Verify(ctx context.Context, token string) (*model.T
 }
 
 func (useCase *tokenUseCase) Revoke(ctx context.Context, token string) error {
-	return useCase.tokens.Delete(ctx, token)
+	return useCase.tokens.Remove(ctx, token)
 }

@@ -2,6 +2,7 @@ package usecase_test
 
 import (
 	"context"
+	"sync"
 	"testing"
 
 	"github.com/brianvoe/gofakeit"
@@ -18,7 +19,8 @@ func TestVerify(t *testing.T) {
 
 	require := require.New(t)
 	assert := assert.New(t)
-	repo := repository.NewMemoryTokenRepository()
+	store := new(sync.Map)
+	repo := repository.NewMemoryTokenRepository(store)
 	ucase := usecase.NewTokenUseCase(repo)
 	accessToken := &model.Token{
 		AccessToken: gofakeit.Password(true, true, true, true, false, 32),
@@ -40,7 +42,8 @@ func TestRevoke(t *testing.T) {
 
 	require := require.New(t)
 	assert := assert.New(t)
-	repo := repository.NewMemoryTokenRepository()
+	store := new(sync.Map)
+	repo := repository.NewMemoryTokenRepository(store)
 	ucase := usecase.NewTokenUseCase(repo)
 	accessToken := gofakeit.Password(true, true, true, true, false, 32)
 

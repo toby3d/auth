@@ -9,67 +9,50 @@ import (
 )
 
 type memoryTokenRepository struct {
-	mutex  *sync.RWMutex
-	tokens []*model.Token
+	tokens *sync.Map
 }
 
-func NewMemoryTokenRepository() token.Repository {
+func NewMemoryTokenRepository(tokens *sync.Map) token.Repository {
 	return &memoryTokenRepository{
-		mutex:  new(sync.RWMutex),
-		tokens: make([]*model.Token, 0),
+		tokens: tokens,
 	}
 }
 
-func (repo *memoryTokenRepository) Create(ctx context.Context, token *model.Token) error {
-	repo.mutex.Lock()
+func (repo *memoryTokenRepository) Get(ctx context.Context, accessToken string) (*model.Token, error) {
+	src, ok := repo.tokens.Load(accessToken)
+	if !ok {
+		return nil, nil
+	}
 
-	repo.tokens = append(repo.tokens, token)
+	result, ok := src.(*model.Token)
+	if !ok {
+		return nil, nil
+	}
 
-	repo.mutex.Unlock()
+	return result, nil
+}
+
+func (repo *memoryTokenRepository) Create(ctx context.Context, accessToken *model.Token) error {
+	t, err := repo.Get(ctx, accessToken.AccessToken)
+	if err != nil {
+		return err
+	}
+
+	if t != nil {
+		return token.ErrExist
+	}
+
+	return repo.Update(ctx, accessToken)
+}
+
+func (repo *memoryTokenRepository) Update(ctx context.Context, accessToken *model.Token) error {
+	repo.tokens.Store(accessToken.AccessToken, accessToken)
 
 	return nil
 }
 
-func (repo *memoryTokenRepository) Get(ctx context.Context, token string) (*model.Token, error) {
-	repo.mutex.RLock()
-	defer repo.mutex.RUnlock()
-
-	for i := range repo.tokens {
-		if repo.tokens[i].AccessToken != token {
-			continue
-		}
-
-		return repo.tokens[i], nil
-	}
-
-	return nil, nil
-}
-
-func (repo *memoryTokenRepository) Delete(ctx context.Context, token string) error {
-	repo.mutex.RLock()
-
-	for i := range repo.tokens {
-		if repo.tokens[i].AccessToken != token {
-			continue
-		}
-
-		repo.mutex.RUnlock()
-		repo.mutex.Lock()
-
-		if i < len(repo.tokens)-1 {
-			copy(repo.tokens[i:], repo.tokens[i+1:])
-		}
-
-		repo.tokens[len(repo.tokens)-1] = nil
-		repo.tokens = repo.tokens[:len(repo.tokens)-1]
-
-		repo.mutex.Unlock()
-		repo.mutex.RLock()
-
-		break
-	}
-
-	repo.mutex.RUnlock()
+func (repo *memoryTokenRepository) Remove(ctx context.Context, accessToken string) error {
+	repo.tokens.Delete(accessToken)
 
 	return nil
 }

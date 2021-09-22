@@ -3,11 +3,19 @@ package token
 import (
 	"context"
 
+	"golang.org/x/xerrors"
 	"source.toby3d.me/website/oauth/internal/model"
 )
 
 type Repository interface {
-	Create(ctx context.Context, token *model.Token) error
-	Get(ctx context.Context, token string) (*model.Token, error)
-	Delete(ctx context.Context, token string) error
+	Get(ctx context.Context, accessToken string) (*model.Token, error)
+	Create(ctx context.Context, accessToken *model.Token) error
+	Update(ctx context.Context, accessToken *model.Token) error
+	Remove(ctx context.Context, accessToken string) error
+}
+
+var ErrExist error = model.Error{
+	Code:        model.ErrInvalidRequest,
+	Description: "this token is already exists",
+	Frame:       xerrors.Caller(1),
 }
