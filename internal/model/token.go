@@ -1,12 +1,17 @@
 package model
 
 type Token struct {
-	AccessToken string   `json:"access_token"`
-	TokenType   string   `json:"token_type"`
-	Scope       string   `json:"scope"`
-	Me          string   `json:"me"`
-	ClientID    string   `json:"client_id"`
-	Profile     *Profile `json:"profile,omitempty"`
+	Profile     *Profile
+	Scopes      []string
+	AccessToken string
+	Type        string
+	Me          URL
+	ClientID    URL
 }
 
-func (Token) Bucket() []byte { return []byte("tokens") }
+func NewToken() *Token {
+	t := new(Token)
+	t.Scopes = make([]string, 0)
+
+	return t
+}
