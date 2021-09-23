@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.etcd.io/bbolt"
+
 	"source.toby3d.me/website/oauth/internal/model"
 	"source.toby3d.me/website/oauth/internal/random"
 	"source.toby3d.me/website/oauth/internal/token"
@@ -81,29 +82,31 @@ func TestGet(t *testing.T) {
 func TestCreate(t *testing.T) {
 	t.Parallel()
 
-	accessToken := &model.Token{
-		AccessToken: random.New().String(32),
+	accessToken := random.New().String(32)
+
+	t.Cleanup(func() {
+		_ = db.Update(func(tx *bbolt.Tx) error {
+			return tx.Bucket(bolt.Token{}.Bucket()).Delete([]byte(accessToken))
+		})
+	})
+
+	tkn := &model.Token{
+		AccessToken: accessToken,
 		ClientID:    "https://app.example.com/",
 		Me:          "https://toby3d.me/",
 		Scopes:      []string{"read", "update", "delete"},
 		Type:        "Bearer",
 	}
 
-	t.Cleanup(func() {
-		_ = db.Update(func(tx *bbolt.Tx) error {
-			return tx.Bucket(bolt.Token{}.Bucket()).Delete([]byte(accessToken.AccessToken))
-		})
-	})
+	require.NoError(t, repo.Create(context.TODO(), tkn))
 
-	require.NoError(t, repo.Create(context.TODO(), accessToken))
-
-	result := new(model.Token)
+	result := model.NewToken()
 	require.NoError(t, db.View(func(tx *bbolt.Tx) error {
-		return bolt.NewToken().Bind(tx.Bucket(bolt.Token{}.Bucket()).Get([]byte(accessToken.AccessToken)), result)
+		return bolt.NewToken().Bind(tx.Bucket(bolt.Token{}.Bucket()).Get([]byte(tkn.AccessToken)), result)
 	}))
-	assert.Equal(t, accessToken, result)
+	assert.Equal(t, tkn, result)
 
-	assert.EqualError(t, repo.Create(context.TODO(), accessToken), token.ErrExist.Error())
+	assert.EqualError(t, repo.Create(context.TODO(), tkn), token.ErrExist.Error())
 }
 
 func TestUpdate(t *testing.T) {
@@ -138,7 +141,7 @@ func TestUpdate(t *testing.T) {
 		Type:        "Bearer",
 	}))
 
-	result := new(model.Token)
+	result := model.NewToken()
 	require.NoError(t, db.View(func(tx *bbolt.Tx) error {
 		return bolt.NewToken().Bind(tx.Bucket(bolt.Token{}.Bucket()).Get([]byte(accessToken)), result)
 	}))

@@ -17,10 +17,10 @@ func NewTokenUseCase(tokens token.Repository) token.UseCase {
 	}
 }
 
-func (useCase *tokenUseCase) Verify(ctx context.Context, token string) (*model.Token, error) {
-	return useCase.tokens.Get(ctx, token)
+func (useCase *tokenUseCase) Verify(ctx context.Context, accessToken string) (*model.Token, error) {
+	return useCase.tokens.Get(ctx, accessToken)
 }
 
-func (useCase *tokenUseCase) Revoke(ctx context.Context, token string) error {
-	return useCase.tokens.Remove(ctx, token)
+func (useCase *tokenUseCase) Revoke(ctx context.Context, accessToken string) error {
+	return useCase.tokens.Remove(ctx, accessToken)
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"source.toby3d.me/website/oauth/internal/model"
 	"source.toby3d.me/website/oauth/internal/random"
 	"source.toby3d.me/website/oauth/internal/token"

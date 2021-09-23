@@ -3,6 +3,7 @@ package http_test
 import (
 	"context"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/brianvoe/gofakeit"
@@ -24,7 +25,8 @@ func TestVerification(t *testing.T) {
 
 	require := require.New(t)
 	assert := assert.New(t)
-	repo := repository.NewMemoryTokenRepository()
+	store := new(sync.Map)
+	repo := repository.NewMemoryTokenRepository(store)
 	accessToken := model.Token{
 		AccessToken: gofakeit.Password(true, true, true, true, false, 32),
 		Type:        "Bearer",
@@ -63,7 +65,8 @@ func TestRevocation(t *testing.T) {
 
 	require := require.New(t)
 	assert := assert.New(t)
-	repo := repository.NewMemoryTokenRepository()
+	store := new(sync.Map)
+	repo := repository.NewMemoryTokenRepository(store)
 	accessToken := gofakeit.Password(true, true, true, true, false, 32)
 
 	require.NoError(repo.Create(context.TODO(), &model.Token{

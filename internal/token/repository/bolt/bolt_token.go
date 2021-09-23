@@ -9,6 +9,7 @@ import (
 	"go.etcd.io/bbolt"
 	bolt "go.etcd.io/bbolt"
 	"golang.org/x/xerrors"
+
 	"source.toby3d.me/website/oauth/internal/model"
 	"source.toby3d.me/website/oauth/internal/token"
 )
@@ -44,7 +45,7 @@ func NewBoltTokenRepository(db *bolt.DB) (token.Repository, error) {
 }
 
 func (repo *boltTokenRepository) Get(ctx context.Context, accessToken string) (*model.Token, error) {
-	result := new(model.Token)
+	result := model.NewToken()
 	err := repo.db.View(func(tx *bolt.Tx) error {
 		if src := tx.Bucket(Token{}.Bucket()).Get([]byte(accessToken)); src != nil {
 			return NewToken().Bind(src, result)
@@ -104,8 +105,8 @@ func (Token) Bucket() []byte { return []byte("tokens") }
 
 func (t *Token) Populate(src *model.Token) {
 	t.AccessToken = src.AccessToken
-	t.ClientID = src.ClientID
-	t.Me = src.Me
+	t.ClientID = string(src.ClientID)
+	t.Me = string(src.Me)
 	t.Scope = strings.Join(src.Scopes, " ")
 	t.Type = src.Type
 }
@@ -116,10 +117,10 @@ func (t *Token) Bind(src []byte, dst *model.Token) error {
 	}
 
 	dst.AccessToken = t.AccessToken
-	dst.ClientID = t.ClientID
-	dst.Me = t.Me
 	dst.Scopes = strings.Fields(t.Scope)
 	dst.Type = t.Type
+	dst.ClientID = model.URL(t.ClientID)
+	dst.Me = model.URL(t.Me)
 
 	return nil
 }

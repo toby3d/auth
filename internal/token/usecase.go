@@ -7,6 +7,6 @@ import (
 )
 
 type UseCase interface {
-	Verify(ctx context.Context, token string) (*model.Token, error)
-	Revoke(ctx context.Context, token string) error
+	Verify(ctx context.Context, accessToken string) (*model.Token, error)
+	Revoke(ctx context.Context, accessToken string) error
 }

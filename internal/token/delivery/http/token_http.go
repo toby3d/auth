@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/fasthttp/router"
-	"github.com/goccy/go-json"
+	json "github.com/goccy/go-json"
 	http "github.com/valyala/fasthttp"
 
 	"source.toby3d.me/website/oauth/internal/common"

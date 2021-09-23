@@ -1,10 +1,17 @@
 package model
 
 type Token struct {
-	AccessToken string
-	ClientID    string
-	Me          string
 	Profile     *Profile
 	Scopes      []string
+	AccessToken string
 	Type        string
+	Me          URL
+	ClientID    URL
+}
+
+func NewToken() *Token {
+	t := new(Token)
+	t.Scopes = make([]string, 0)
+
+	return t
 }
