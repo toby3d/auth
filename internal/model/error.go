@@ -13,21 +13,6 @@ type Error struct {
 	Frame       xerrors.Frame `json:"-"`
 }
 
-const (
-	ErrAccessDenied            string = "access_denied"
-	ErrInvalidClient           string = "invalid_client"
-	ErrInvalidGrant            string = "invalid_grant"
-	ErrInvalidRequest          string = "invalid_request"
-	ErrInvalidScope            string = "invalid_scope"
-	ErrInvalidToken            string = "invalid_token"
-	ErrServerError             string = "server_error"
-	ErrTemporarilyUnavailable  string = "temporarily_unavailable"
-	ErrUnauthorizedClient      string = "unauthorized_client"
-	ErrUnsupportedResponseType string = "unsupported_response_type"
-)
-
-const errorColor string = "\033[31m"
-
 func (e Error) Error() string {
 	return fmt.Sprint(e)
 }
@@ -37,14 +22,10 @@ func (e Error) Format(s fmt.State, r rune) {
 }
 
 func (e Error) FormatError(p xerrors.Printer) error {
-	p.Print(errorColor, e.Code)
-
-	if e.Description != "" {
-		p.Printf(": %s", e.Description)
-	}
+	p.Printf("%s: %s", e.Code, e.Description)
 
 	if e.URI != "" {
-		p.Printf("%4s", e.URI)
+		p.Printf("%s", e.URI)
 	}
 
 	if p.Detail() {
