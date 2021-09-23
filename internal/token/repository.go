@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"golang.org/x/xerrors"
-
 	"source.toby3d.me/website/oauth/internal/model"
 )
 
@@ -18,5 +17,6 @@ type Repository interface {
 var ErrExist error = model.Error{
 	Code:        "invalid_request",
 	Description: "this token is already exists",
+	URI:         "",
 	Frame:       xerrors.Caller(1),
 }

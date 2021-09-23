@@ -1,3 +1,4 @@
+//nolint: wrapcheck
 package bolt_test
 
 import (
@@ -11,13 +12,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.etcd.io/bbolt"
-
 	"source.toby3d.me/website/oauth/internal/model"
 	"source.toby3d.me/website/oauth/internal/random"
 	"source.toby3d.me/website/oauth/internal/token"
 	"source.toby3d.me/website/oauth/internal/token/repository/bolt"
 )
 
+//nolint: gochecknoglobals
 var (
 	db   *bbolt.DB
 	repo token.Repository
@@ -51,6 +52,7 @@ func TestGet(t *testing.T) {
 
 	t.Cleanup(func() {
 		_ = db.Update(func(tx *bbolt.Tx) error {
+			//nolint: exhaustivestruct
 			return tx.Bucket(bolt.Token{}.Bucket()).Delete([]byte(accessToken))
 		})
 	})
@@ -65,6 +67,7 @@ func TestGet(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NoError(t, db.Update(func(tx *bbolt.Tx) error {
+		//nolint: exhaustivestruct
 		return tx.Bucket(bolt.Token{}.Bucket()).Put([]byte(accessToken), src)
 	}))
 
@@ -76,6 +79,7 @@ func TestGet(t *testing.T) {
 		Me:          "https://toby3d.me/",
 		Scopes:      []string{"read", "update", "delete"},
 		Type:        "Bearer",
+		Profile:     nil,
 	}, tkn)
 }
 
@@ -86,6 +90,7 @@ func TestCreate(t *testing.T) {
 
 	t.Cleanup(func() {
 		_ = db.Update(func(tx *bbolt.Tx) error {
+			//nolint: exhaustivestruct
 			return tx.Bucket(bolt.Token{}.Bucket()).Delete([]byte(accessToken))
 		})
 	})
@@ -96,12 +101,15 @@ func TestCreate(t *testing.T) {
 		Me:          "https://toby3d.me/",
 		Scopes:      []string{"read", "update", "delete"},
 		Type:        "Bearer",
+		Profile:     nil,
 	}
 
 	require.NoError(t, repo.Create(context.TODO(), tkn))
 
 	result := model.NewToken()
+
 	require.NoError(t, db.View(func(tx *bbolt.Tx) error {
+		//nolint: exhaustivestruct
 		return bolt.NewToken().Bind(tx.Bucket(bolt.Token{}.Bucket()).Get([]byte(tkn.AccessToken)), result)
 	}))
 	assert.Equal(t, tkn, result)
@@ -116,6 +124,7 @@ func TestUpdate(t *testing.T) {
 
 	t.Cleanup(func() {
 		_ = db.Update(func(tx *bbolt.Tx) error {
+			//nolint: exhaustivestruct
 			return tx.Bucket(bolt.Token{}.Bucket()).Delete([]byte(accessToken))
 		})
 	})
@@ -130,6 +139,7 @@ func TestUpdate(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NoError(t, db.Update(func(tx *bbolt.Tx) error {
+		//nolint: exhaustivestruct
 		return tx.Bucket(bolt.Token{}.Bucket()).Put([]byte(accessToken), src)
 	}))
 
@@ -139,10 +149,13 @@ func TestUpdate(t *testing.T) {
 		Me:          "https://toby3d.ru/",
 		Scopes:      []string{"read"},
 		Type:        "Bearer",
+		Profile:     nil,
 	}))
 
 	result := model.NewToken()
+
 	require.NoError(t, db.View(func(tx *bbolt.Tx) error {
+		//nolint: exhaustivestruct
 		return bolt.NewToken().Bind(tx.Bucket(bolt.Token{}.Bucket()).Get([]byte(accessToken)), result)
 	}))
 	assert.Equal(t, &model.Token{
@@ -151,6 +164,7 @@ func TestUpdate(t *testing.T) {
 		Me:          "https://toby3d.ru/",
 		Scopes:      []string{"read"},
 		Type:        "Bearer",
+		Profile:     nil,
 	}, result)
 }
 
@@ -161,6 +175,7 @@ func TestDelete(t *testing.T) {
 
 	t.Cleanup(func() {
 		_ = db.Update(func(tx *bbolt.Tx) error {
+			//nolint: exhaustivestruct
 			return tx.Bucket(bolt.Token{}.Bucket()).Delete([]byte(accessToken))
 		})
 	})
@@ -175,12 +190,14 @@ func TestDelete(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NoError(t, db.Update(func(tx *bbolt.Tx) error {
+		//nolint: exhaustivestruct
 		return tx.Bucket(bolt.Token{}.Bucket()).Put([]byte(accessToken), src)
 	}))
 
 	require.NoError(t, repo.Remove(context.TODO(), accessToken))
 
 	require.NoError(t, db.View(func(tx *bbolt.Tx) error {
+		//nolint: exhaustivestruct
 		assert.Nil(t, tx.Bucket(bolt.Token{}.Bucket()).Get([]byte(accessToken)))
 
 		return nil

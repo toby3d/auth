@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	http "github.com/valyala/fasthttp"
-
 	"source.toby3d.me/website/oauth/internal/common"
 	"source.toby3d.me/website/oauth/internal/model"
 	delivery "source.toby3d.me/website/oauth/internal/token/delivery/http"
@@ -33,6 +32,7 @@ func TestVerification(t *testing.T) {
 		ClientID:    "https://app.example.com/",
 		Me:          "https://user.example.net/",
 		Scopes:      []string{"create", "update", "delete"},
+		Profile:     nil,
 	}
 
 	require.NoError(repo.Create(context.TODO(), &accessToken))
@@ -75,6 +75,7 @@ func TestRevocation(t *testing.T) {
 		ClientID:    "https://app.example.com/",
 		Me:          "https://user.example.net/",
 		Scopes:      []string{"create", "update", "delete"},
+		Profile:     nil,
 	}))
 
 	req := http.AcquireRequest()

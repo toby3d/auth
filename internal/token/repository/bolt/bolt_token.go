@@ -6,18 +6,16 @@ import (
 
 	json "github.com/goccy/go-json"
 	"github.com/pkg/errors"
-	"go.etcd.io/bbolt"
 	bolt "go.etcd.io/bbolt"
 	"golang.org/x/xerrors"
-
 	"source.toby3d.me/website/oauth/internal/model"
 	"source.toby3d.me/website/oauth/internal/token"
 )
 
 type (
 	Token struct {
-		AccessToken string `json:"access_token"`
-		ClientID    string `json:"client_id"`
+		AccessToken string `json:"accessToken"`
+		ClientID    string `json:"clientId"`
 		Me          string `json:"me"`
 		Scope       string `json:"scope"`
 		Type        string `json:"type"`
@@ -31,12 +29,13 @@ type (
 var ErrNotExist error = xerrors.New("key not exist")
 
 func NewBoltTokenRepository(db *bolt.DB) (token.Repository, error) {
-	if err := db.Update(func(tx *bbolt.Tx) error {
+	if err := db.Update(func(tx *bolt.Tx) error {
+		//nolint: exhaustivestruct
 		_, err := tx.CreateBucketIfNotExists(Token{}.Bucket())
 
-		return err
+		return errors.Wrap(err, "failed to create a bucket")
 	}); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to update the storage structure")
 	}
 
 	return &boltTokenRepository{
@@ -46,18 +45,19 @@ func NewBoltTokenRepository(db *bolt.DB) (token.Repository, error) {
 
 func (repo *boltTokenRepository) Get(ctx context.Context, accessToken string) (*model.Token, error) {
 	result := model.NewToken()
-	err := repo.db.View(func(tx *bolt.Tx) error {
+
+	if err := repo.db.View(func(tx *bolt.Tx) error {
+		//nolint: exhaustivestruct
 		if src := tx.Bucket(Token{}.Bucket()).Get([]byte(accessToken)); src != nil {
 			return NewToken().Bind(src, result)
 		}
 
 		return ErrNotExist
-	})
-	if err != nil && !xerrors.Is(err, ErrNotExist) {
-		return nil, err
-	}
+	}); err != nil {
+		if !xerrors.Is(err, ErrNotExist) {
+			return nil, errors.Wrap(err, "failed to retrieve token from storage")
+		}
 
-	if xerrors.Is(err, ErrNotExist) {
 		return nil, nil
 	}
 
@@ -86,15 +86,32 @@ func (repo *boltTokenRepository) Update(ctx context.Context, accessToken *model.
 		return errors.Wrap(err, "failed to marshal token")
 	}
 
-	return repo.db.Update(func(tx *bolt.Tx) error {
-		return tx.Bucket(dto.Bucket()).Put([]byte(dto.AccessToken), src)
-	})
+	if err = repo.db.Update(func(tx *bolt.Tx) error {
+		if err := tx.Bucket(dto.Bucket()).Put([]byte(dto.AccessToken), src); err != nil {
+			return errors.Wrap(err, "failed to overwrite the token in the bucket")
+		}
+
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "failed to update the token in the repository")
+	}
+
+	return nil
 }
 
 func (repo *boltTokenRepository) Remove(ctx context.Context, accessToken string) error {
-	return repo.db.Update(func(tx *bolt.Tx) error {
-		return tx.Bucket(Token{}.Bucket()).Delete([]byte(accessToken))
-	})
+	if err := repo.db.Update(func(tx *bolt.Tx) error {
+		//nolint: exhaustivestruct
+		if err := tx.Bucket(Token{}.Bucket()).Delete([]byte(accessToken)); err != nil {
+			return errors.Wrap(err, "failed to remove token in bucket")
+		}
+
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "failed to remove token from storage")
+	}
+
+	return nil
 }
 
 func NewToken() *Token {
@@ -113,7 +130,7 @@ func (t *Token) Populate(src *model.Token) {
 
 func (t *Token) Bind(src []byte, dst *model.Token) error {
 	if err := json.Unmarshal(src, t); err != nil {
-		return err
+		return errors.Wrap(err, "cannot unmarshal token source")
 	}
 
 	dst.AccessToken = t.AccessToken

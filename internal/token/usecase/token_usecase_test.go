@@ -8,7 +8,6 @@ import (
 	"github.com/brianvoe/gofakeit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
 	"source.toby3d.me/website/oauth/internal/model"
 	repository "source.toby3d.me/website/oauth/internal/token/repository/memory"
 	"source.toby3d.me/website/oauth/internal/token/usecase"
@@ -28,6 +27,7 @@ func TestVerify(t *testing.T) {
 		ClientID:    "https://app.example.com/",
 		Me:          "https://user.example.net/",
 		Scopes:      []string{"create", "update", "delete"},
+		Profile:     nil,
 	}
 
 	require.NoError(repo.Create(context.TODO(), accessToken))
@@ -53,6 +53,7 @@ func TestRevoke(t *testing.T) {
 		ClientID:    "https://app.example.com/",
 		Me:          "https://user.example.net/",
 		Scopes:      []string{"create", "update", "delete"},
+		Profile:     nil,
 	}))
 
 	token, err := repo.Get(context.TODO(), accessToken)
