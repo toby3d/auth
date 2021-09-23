@@ -6,6 +6,7 @@ import (
 	"golang.org/x/xerrors"
 )
 
+//nolint: tagliatelle
 type Error struct {
 	Code        string        `json:"error"`
 	Description string        `json:"error_description,omitempty"`
