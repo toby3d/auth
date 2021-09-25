@@ -9,6 +9,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/viper v1.8.1
 	github.com/stretchr/testify v1.7.0
+	github.com/tomnomnom/linkheader v0.0.0-20180905144013-02ca5825eb80
 	github.com/valyala/fasthttp v1.29.0
 	github.com/valyala/quicktemplate v1.6.3
 	go.etcd.io/bbolt v1.3.6

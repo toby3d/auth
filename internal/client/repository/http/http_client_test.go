@@ -2,12 +2,15 @@ package http_test
 
 import (
 	"context"
+	"net"
 	"testing"
 
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/valyala/fasthttp"
-	"source.toby3d.me/website/oauth/internal/client/repository/http"
+	http "github.com/valyala/fasthttp"
+	httputil "github.com/valyala/fasthttp/fasthttputil"
+	repository "source.toby3d.me/website/oauth/internal/client/repository/http"
 	"source.toby3d.me/website/oauth/internal/common"
 	"source.toby3d.me/website/oauth/internal/model"
 )
@@ -33,35 +36,45 @@ const testBody string = `
 func TestGet(t *testing.T) {
 	t.Parallel()
 
-	//nolint: exhaustivestruct
-	srv := &fasthttp.Server{
-		ReduceMemoryUsage: true,
-		GetOnly:           true,
-		CloseOnShutdown:   true,
-		Handler: func(ctx *fasthttp.RequestCtx) {
-			ctx.SuccessString(common.MIMETextHTML, testBody)
-			ctx.Response.Header.Set(fasthttp.HeaderLink, `<https://app.example.com/redirect>; rel="redirect_uri">`)
-		},
-	}
-
-	go func(srv *fasthttp.Server) {
-		assert.NoError(t, srv.ListenAndServe("127.0.0.1:2368"))
-	}(srv)
+	ln := httputil.NewInmemoryListener()
+	u := http.AcquireURI()
+	u.SetScheme("http")
+	u.SetHost(ln.Addr().String())
 
 	t.Cleanup(func() {
-		assert.NoError(t, srv.Shutdown())
+		http.ReleaseURI(u)
+		assert.NoError(t, ln.Close())
 	})
 
-	result, err := http.NewHTTPClientRepository(new(fasthttp.Client)).Get(context.TODO(), "http://127.0.0.1:2368/")
+	go func(t *testing.T) {
+		t.Helper()
+		require.NoError(t, http.Serve(ln, func(ctx *http.RequestCtx) {
+			ctx.SuccessString(common.MIMETextHTML, testBody)
+			ctx.Response.Header.Set(http.HeaderLink,
+				`<https://app.example.com/redirect>; rel="redirect_uri">`)
+		}))
+	}(t)
+
+	client := new(http.Client)
+	client.Dial = func(addr string) (net.Conn, error) {
+		conn, err := ln.Dial()
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to dial the address")
+		}
+
+		return conn, nil
+	}
+
+	result, err := repository.NewHTTPClientRepository(client).Get(context.TODO(), u.String())
 	require.NoError(t, err)
 	assert.Equal(t, &model.Client{
-		ID:   "http://127.0.0.1:2368/",
+		ID:   model.URL(u.String()),
 		Name: "Example App",
-		Logo: "http://127.0.0.1:2368/logo.png",
-		URL:  "http://127.0.0.1:2368/",
+		Logo: model.URL(u.String() + "logo.png"),
+		URL:  model.URL(u.String()),
 		RedirectURI: []model.URL{
 			"https://app.example.com/redirect",
-			"http://127.0.0.1:2368/redirect",
+			model.URL(u.String() + "redirect"),
 		},
 	}, result)
 }

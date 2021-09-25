@@ -7,7 +7,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
 	repository "source.toby3d.me/website/oauth/internal/client/repository/memory"
 	"source.toby3d.me/website/oauth/internal/client/usecase"
 	"source.toby3d.me/website/oauth/internal/model"

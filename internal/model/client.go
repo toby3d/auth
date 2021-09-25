@@ -2,7 +2,7 @@ package model
 
 type Client struct {
 	ID          URL
-	Name        URL
+	Name        string
 	Logo        URL
 	URL         URL
 	RedirectURI []URL
