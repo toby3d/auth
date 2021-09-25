@@ -9,9 +9,10 @@ import (
 )
 
 func TestGetString(t *testing.T) {
-	v := viper.New()
+	t.Parallel()
 
-	v.MergeConfigMap(map[string]interface{}{
+	v := viper.New()
+	_ = v.MergeConfigMap(map[string]interface{}{
 		"testing": map[string]interface{}{
 			"sample": "text",
 			"answer": 42,
@@ -24,9 +25,10 @@ func TestGetString(t *testing.T) {
 }
 
 func TestGetInt(t *testing.T) {
-	v := viper.New()
+	t.Parallel()
 
-	v.MergeConfigMap(map[string]interface{}{
+	v := viper.New()
+	_ = v.MergeConfigMap(map[string]interface{}{
 		"testing": map[string]interface{}{
 			"answer": 42,
 		},

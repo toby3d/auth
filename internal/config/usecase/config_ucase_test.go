@@ -11,6 +11,7 @@ import (
 	"source.toby3d.me/website/oauth/internal/config/usecase"
 )
 
+//nolint: gochecknoglobals
 var ucase config.UseCase
 
 func TestMain(m *testing.M) {
