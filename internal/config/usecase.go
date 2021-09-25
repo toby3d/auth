@@ -1,9 +1,9 @@
 package config
 
 type UseCase interface {
-	GetURL() string
-	GetHost() string
-	GetPort() string
-	GetAddr() string
-	GetDatabaseFileName() string
+	Addr() string
+	DBFileName() string
+	Host() string
+	Port() int
+	URL() string
 }

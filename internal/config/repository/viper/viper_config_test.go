@@ -1,0 +1,36 @@
+package viper_test
+
+import (
+	"testing"
+
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/assert"
+	repository "source.toby3d.me/website/oauth/internal/config/repository/viper"
+)
+
+func TestGetString(t *testing.T) {
+	v := viper.New()
+
+	v.MergeConfigMap(map[string]interface{}{
+		"testing": map[string]interface{}{
+			"sample": "text",
+			"answer": 42,
+		},
+	})
+
+	repo := repository.NewViperConfigRepository(v)
+	assert.Equal(t, "text", repo.GetString("testing.sample"))
+	assert.Equal(t, "42", repo.GetString("testing.answer"))
+}
+
+func TestGetInt(t *testing.T) {
+	v := viper.New()
+
+	v.MergeConfigMap(map[string]interface{}{
+		"testing": map[string]interface{}{
+			"answer": 42,
+		},
+	})
+
+	assert.Equal(t, 42, repository.NewViperConfigRepository(v).GetInt("testing.answer"))
+}
