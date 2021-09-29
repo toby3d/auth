@@ -22,6 +22,7 @@ func NewToken() *Token {
 	return t
 }
 
+//nolint: gomnd
 func TestToken(tb testing.TB) *Token {
 	tb.Helper()
 

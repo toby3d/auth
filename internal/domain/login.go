@@ -18,6 +18,7 @@ type Login struct {
 	State               string
 }
 
+//nolint: gomnd
 func TestLogin(tb testing.TB) *Login {
 	tb.Helper()
 
@@ -34,6 +35,7 @@ func TestLogin(tb testing.TB) *Login {
 	}
 }
 
+//nolint: gomnd
 func TestLoginInvalid(tb testing.TB) *Login {
 	tb.Helper()
 
