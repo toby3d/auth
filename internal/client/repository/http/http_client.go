@@ -9,9 +9,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tomnomnom/linkheader"
 	http "github.com/valyala/fasthttp"
-	"source.toby3d.me/website/oauth/internal/client"
-	"source.toby3d.me/website/oauth/internal/model"
 	"willnorris.com/go/microformats"
+
+	"source.toby3d.me/website/oauth/internal/client"
+	"source.toby3d.me/website/oauth/internal/domain"
 )
 
 type httpClientRepository struct {
@@ -37,7 +38,7 @@ func NewHTTPClientRepository(c *http.Client) client.Repository {
 	}
 }
 
-func (repo *httpClientRepository) Get(ctx context.Context, id string) (*model.Client, error) {
+func (repo *httpClientRepository) Get(ctx context.Context, id string) (*domain.Client, error) {
 	req := http.AcquireRequest()
 	defer http.ReleaseRequest(req)
 
@@ -51,16 +52,15 @@ func (repo *httpClientRepository) Get(ctx context.Context, id string) (*model.Cl
 		return nil, errors.Wrap(err, "failed to make a request to the client")
 	}
 
-	client := new(model.Client)
-	client.ID = model.URL(id)
-	client.RedirectURI = make([]model.URL, 0)
+	client := domain.NewClient()
+	client.ID = id
 
 	for _, l := range linkheader.Parse(string(resp.Header.Peek(http.HeaderLink))) {
 		if !strings.Contains(l.Rel, "redirect_uri") {
 			continue
 		}
 
-		client.RedirectURI = append(client.RedirectURI, model.URL(l.URL))
+		client.RedirectURI = append(client.RedirectURI, l.URL)
 	}
 
 	u, err := url.Parse(id)
@@ -84,7 +84,7 @@ func (repo *httpClientRepository) Get(ctx context.Context, id string) (*model.Cl
 	return client, nil
 }
 
-func populateProperties(src map[string][]interface{}, dst *model.Client) {
+func populateProperties(src map[string][]interface{}, dst *domain.Client) {
 	for key, property := range src {
 		if len(property) == 0 {
 			continue
@@ -97,25 +97,25 @@ func populateProperties(src map[string][]interface{}, dst *model.Client) {
 			for i := range property {
 				switch val := property[i].(type) {
 				case string:
-					dst.Logo = model.URL(val)
+					dst.Logo = val
 				case map[string]string:
-					dst.Logo = model.URL(val[ValueValue])
+					dst.Logo = val[ValueValue]
 				}
 			}
 		case KeyURL:
-			dst.URL = model.URL(getString(property))
+			dst.URL = getString(property)
 		}
 	}
 }
 
-func populateRels(src map[string][]string, dst *model.Client) {
+func populateRels(src map[string][]string, dst *domain.Client) {
 	for key, values := range src {
 		if !strings.EqualFold(key, RelRedirectURI) {
 			continue
 		}
 
 		for i := range values {
-			dst.RedirectURI = append(dst.RedirectURI, model.URL(values[i]))
+			dst.RedirectURI = append(dst.RedirectURI, values[i])
 		}
 	}
 }

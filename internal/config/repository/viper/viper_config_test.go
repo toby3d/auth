@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+
 	repository "source.toby3d.me/website/oauth/internal/config/repository/viper"
 )
 

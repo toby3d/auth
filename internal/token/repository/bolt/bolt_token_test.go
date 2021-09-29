@@ -12,7 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.etcd.io/bbolt"
-	"source.toby3d.me/website/oauth/internal/model"
+
+	"source.toby3d.me/website/oauth/internal/domain"
 	"source.toby3d.me/website/oauth/internal/random"
 	"source.toby3d.me/website/oauth/internal/token"
 	"source.toby3d.me/website/oauth/internal/token/repository/bolt"
@@ -73,7 +74,7 @@ func TestGet(t *testing.T) {
 
 	tkn, err := repo.Get(context.TODO(), accessToken)
 	require.NoError(t, err)
-	assert.Equal(t, &model.Token{
+	assert.Equal(t, &domain.Token{
 		AccessToken: accessToken,
 		ClientID:    "https://app.example.com/",
 		Me:          "https://toby3d.me/",
@@ -95,7 +96,7 @@ func TestCreate(t *testing.T) {
 		})
 	})
 
-	tkn := &model.Token{
+	tkn := &domain.Token{
 		AccessToken: accessToken,
 		ClientID:    "https://app.example.com/",
 		Me:          "https://toby3d.me/",
@@ -106,11 +107,11 @@ func TestCreate(t *testing.T) {
 
 	require.NoError(t, repo.Create(context.TODO(), tkn))
 
-	result := model.NewToken()
+	result := domain.NewToken()
 
 	require.NoError(t, db.View(func(tx *bbolt.Tx) error {
 		//nolint: exhaustivestruct
-		return bolt.NewToken().Bind(tx.Bucket(bolt.Token{}.Bucket()).Get([]byte(tkn.AccessToken)), result)
+		return new(bolt.Token).Bind(tx.Bucket(bolt.Token{}.Bucket()).Get([]byte(tkn.AccessToken)), result)
 	}))
 	assert.Equal(t, tkn, result)
 
@@ -143,7 +144,7 @@ func TestUpdate(t *testing.T) {
 		return tx.Bucket(bolt.Token{}.Bucket()).Put([]byte(accessToken), src)
 	}))
 
-	require.NoError(t, repo.Update(context.TODO(), &model.Token{
+	require.NoError(t, repo.Update(context.TODO(), &domain.Token{
 		AccessToken: accessToken,
 		ClientID:    "https://client.example.com/",
 		Me:          "https://toby3d.ru/",
@@ -152,13 +153,13 @@ func TestUpdate(t *testing.T) {
 		Profile:     nil,
 	}))
 
-	result := model.NewToken()
+	result := domain.NewToken()
 
 	require.NoError(t, db.View(func(tx *bbolt.Tx) error {
 		//nolint: exhaustivestruct
-		return bolt.NewToken().Bind(tx.Bucket(bolt.Token{}.Bucket()).Get([]byte(accessToken)), result)
+		return new(bolt.Token).Bind(tx.Bucket(bolt.Token{}.Bucket()).Get([]byte(accessToken)), result)
 	}))
-	assert.Equal(t, &model.Token{
+	assert.Equal(t, &domain.Token{
 		AccessToken: accessToken,
 		ClientID:    "https://client.example.com/",
 		Me:          "https://toby3d.ru/",

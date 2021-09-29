@@ -8,7 +8,8 @@ import (
 	"github.com/pkg/errors"
 	bolt "go.etcd.io/bbolt"
 	"golang.org/x/xerrors"
-	"source.toby3d.me/website/oauth/internal/model"
+
+	"source.toby3d.me/website/oauth/internal/domain"
 	"source.toby3d.me/website/oauth/internal/token"
 )
 
@@ -43,13 +44,13 @@ func NewBoltTokenRepository(db *bolt.DB) (token.Repository, error) {
 	}, nil
 }
 
-func (repo *boltTokenRepository) Get(ctx context.Context, accessToken string) (*model.Token, error) {
-	result := model.NewToken()
+func (repo *boltTokenRepository) Get(ctx context.Context, accessToken string) (*domain.Token, error) {
+	result := domain.NewToken()
 
 	if err := repo.db.View(func(tx *bolt.Tx) error {
 		//nolint: exhaustivestruct
 		if src := tx.Bucket(Token{}.Bucket()).Get([]byte(accessToken)); src != nil {
-			return NewToken().Bind(src, result)
+			return new(Token).Bind(src, result)
 		}
 
 		return ErrNotExist
@@ -64,7 +65,7 @@ func (repo *boltTokenRepository) Get(ctx context.Context, accessToken string) (*
 	return result, nil
 }
 
-func (repo *boltTokenRepository) Create(ctx context.Context, accessToken *model.Token) error {
+func (repo *boltTokenRepository) Create(ctx context.Context, accessToken *domain.Token) error {
 	t, err := repo.Get(ctx, accessToken.AccessToken)
 	if err != nil {
 		return errors.Wrap(err, "failed to verify the existence of the token")
@@ -77,8 +78,8 @@ func (repo *boltTokenRepository) Create(ctx context.Context, accessToken *model.
 	return repo.Update(ctx, accessToken)
 }
 
-func (repo *boltTokenRepository) Update(ctx context.Context, accessToken *model.Token) error {
-	dto := NewToken()
+func (repo *boltTokenRepository) Update(ctx context.Context, accessToken *domain.Token) error {
+	dto := new(Token)
 	dto.Populate(accessToken)
 
 	src, err := json.Marshal(dto)
@@ -114,21 +115,17 @@ func (repo *boltTokenRepository) Remove(ctx context.Context, accessToken string)
 	return nil
 }
 
-func NewToken() *Token {
-	return new(Token)
-}
-
 func (Token) Bucket() []byte { return []byte("tokens") }
 
-func (t *Token) Populate(src *model.Token) {
+func (t *Token) Populate(src *domain.Token) {
 	t.AccessToken = src.AccessToken
-	t.ClientID = string(src.ClientID)
-	t.Me = string(src.Me)
+	t.ClientID = src.ClientID
+	t.Me = src.Me
 	t.Scope = strings.Join(src.Scopes, " ")
 	t.Type = src.Type
 }
 
-func (t *Token) Bind(src []byte, dst *model.Token) error {
+func (t *Token) Bind(src []byte, dst *domain.Token) error {
 	if err := json.Unmarshal(src, t); err != nil {
 		return errors.Wrap(err, "cannot unmarshal token source")
 	}
@@ -136,8 +133,8 @@ func (t *Token) Bind(src []byte, dst *model.Token) error {
 	dst.AccessToken = t.AccessToken
 	dst.Scopes = strings.Fields(t.Scope)
 	dst.Type = t.Type
-	dst.ClientID = model.URL(t.ClientID)
-	dst.Me = model.URL(t.Me)
+	dst.ClientID = t.ClientID
+	dst.Me = t.Me
 
 	return nil
 }

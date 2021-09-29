@@ -4,7 +4,8 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
-	"source.toby3d.me/website/oauth/internal/model"
+
+	"source.toby3d.me/website/oauth/internal/domain"
 	"source.toby3d.me/website/oauth/internal/token"
 )
 
@@ -18,7 +19,7 @@ func NewTokenUseCase(tokens token.Repository) token.UseCase {
 	}
 }
 
-func (useCase *tokenUseCase) Verify(ctx context.Context, accessToken string) (*model.Token, error) {
+func (useCase *tokenUseCase) Verify(ctx context.Context, accessToken string) (*domain.Token, error) {
 	t, err := useCase.tokens.Get(ctx, accessToken)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to retrieve token from storage")

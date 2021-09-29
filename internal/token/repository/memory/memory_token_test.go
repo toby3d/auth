@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"source.toby3d.me/website/oauth/internal/model"
-	"source.toby3d.me/website/oauth/internal/random"
+
+	"source.toby3d.me/website/oauth/internal/domain"
 	"source.toby3d.me/website/oauth/internal/token"
 	"source.toby3d.me/website/oauth/internal/token/repository/memory"
 )
@@ -17,19 +17,7 @@ func TestGet(t *testing.T) {
 	t.Parallel()
 
 	store := new(sync.Map)
-	accessToken := &model.Token{
-		AccessToken: random.New().String(32),
-		ClientID:    "https://app.example.com/",
-		Me:          "https://toby3d.me/",
-		Profile: &model.Profile{
-			Name:  "Maxim Lebedev",
-			URL:   "https://toby3d.me/",
-			Photo: "https://toby3d.me/photo.jpg",
-			Email: "hey@toby3d.me",
-		},
-		Scopes: []string{"read", "update", "delete"},
-		Type:   "Bearer",
-	}
+	accessToken := domain.TestToken(t)
 
 	store.Store(accessToken.AccessToken, accessToken)
 
@@ -42,19 +30,7 @@ func TestCreate(t *testing.T) {
 	t.Parallel()
 
 	store := new(sync.Map)
-	accessToken := &model.Token{
-		AccessToken: random.New().String(32),
-		ClientID:    "https://app.example.com/",
-		Me:          "https://toby3d.me/",
-		Profile: &model.Profile{
-			Name:  "Maxim Lebedev",
-			URL:   "https://toby3d.me/",
-			Photo: "https://toby3d.me/photo.jpg",
-			Email: "hey@toby3d.me",
-		},
-		Scopes: []string{"read", "update", "delete"},
-		Type:   "Bearer",
-	}
+	accessToken := domain.TestToken(t)
 
 	repo := memory.NewMemoryTokenRepository(store)
 	require.NoError(t, repo.Create(context.TODO(), accessToken))
@@ -70,19 +46,7 @@ func TestUpdate(t *testing.T) {
 	t.Parallel()
 
 	store := new(sync.Map)
-	accessToken := &model.Token{
-		AccessToken: random.New().String(32),
-		ClientID:    "https://app.example.com/",
-		Me:          "https://toby3d.me/",
-		Profile: &model.Profile{
-			Name:  "Maxim Lebedev",
-			URL:   "https://toby3d.me/",
-			Photo: "https://toby3d.me/photo.jpg",
-			Email: "hey@toby3d.me",
-		},
-		Scopes: []string{"read", "update", "delete"},
-		Type:   "Bearer",
-	}
+	accessToken := domain.TestToken(t)
 
 	store.Store(accessToken.AccessToken, accessToken)
 
@@ -102,19 +66,7 @@ func TestDelete(t *testing.T) {
 	t.Parallel()
 
 	store := new(sync.Map)
-	accessToken := &model.Token{
-		AccessToken: random.New().String(32),
-		ClientID:    "https://app.example.com/",
-		Me:          "https://toby3d.me/",
-		Profile: &model.Profile{
-			Name:  "Maxim Lebedev",
-			URL:   "https://toby3d.me/",
-			Photo: "https://toby3d.me/photo.jpg",
-			Email: "hey@toby3d.me",
-		},
-		Scopes: []string{"read", "update", "delete"},
-		Type:   "Bearer",
-	}
+	accessToken := domain.TestToken(t)
 
 	store.Store(accessToken.AccessToken, accessToken)
 

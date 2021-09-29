@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"source.toby3d.me/website/oauth/internal/client"
-	"source.toby3d.me/website/oauth/internal/model"
+	"source.toby3d.me/website/oauth/internal/domain"
 )
 
 type memoryClientRepository struct {
@@ -18,13 +18,13 @@ func NewMemoryClientRepository(clients *sync.Map) client.Repository {
 	}
 }
 
-func (repo *memoryClientRepository) Get(ctx context.Context, id string) (*model.Client, error) {
+func (repo *memoryClientRepository) Get(ctx context.Context, id string) (*domain.Client, error) {
 	src, ok := repo.clients.Load(id)
 	if !ok {
 		return nil, nil
 	}
 
-	c, ok := src.(*model.Client)
+	c, ok := src.(*domain.Client)
 	if !ok {
 		return nil, nil
 	}

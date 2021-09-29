@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"source.toby3d.me/website/oauth/internal/model"
+	"source.toby3d.me/website/oauth/internal/domain"
 	"source.toby3d.me/website/oauth/internal/token"
 )
 
@@ -18,13 +18,13 @@ func NewMemoryTokenRepository(tokens *sync.Map) token.Repository {
 	}
 }
 
-func (repo *memoryTokenRepository) Get(ctx context.Context, accessToken string) (*model.Token, error) {
+func (repo *memoryTokenRepository) Get(ctx context.Context, accessToken string) (*domain.Token, error) {
 	src, ok := repo.tokens.Load(accessToken)
 	if !ok {
 		return nil, nil
 	}
 
-	result, ok := src.(*model.Token)
+	result, ok := src.(*domain.Token)
 	if !ok {
 		return nil, nil
 	}
@@ -32,7 +32,7 @@ func (repo *memoryTokenRepository) Get(ctx context.Context, accessToken string) 
 	return result, nil
 }
 
-func (repo *memoryTokenRepository) Create(ctx context.Context, accessToken *model.Token) error {
+func (repo *memoryTokenRepository) Create(ctx context.Context, accessToken *domain.Token) error {
 	t, err := repo.Get(ctx, accessToken.AccessToken)
 	if err != nil {
 		return err
@@ -45,7 +45,7 @@ func (repo *memoryTokenRepository) Create(ctx context.Context, accessToken *mode
 	return repo.Update(ctx, accessToken)
 }
 
-func (repo *memoryTokenRepository) Update(ctx context.Context, accessToken *model.Token) error {
+func (repo *memoryTokenRepository) Update(ctx context.Context, accessToken *domain.Token) error {
 	repo.tokens.Store(accessToken.AccessToken, accessToken)
 
 	return nil

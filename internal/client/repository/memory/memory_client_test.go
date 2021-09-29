@@ -7,28 +7,20 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"source.toby3d.me/website/oauth/internal/client/repository/memory"
-	"source.toby3d.me/website/oauth/internal/model"
+	"source.toby3d.me/website/oauth/internal/domain"
 )
 
 func TestGet(t *testing.T) {
 	t.Parallel()
 
 	store := new(sync.Map)
-	client := &model.Client{
-		ID:   "http://127.0.0.1:2368/",
-		Name: "Example App",
-		Logo: "http://127.0.0.1:2368/logo.png",
-		URL:  "http://127.0.0.1:2368/",
-		RedirectURI: []model.URL{
-			"https://app.example.com/redirect",
-			"http://127.0.0.1:2368/redirect",
-		},
-	}
+	client := domain.TestClient(t)
 
-	store.Store(string(client.ID), client)
+	store.Store(client.ID, client)
 
-	result, err := memory.NewMemoryClientRepository(store).Get(context.TODO(), string(client.ID))
+	result, err := memory.NewMemoryClientRepository(store).Get(context.TODO(), client.ID)
 	require.NoError(t, err)
 	assert.Equal(t, client, result)
 }

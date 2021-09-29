@@ -2,6 +2,7 @@ package viper
 
 import (
 	"github.com/spf13/viper"
+
 	"source.toby3d.me/website/oauth/internal/config"
 )
 

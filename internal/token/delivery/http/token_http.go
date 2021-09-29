@@ -8,8 +8,9 @@ import (
 	json "github.com/goccy/go-json"
 	http "github.com/valyala/fasthttp"
 	"golang.org/x/xerrors"
+
 	"source.toby3d.me/website/oauth/internal/common"
-	"source.toby3d.me/website/oauth/internal/model"
+	"source.toby3d.me/website/oauth/internal/domain"
 	"source.toby3d.me/website/oauth/internal/token"
 )
 
@@ -25,9 +26,9 @@ type (
 
 	//nolint: tagliatelle
 	VerificationResponse struct {
-		Me       model.URL `json:"me"`
-		ClientID model.URL `json:"client_id"`
-		Scope    string    `json:"scope"`
+		Me       string `json:"me"`
+		ClientID string `json:"client_id"`
+		Scope    string `json:"scope"`
 	}
 
 	RevocationResponse struct{}
@@ -130,7 +131,7 @@ func (h *RequestHandler) Revocation(ctx *http.RequestCtx) {
 
 func (r *RevocationRequest) bind(ctx *http.RequestCtx) error {
 	if r.Action = string(ctx.FormValue(Action)); !strings.EqualFold(r.Action, ActionRevoke) {
-		return model.Error{
+		return domain.Error{
 			Code:        "invalid_request",
 			Description: "request MUST contain 'action' key with value 'revoke'",
 			URI:         "https://indieauth.spec.indieweb.org/#token-revocation-request",
@@ -139,7 +140,7 @@ func (r *RevocationRequest) bind(ctx *http.RequestCtx) error {
 	}
 
 	if r.Token = string(ctx.FormValue("token")); r.Token == "" {
-		return model.Error{
+		return domain.Error{
 			Code:        "invalid_request",
 			Description: "request MUST contain the 'token' key with the valid access token as its value",
 			URI:         "https://indieauth.spec.indieweb.org/#token-revocation-request",

@@ -3,9 +3,9 @@ package client
 import (
 	"context"
 
-	"source.toby3d.me/website/oauth/internal/model"
+	"source.toby3d.me/website/oauth/internal/domain"
 )
 
 type Repository interface {
-	Get(ctx context.Context, id string) (*model.Client, error)
+	Get(ctx context.Context, id string) (*domain.Client, error)
 }

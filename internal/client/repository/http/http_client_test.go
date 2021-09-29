@@ -10,9 +10,10 @@ import (
 	"github.com/stretchr/testify/require"
 	http "github.com/valyala/fasthttp"
 	httputil "github.com/valyala/fasthttp/fasthttputil"
+
 	repository "source.toby3d.me/website/oauth/internal/client/repository/http"
 	"source.toby3d.me/website/oauth/internal/common"
-	"source.toby3d.me/website/oauth/internal/model"
+	"source.toby3d.me/website/oauth/internal/domain"
 )
 
 const testBody string = `
@@ -67,14 +68,14 @@ func TestGet(t *testing.T) {
 
 	result, err := repository.NewHTTPClientRepository(client).Get(context.TODO(), u.String())
 	require.NoError(t, err)
-	assert.Equal(t, &model.Client{
-		ID:   model.URL(u.String()),
+	assert.Equal(t, &domain.Client{
+		ID:   u.String(),
 		Name: "Example App",
-		Logo: model.URL(u.String() + "logo.png"),
-		URL:  model.URL(u.String()),
-		RedirectURI: []model.URL{
+		Logo: u.String() + "logo.png",
+		URL:  u.String(),
+		RedirectURI: []string{
 			"https://app.example.com/redirect",
-			model.URL(u.String() + "redirect"),
+			u.String() + "redirect",
 		},
 	}, result)
 }
