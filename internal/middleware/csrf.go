@@ -7,37 +7,49 @@ import (
 	"time"
 
 	http "github.com/valyala/fasthttp"
-	"gitlab.com/toby3d/indieauth/internal/random"
+
+	"source.toby3d.me/website/oauth/internal/random"
 )
 
 type (
 	CSRFConfig struct {
+		Skipper        Skipper
+		CookieMaxAge   time.Duration
+		CookieSameSite http.CookieSameSite
 		ContextKey     string
 		CookieDomain   string
-		CookieHTTPOnly bool
-		CookieMaxAge   int
 		CookieName     string
 		CookiePath     string
-		CookieSameSite http.CookieSameSite
-		CookieSecure   bool
-		Skipper        Skipper
-		TokenLength    int
 		TokenLookup    string
+		TokenLength    int
+		CookieSecure   bool
+		CookieHTTPOnly bool
 	}
 
 	csrfTokenExtractor func(*http.RequestCtx) ([]byte, error)
 )
 
+// HeaderXCSRFToken describes the name of the header with the CSRF token.
+//nolint: gosec
 const HeaderXCSRFToken string = "X-CSRF-Token"
 
+var (
+	ErrMissingFormToken  = errors.New("missing csrf token in the form parameter")
+	ErrMissingQueryToken = errors.New("missing csrf token in the query string")
+)
+
+// DefaultCSRFConfig contains the default CSRF middleware configuration.
+//nolint: exhaustivestruct, gochecknoglobals, gomnd
 var DefaultCSRFConfig = CSRFConfig{
+	ContextKey:     "csrf",
+	CookieHTTPOnly: false,
+	CookieMaxAge:   24 * time.Hour,
+	CookieName:     "_csrf",
+	CookieSameSite: http.CookieSameSiteDefaultMode,
+	CookieSecure:   false,
 	Skipper:        DefaultSkipper,
 	TokenLength:    32,
 	TokenLookup:    "header:" + HeaderXCSRFToken,
-	ContextKey:     "csrf",
-	CookieName:     "_csrf",
-	CookieMaxAge:   86400,
-	CookieSameSite: http.CookieSameSiteDefaultMode,
 }
 
 func CSRF() Interceptor {
@@ -46,6 +58,7 @@ func CSRF() Interceptor {
 	return CSRFWithConfig(cfg)
 }
 
+//nolint: funlen, cyclop
 func CSRFWithConfig(config CSRFConfig) Interceptor {
 	if config.Skipper == nil {
 		config.Skipper = DefaultCSRFConfig.Skipper
@@ -92,21 +105,17 @@ func CSRFWithConfig(config CSRFConfig) Interceptor {
 			return
 		}
 
-		k := ctx.Request.Header.Cookie(config.CookieName)
 		var token []byte
-
-		// Generate token
-		if k == nil {
-			token = []byte(random.New().String(config.TokenLength))
-		} else {
-			// Reuse token
+		if k := ctx.Request.Header.Cookie(config.CookieName); k != nil {
 			token = k
+		} else {
+			token = []byte(random.New().String(config.TokenLength))
 		}
 
 		switch string(ctx.Method()) {
 		case http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodTrace:
 		default:
-			// Validate token only for requests which are not defined as 'safe' by RFC7231
+			// NOTE(toby3d): validate token only for requests which are not defined as 'safe' by RFC7231
 			clientToken, err := extractor(ctx)
 			if err != nil {
 				ctx.Error(err.Error(), http.StatusBadRequest)
@@ -140,15 +149,15 @@ func CSRFWithConfig(config CSRFConfig) Interceptor {
 			cookie.SetSameSite(config.CookieSameSite)
 		}
 
-		cookie.SetExpire(time.Now().Add(time.Duration(config.CookieMaxAge) * time.Second))
+		cookie.SetExpire(time.Now().Add(config.CookieMaxAge))
 		cookie.SetSecure(config.CookieSecure)
 		cookie.SetHTTPOnly(config.CookieHTTPOnly)
 		ctx.Response.Header.SetCookie(cookie)
 
-		// Store token in the context
+		// NOTE(toby3d): store token in the context
 		ctx.SetUserValue(config.ContextKey, token)
 
-		// Protect clients from caching the response
+		// NOTE(toby3d): protect clients from caching the response
 		ctx.Response.Header.Add(http.HeaderVary, http.HeaderCookie)
 
 		next(ctx)
@@ -165,7 +174,7 @@ func csrfTokenFromForm(param string) csrfTokenExtractor {
 	return func(ctx *http.RequestCtx) ([]byte, error) {
 		token := ctx.FormValue(param)
 		if token == nil {
-			return nil, errors.New("missing csrf token in the form parameter")
+			return nil, ErrMissingFormToken
 		}
 
 		return token, nil
@@ -175,7 +184,7 @@ func csrfTokenFromForm(param string) csrfTokenExtractor {
 func csrfTokenFromQuery(param string) csrfTokenExtractor {
 	return func(ctx *http.RequestCtx) ([]byte, error) {
 		if !ctx.QueryArgs().Has(param) {
-			return nil, errors.New("missing csrf token in the query string")
+			return nil, ErrMissingQueryToken
 		}
 
 		return ctx.QueryArgs().Peek(param), nil
