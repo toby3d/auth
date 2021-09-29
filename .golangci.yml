@@ -1,0 +1,13 @@
+---
+output:
+  sort-results: true
+linters-settings:
+  lll:
+    tab-width: 8
+  gci:
+    local-prefixes: source.toby3d.me/
+  goimports:
+    local-prefixes: source.toby3d.me/
+linters:
+  enable-all: true
+  fix: true
