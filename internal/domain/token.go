@@ -10,7 +10,6 @@ type Token struct {
 	AccessToken string
 	ClientID    string
 	Me          string
-	Profile     *Profile
 	Scopes      []string
 	Type        string
 }
@@ -30,7 +29,6 @@ func TestToken(tb testing.TB) *Token {
 		AccessToken: random.New().String(32),
 		ClientID:    "http://app.example.com/",
 		Me:          "http://user.example.net/",
-		Profile:     TestProfile(tb),
 		Scopes:      []string{"create", "update", "delete"},
 		Type:        "Bearer",
 	}

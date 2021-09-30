@@ -51,7 +51,6 @@ func TestGet(t *testing.T) {
 	t.Parallel()
 
 	accessToken := domain.TestToken(t)
-	accessToken.Profile = nil
 
 	t.Cleanup(func() {
 		_ = db.Update(func(tx *bbolt.Tx) error {
@@ -83,7 +82,6 @@ func TestCreate(t *testing.T) {
 	t.Parallel()
 
 	accessToken := domain.TestToken(t)
-	accessToken.Profile = nil
 
 	t.Cleanup(func() {
 		_ = db.Update(func(tx *bbolt.Tx) error {
@@ -138,7 +136,6 @@ func TestUpdate(t *testing.T) {
 		Me:          "https://toby3d.ru/",
 		Scopes:      []string{"read"},
 		Type:        "Bearer",
-		Profile:     nil,
 	}))
 
 	result := domain.NewToken()
@@ -153,7 +150,6 @@ func TestUpdate(t *testing.T) {
 		Me:          "https://toby3d.ru/",
 		Scopes:      []string{"read"},
 		Type:        "Bearer",
-		Profile:     nil,
 	}, result)
 }
 
