@@ -28,8 +28,8 @@ func TestToken(tb testing.TB) *Token {
 
 	return &Token{
 		AccessToken: random.New().String(32),
-		ClientID:    "https://app.example.com/",
-		Me:          "https://user.example.net/",
+		ClientID:    "http://app.example.com/",
+		Me:          "http://user.example.net/",
 		Profile:     TestProfile(tb),
 		Scopes:      []string{"create", "update", "delete"},
 		Type:        "Bearer",

@@ -22,24 +22,26 @@ import (
 func TestVerification(t *testing.T) {
 	t.Parallel()
 
-	store := new(sync.Map)
-	repo := repository.NewMemoryTokenRepository(store)
+	repo := repository.NewMemoryTokenRepository(new(sync.Map))
 	accessToken := domain.TestToken(t)
 
 	require.NoError(t, repo.Create(context.TODO(), accessToken))
 
+	client, _, cleanup := util.TestServe(t, delivery.NewRequestHandler(usecase.NewTokenUseCase(repo)).Read)
+	t.Cleanup(cleanup)
+
 	req := http.AcquireRequest()
 	defer http.ReleaseRequest(req)
-
 	req.Header.SetMethod(http.MethodGet)
-	req.SetRequestURI("http://localhost/token")
+	req.SetRequestURI("http://app.example.com/token")
 	req.Header.Set(http.HeaderAccept, common.MIMEApplicationJSON)
 	req.Header.Set(http.HeaderAuthorization, "Bearer "+accessToken.AccessToken)
 
 	resp := http.AcquireResponse()
 	defer http.ReleaseResponse(resp)
 
-	require.NoError(t, util.Serve(delivery.NewRequestHandler(usecase.NewTokenUseCase(repo)).Read, req, resp))
+	require.NoError(t, client.Do(req, resp))
+
 	assert.Equal(t, http.StatusOK, resp.StatusCode())
 
 	token := new(delivery.VerificationResponse)
@@ -54,17 +56,18 @@ func TestVerification(t *testing.T) {
 func TestRevocation(t *testing.T) {
 	t.Parallel()
 
-	store := new(sync.Map)
-	repo := repository.NewMemoryTokenRepository(store)
+	repo := repository.NewMemoryTokenRepository(new(sync.Map))
 	accessToken := domain.TestToken(t)
 
 	require.NoError(t, repo.Create(context.TODO(), domain.TestToken(t)))
 
+	client, _, cleanup := util.TestServe(t, delivery.NewRequestHandler(usecase.NewTokenUseCase(repo)).Update)
+	t.Cleanup(cleanup)
+
 	req := http.AcquireRequest()
 	defer http.ReleaseRequest(req)
-
 	req.Header.SetMethod(http.MethodPost)
-	req.SetRequestURI("http://localhost/token")
+	req.SetRequestURI("http://app.example.com/token")
 	req.Header.SetContentType(common.MIMEApplicationXWWWFormUrlencoded)
 	req.Header.Set(http.HeaderAccept, common.MIMEApplicationJSON)
 	req.PostArgs().Set("action", "revoke")
@@ -73,7 +76,8 @@ func TestRevocation(t *testing.T) {
 	resp := http.AcquireResponse()
 	defer http.ReleaseResponse(resp)
 
-	require.NoError(t, util.Serve(delivery.NewRequestHandler(usecase.NewTokenUseCase(repo)).Update, req, resp))
+	require.NoError(t, client.Do(req, resp))
+
 	assert.Equal(t, http.StatusOK, resp.StatusCode())
 	assert.Equal(t, `{}`, strings.TrimSpace(string(resp.Body())))
 

@@ -2,26 +2,41 @@ package util
 
 import (
 	"net"
+	"testing"
 
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 	http "github.com/valyala/fasthttp"
 	httputil "github.com/valyala/fasthttp/fasthttputil"
 )
 
-func Serve(handler http.RequestHandler, req *http.Request, res *http.Response) error {
+//nolint: exhaustivestruct
+func TestServe(tb testing.TB, handler http.RequestHandler) (*http.Client, *http.Server, func()) {
+	tb.Helper()
+
 	ln := httputil.NewInmemoryListener()
-	defer ln.Close()
+	server := &http.Server{
+		Handler:          handler,
+		DisableKeepalive: true,
+		CloseOnShutdown:  true,
+	}
 
 	go func() {
-		if err := http.Serve(ln, handler); err != nil {
-			panic(err)
-		}
+		assert.NoError(tb, server.Serve(ln))
 	}()
 
-	client := http.Client{
-		Dial: func(addr string) (net.Conn, error) {
-			return ln.Dial()
+	client := &http.Client{
+		Dial: func(_ string) (net.Conn, error) {
+			conn, err := ln.Dial()
+			if err != nil {
+				return nil, errors.Wrap(err, "cannot dial to address")
+			}
+
+			return conn, nil
 		},
 	}
 
-	return client.Do(req, res)
+	return client, server, func() {
+		assert.NoError(tb, server.Shutdown())
+	}
 }

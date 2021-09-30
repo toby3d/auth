@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	json "github.com/goccy/go-json"
@@ -49,73 +50,60 @@ func TestMain(m *testing.M) {
 func TestGet(t *testing.T) {
 	t.Parallel()
 
-	accessToken := random.New().String(32)
+	accessToken := domain.TestToken(t)
+	accessToken.Profile = nil
 
 	t.Cleanup(func() {
 		_ = db.Update(func(tx *bbolt.Tx) error {
 			//nolint: exhaustivestruct
-			return tx.Bucket(bolt.Token{}.Bucket()).Delete([]byte(accessToken))
+			return tx.Bucket(bolt.Token{}.Bucket()).Delete([]byte(accessToken.AccessToken))
 		})
 	})
 
 	src, err := json.Marshal(&bolt.Token{
-		AccessToken: accessToken,
-		ClientID:    "https://app.example.com/",
-		Me:          "https://toby3d.me/",
-		Scope:       "read update delete",
-		Type:        "Bearer",
+		AccessToken: accessToken.AccessToken,
+		ClientID:    accessToken.ClientID,
+		Me:          accessToken.Me,
+		Scope:       strings.Join(accessToken.Scopes, " "),
+		Type:        accessToken.Type,
 	})
 	require.NoError(t, err)
 
 	require.NoError(t, db.Update(func(tx *bbolt.Tx) error {
 		//nolint: exhaustivestruct
-		return tx.Bucket(bolt.Token{}.Bucket()).Put([]byte(accessToken), src)
+		return tx.Bucket(bolt.Token{}.Bucket()).Put([]byte(accessToken.AccessToken), src)
 	}))
 
-	tkn, err := repo.Get(context.TODO(), accessToken)
+	tkn, err := repo.Get(context.TODO(), accessToken.AccessToken)
 	require.NoError(t, err)
-	assert.Equal(t, &domain.Token{
-		AccessToken: accessToken,
-		ClientID:    "https://app.example.com/",
-		Me:          "https://toby3d.me/",
-		Scopes:      []string{"read", "update", "delete"},
-		Type:        "Bearer",
-		Profile:     nil,
-	}, tkn)
+	assert.Equal(t, accessToken, tkn)
 }
 
 func TestCreate(t *testing.T) {
 	t.Parallel()
 
-	accessToken := random.New().String(32)
+	accessToken := domain.TestToken(t)
+	accessToken.Profile = nil
 
 	t.Cleanup(func() {
 		_ = db.Update(func(tx *bbolt.Tx) error {
 			//nolint: exhaustivestruct
-			return tx.Bucket(bolt.Token{}.Bucket()).Delete([]byte(accessToken))
+			return tx.Bucket(bolt.Token{}.Bucket()).Delete([]byte(accessToken.AccessToken))
 		})
 	})
 
-	tkn := &domain.Token{
-		AccessToken: accessToken,
-		ClientID:    "https://app.example.com/",
-		Me:          "https://toby3d.me/",
-		Scopes:      []string{"read", "update", "delete"},
-		Type:        "Bearer",
-		Profile:     nil,
-	}
+	require.NoError(t, repo.Create(context.TODO(), accessToken))
 
-	require.NoError(t, repo.Create(context.TODO(), tkn))
-
-	result := domain.NewToken()
+	result := new(domain.Token)
 
 	require.NoError(t, db.View(func(tx *bbolt.Tx) error {
 		//nolint: exhaustivestruct
-		return new(bolt.Token).Bind(tx.Bucket(bolt.Token{}.Bucket()).Get([]byte(tkn.AccessToken)), result)
+		return new(bolt.Token).Bind(tx.Bucket(bolt.Token{}.Bucket()).Get([]byte(accessToken.AccessToken)),
+			result)
 	}))
-	assert.Equal(t, tkn, result)
 
-	assert.EqualError(t, repo.Create(context.TODO(), tkn), token.ErrExist.Error())
+	assert.Equal(t, accessToken, result)
+	assert.EqualError(t, repo.Create(context.TODO(), accessToken), token.ErrExist.Error())
 }
 
 func TestUpdate(t *testing.T) {
