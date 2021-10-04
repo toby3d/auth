@@ -30,8 +30,7 @@ type (
 )
 
 // HeaderXCSRFToken describes the name of the header with the CSRF token.
-//nolint: gosec
-const HeaderXCSRFToken string = "X-CSRF-Token"
+const HeaderXCSRFToken string = "X-CSRF-Token" //nolint: gosec
 
 var (
 	ErrMissingFormToken  = errors.New("missing csrf token in the form parameter")
@@ -39,23 +38,23 @@ var (
 )
 
 // DefaultCSRFConfig contains the default CSRF middleware configuration.
-//nolint: exhaustivestruct, gochecknoglobals, gomnd
+//nolint: gochecknoglobals, gomnd
 var DefaultCSRFConfig = CSRFConfig{
-	ContextKey:     "csrf",
-	CookieHTTPOnly: false,
-	CookieMaxAge:   24 * time.Hour,
-	CookieName:     "_csrf",
-	CookieSameSite: http.CookieSameSiteDefaultMode,
-	CookieSecure:   false,
 	Skipper:        DefaultSkipper,
-	TokenLength:    32,
+	CookieMaxAge:   24 * time.Hour,
+	CookieSameSite: http.CookieSameSiteDefaultMode,
+	ContextKey:     "csrf",
+	CookieDomain:   "",
+	CookieName:     "_csrf",
+	CookiePath:     "",
 	TokenLookup:    "header:" + HeaderXCSRFToken,
+	TokenLength:    32,
+	CookieSecure:   false,
+	CookieHTTPOnly: false,
 }
 
 func CSRF() Interceptor {
-	cfg := DefaultCSRFConfig
-
-	return CSRFWithConfig(cfg)
+	return CSRFWithConfig(DefaultCSRFConfig)
 }
 
 //nolint: funlen, cyclop
@@ -130,7 +129,7 @@ func CSRFWithConfig(config CSRFConfig) Interceptor {
 			}
 		}
 
-		// Set CSRF cookie
+		// NOTE(toby3d): set CSRF cookie
 		cookie := http.AcquireCookie()
 		defer http.ReleaseCookie(cookie)
 
@@ -172,12 +171,11 @@ func csrfTokenFromHeader(header string) csrfTokenExtractor {
 
 func csrfTokenFromForm(param string) csrfTokenExtractor {
 	return func(ctx *http.RequestCtx) ([]byte, error) {
-		token := ctx.FormValue(param)
-		if token == nil {
-			return nil, ErrMissingFormToken
+		if token := ctx.FormValue(param); token != nil {
+			return token, nil
 		}
 
-		return token, nil
+		return nil, ErrMissingFormToken
 	}
 }
 

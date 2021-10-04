@@ -34,6 +34,7 @@ func (r *Random) String(length int, charsets ...string) string {
 	b := make([]byte, length)
 
 	for i := range b {
+		//nolint: gosec
 		b[i] = charset[rand.Int()%len(charset)]
 	}
 

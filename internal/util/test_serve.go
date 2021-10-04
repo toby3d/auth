@@ -31,10 +31,10 @@ func TestServe(tb testing.TB, handler http.RequestHandler) (*http.Client, *http.
 
 	client := &http.Client{
 		TLSConfig: &tls.Config{
-			InsecureSkipVerify: true,
+			InsecureSkipVerify: true, //nolint: gosec
 		},
 		Dial: func(addr string) (net.Conn, error) {
-			return ln.Dial()
+			return ln.Dial() //nolint: wrapcheck
 		},
 	}
 

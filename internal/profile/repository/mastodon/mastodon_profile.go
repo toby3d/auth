@@ -15,6 +15,7 @@ import (
 )
 
 type (
+	//nolint: tagliatelle
 	Response struct {
 		DisplayName string `json:"display_name"`
 		Avatar      string `json:"avatar"`
@@ -62,5 +63,6 @@ func (repo *mastodonProfileRepository) Get(ctx context.Context, token oauth2.Tok
 		Name:  result.DisplayName,
 		URL:   result.URL,
 		Photo: result.Avatar,
+		Email: "",
 	}, nil
 }

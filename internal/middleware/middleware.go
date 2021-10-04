@@ -3,13 +3,10 @@ package middleware
 import http "github.com/valyala/fasthttp"
 
 type (
-	Chain []Interceptor
-
-	Interceptor func(*http.RequestCtx, http.RequestHandler)
-
+	Chain          []Interceptor
+	Interceptor    func(*http.RequestCtx, http.RequestHandler)
 	RequestHandler http.RequestHandler
-
-	Skipper func(*http.RequestCtx) bool
+	Skipper        func(*http.RequestCtx) bool
 )
 
 // DefaultSkipper is the default skipper, which always returns false.
