@@ -21,13 +21,13 @@ func TestClient(tb testing.TB) *Client {
 	tb.Helper()
 
 	return &Client{
-		ID:   "http://app.example.com/",
+		ID:   "https://app.example.com/",
 		Name: "Example App",
-		Logo: "http://app.example.com/logo.png",
-		URL:  "http://app.example.com/",
+		Logo: "https://app.example.com/logo.png",
+		URL:  "https://app.example.com/",
 		RedirectURI: []string{
-			"http://app.example.com/redirect",
-			"http://app.example.com/redirect",
+			"https://app.example.com/redirect",
+			"https://app.example.com/redirect",
 		},
 	}
 }

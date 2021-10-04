@@ -27,8 +27,8 @@ func TestToken(tb testing.TB) *Token {
 
 	return &Token{
 		AccessToken: random.New().String(32),
-		ClientID:    "http://app.example.com/",
-		Me:          "http://user.example.net/",
+		ClientID:    "https://app.example.com/",
+		Me:          "https://user.example.net/",
 		Scopes:      []string{"create", "update", "delete"},
 		Type:        "Bearer",
 	}

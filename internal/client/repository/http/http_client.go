@@ -41,9 +41,8 @@ func NewHTTPClientRepository(c *http.Client) client.Repository {
 func (repo *httpClientRepository) Get(ctx context.Context, id string) (*domain.Client, error) {
 	req := http.AcquireRequest()
 	defer http.ReleaseRequest(req)
-
-	req.Header.SetMethod(http.MethodGet)
 	req.SetRequestURI(id)
+	req.Header.SetMethod(http.MethodGet)
 
 	resp := http.AcquireResponse()
 	defer http.ReleaseResponse(resp)

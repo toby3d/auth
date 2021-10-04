@@ -33,7 +33,7 @@ func TestVerification(t *testing.T) {
 	req := http.AcquireRequest()
 	defer http.ReleaseRequest(req)
 	req.Header.SetMethod(http.MethodGet)
-	req.SetRequestURI("http://app.example.com/token")
+	req.SetRequestURI("https://app.example.com/token")
 	req.Header.Set(http.HeaderAccept, common.MIMEApplicationJSON)
 	req.Header.Set(http.HeaderAuthorization, "Bearer "+accessToken.AccessToken)
 
@@ -67,7 +67,7 @@ func TestRevocation(t *testing.T) {
 	req := http.AcquireRequest()
 	defer http.ReleaseRequest(req)
 	req.Header.SetMethod(http.MethodPost)
-	req.SetRequestURI("http://app.example.com/token")
+	req.SetRequestURI("https://app.example.com/token")
 	req.Header.SetContentType(common.MIMEApplicationXWWWFormUrlencoded)
 	req.Header.Set(http.HeaderAccept, common.MIMEApplicationJSON)
 	req.PostArgs().Set("action", "revoke")

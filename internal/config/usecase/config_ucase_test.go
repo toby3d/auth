@@ -23,7 +23,7 @@ func TestMain(m *testing.M) {
 		"database.connection.filename": "./data/development.db",
 		"server.host":                  "127.0.0.1",
 		"server.port":                  3000,
-		"url":                          "http://127.0.0.1:3000/",
+		"url":                          "https://127.0.0.1:3000/",
 	} {
 		v.Set(key, val)
 	}
@@ -60,5 +60,5 @@ func TestPort(t *testing.T) {
 func TestURL(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, "http://127.0.0.1:3000/", ucase.URL())
+	assert.Equal(t, "https://127.0.0.1:3000/", ucase.URL())
 }

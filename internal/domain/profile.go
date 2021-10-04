@@ -14,8 +14,8 @@ func TestProfile(tb testing.TB) *Profile {
 
 	return &Profile{
 		Name:  "Example User",
-		URL:   "http://user.example.net/",
-		Photo: "http://user.example.net/photo.jpg",
+		URL:   "https://user.example.net/",
+		Photo: "https://user.example.net/photo.jpg",
 		Email: "user@example.net",
 	}
 }
