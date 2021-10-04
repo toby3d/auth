@@ -1,11 +1,13 @@
+//go:generate go run "$GOROOT/src/crypto/tls/generate_cert.go" --host 127.0.0.1,::1,localhost --start-date "Jan 1 00:00:00 1970" --duration=1000000h --ca --rsa-bits 1024 --ecdsa-curve P256
 package util
 
 import (
+	"crypto/tls"
 	"net"
+	"path/filepath"
 	"testing"
+	"time"
 
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
 	http "github.com/valyala/fasthttp"
 	httputil "github.com/valyala/fasthttp/fasthttputil"
 )
@@ -14,29 +16,29 @@ import (
 func TestServe(tb testing.TB, handler http.RequestHandler) (*http.Client, *http.Server, func()) {
 	tb.Helper()
 
-	ln := httputil.NewInmemoryListener()
 	server := &http.Server{
-		Handler:          handler,
-		DisableKeepalive: true,
-		CloseOnShutdown:  true,
+		CloseOnShutdown:   true,
+		DisableKeepalive:  true,
+		Handler:           http.TimeoutHandler(handler, 1*time.Minute, "handler performance is too slow"),
+		ReduceMemoryUsage: true,
 	}
 
-	go func() {
-		assert.NoError(tb, server.Serve(ln))
-	}()
+	ln := httputil.NewInmemoryListener()
+
+	//nolint: errcheck
+	go server.ServeTLS(ln, filepath.Join("..", "..", "..", "util", "cert.pem"),
+		filepath.Join("..", "..", "..", "util", "key.pem"))
 
 	client := &http.Client{
-		Dial: func(_ string) (net.Conn, error) {
-			conn, err := ln.Dial()
-			if err != nil {
-				return nil, errors.Wrap(err, "cannot dial to address")
-			}
-
-			return conn, nil
+		TLSConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+		Dial: func(addr string) (net.Conn, error) {
+			return ln.Dial()
 		},
 	}
 
 	return client, server, func() {
-		assert.NoError(tb, server.Shutdown())
+		server.Shutdown() //nolint: errcheck
 	}
 }
