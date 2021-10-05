@@ -29,19 +29,10 @@ type (
 
 var ErrNotExist error = xerrors.New("key not exist")
 
-func NewBoltTokenRepository(db *bolt.DB) (token.Repository, error) {
-	if err := db.Update(func(tx *bolt.Tx) error {
-		//nolint: exhaustivestruct
-		_, err := tx.CreateBucketIfNotExists(Token{}.Bucket())
-
-		return errors.Wrap(err, "failed to create a bucket")
-	}); err != nil {
-		return nil, errors.Wrap(err, "failed to update the storage structure")
-	}
-
+func NewBoltTokenRepository(db *bolt.DB) token.Repository {
 	return &boltTokenRepository{
 		db: db,
-	}, nil
+	}
 }
 
 func (repo *boltTokenRepository) Get(ctx context.Context, accessToken string) (*domain.Token, error) {
