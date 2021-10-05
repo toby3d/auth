@@ -39,9 +39,14 @@ func NewHTTPClientRepository(c *http.Client) client.Repository {
 }
 
 func (repo *httpClientRepository) Get(ctx context.Context, id string) (*domain.Client, error) {
+	u, err := url.Parse(id)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to parse id as url")
+	}
+
 	req := http.AcquireRequest()
 	defer http.ReleaseRequest(req)
-	req.SetRequestURI(id)
+	req.SetRequestURI(u.String())
 	req.Header.SetMethod(http.MethodGet)
 
 	resp := http.AcquireResponse()
@@ -60,11 +65,6 @@ func (repo *httpClientRepository) Get(ctx context.Context, id string) (*domain.C
 		}
 
 		client.RedirectURI = append(client.RedirectURI, l.URL)
-	}
-
-	u, err := url.Parse(id)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to parse id as url")
 	}
 
 	data := microformats.Parse(bytes.NewReader(resp.Body()), u)

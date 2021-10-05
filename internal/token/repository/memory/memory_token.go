@@ -2,6 +2,7 @@ package memory
 
 import (
 	"context"
+	"path"
 	"sync"
 
 	"source.toby3d.me/website/oauth/internal/domain"
@@ -12,6 +13,8 @@ type memoryTokenRepository struct {
 	tokens *sync.Map
 }
 
+const Key string = "tokens"
+
 func NewMemoryTokenRepository(tokens *sync.Map) token.Repository {
 	return &memoryTokenRepository{
 		tokens: tokens,
@@ -19,7 +22,7 @@ func NewMemoryTokenRepository(tokens *sync.Map) token.Repository {
 }
 
 func (repo *memoryTokenRepository) Get(ctx context.Context, accessToken string) (*domain.Token, error) {
-	src, ok := repo.tokens.Load(accessToken)
+	src, ok := repo.tokens.Load(path.Join(Key, accessToken))
 	if !ok {
 		return nil, nil
 	}
@@ -46,13 +49,13 @@ func (repo *memoryTokenRepository) Create(ctx context.Context, accessToken *doma
 }
 
 func (repo *memoryTokenRepository) Update(ctx context.Context, accessToken *domain.Token) error {
-	repo.tokens.Store(accessToken.AccessToken, accessToken)
+	repo.tokens.Store(path.Join(Key, accessToken.AccessToken), accessToken)
 
 	return nil
 }
 
 func (repo *memoryTokenRepository) Remove(ctx context.Context, accessToken string) error {
-	repo.tokens.Delete(accessToken)
+	repo.tokens.Delete(path.Join(Key, accessToken))
 
 	return nil
 }

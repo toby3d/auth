@@ -2,6 +2,7 @@ package memory
 
 import (
 	"context"
+	"path"
 	"sync"
 
 	"source.toby3d.me/website/oauth/internal/client"
@@ -12,6 +13,8 @@ type memoryClientRepository struct {
 	clients *sync.Map
 }
 
+const Key string = "clients"
+
 func NewMemoryClientRepository(clients *sync.Map) client.Repository {
 	return &memoryClientRepository{
 		clients: clients,
@@ -19,7 +22,7 @@ func NewMemoryClientRepository(clients *sync.Map) client.Repository {
 }
 
 func (repo *memoryClientRepository) Get(ctx context.Context, id string) (*domain.Client, error) {
-	src, ok := repo.clients.Load(id)
+	src, ok := repo.clients.Load(path.Join(Key, id))
 	if !ok {
 		return nil, nil
 	}

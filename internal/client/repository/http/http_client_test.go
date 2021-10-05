@@ -36,7 +36,7 @@ func TestGet(t *testing.T) {
 	t.Parallel()
 
 	client, _, cleanup := util.TestServe(t, func(ctx *http.RequestCtx) {
-		ctx.Response.Header.Set(http.HeaderLink, `<https://app.example.com/redirect>; rel="redirect_uri">`)
+		ctx.Response.Header.Set(http.HeaderLink, `<https://app.example.net/redirect>; rel="redirect_uri">`)
 		ctx.SetStatusCode(http.StatusOK)
 		ctx.SetContentType(common.MIMETextHTML)
 		ctx.SetBodyString(testBody)

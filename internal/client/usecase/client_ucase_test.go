@@ -2,6 +2,7 @@ package usecase_test
 
 import (
 	"context"
+	"path"
 	"sync"
 	"testing"
 
@@ -19,7 +20,7 @@ func TestDiscovery(t *testing.T) {
 	store := new(sync.Map)
 	client := domain.TestClient(t)
 
-	store.Store(client.ID, client)
+	store.Store(path.Join(repository.Key, client.ID), client)
 
 	result, err := usecase.NewClientUseCase(repository.NewMemoryClientRepository(store)).Discovery(context.TODO(),
 		client.ID)
