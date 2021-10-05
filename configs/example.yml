@@ -3,7 +3,7 @@ url: https://example.org/
 database:
   client: bolt
   connection:
-    filename: ./data/development.db
+    filename: ./development.db
 server:
   host: "127.0.0.1"
   port: 3000
