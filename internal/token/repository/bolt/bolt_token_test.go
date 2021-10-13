@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	bolt "go.etcd.io/bbolt"
@@ -27,13 +28,15 @@ func TestCreate(t *testing.T) {
 	require.NoError(t, repo.Create(context.TODO(), accessToken))
 
 	result := &domain.Token{
+		Expiry:      time.Time{},
+		Scopes:      []string{},
 		AccessToken: accessToken.AccessToken,
 		TokenType:   accessToken.TokenType,
-		Expiry:      time.Time{},
+		ClientID:    "",
+		Me:          "",
 	}
 
 	require.NoError(t, db.View(func(tx *bolt.Tx) (err error) {
-		//nolint: exhaustivestruct
 		src := tx.Bucket(repository.DefaultBucket).Get([]byte(accessToken.AccessToken))
 
 		result.Expiry, err = time.Parse(time.RFC3339, string(src))
@@ -57,10 +60,15 @@ func TestGet(t *testing.T) {
 	require.NoError(t, db.Update(func(tx *bolt.Tx) error {
 		bkt, err := tx.CreateBucketIfNotExists(repository.DefaultBucket)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "cannot create bucket")
 		}
 
-		return bkt.Put([]byte(accessToken.AccessToken), []byte(accessToken.Expiry.Format(time.RFC3339)))
+		err = bkt.Put([]byte(accessToken.AccessToken), []byte(accessToken.Expiry.Format(time.RFC3339)))
+		if err != nil {
+			return errors.Wrap(err, "cannot put token into bucket")
+		}
+
+		return nil
 	}))
 
 	result, err := repo.Get(context.TODO(), accessToken.AccessToken)

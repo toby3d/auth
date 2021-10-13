@@ -92,22 +92,19 @@ func (h *RequestHandler) Revocation(ctx *http.RequestCtx) {
 
 	req := new(RevocationRequest)
 	if err := req.bind(ctx); err != nil {
-		ctx.SetStatusCode(http.StatusBadRequest)
-		encoder.Encode(err)
+		ctx.Error(err.Error(), http.StatusBadRequest)
 
 		return
 	}
 
 	if err := h.tokener.Revoke(ctx, req.Token); err != nil {
-		ctx.SetStatusCode(http.StatusBadRequest)
-		encoder.Encode(err)
+		ctx.Error(err.Error(), http.StatusBadRequest)
 
 		return
 	}
 
 	if err := encoder.Encode(&RevocationResponse{}); err != nil {
-		ctx.SetStatusCode(http.StatusInternalServerError)
-		encoder.Encode(err)
+		ctx.Error(err.Error(), http.StatusInternalServerError)
 	}
 }
 

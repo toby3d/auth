@@ -18,7 +18,7 @@ type boltTokenRepository struct {
 
 var ErrNotExist error = errors.New("token not exist")
 
-var DefaultBucket []byte = []byte("tokens")
+var DefaultBucket = []byte("tokens") //nolint: gochecknoglobals
 
 func NewBoltTokenRepository(db *bolt.DB) token.Repository {
 	return &boltTokenRepository{
@@ -42,7 +42,12 @@ func (repo *boltTokenRepository) Create(ctx context.Context, accessToken *domain
 			return errors.Wrap(err, "cannot create bucket")
 		}
 
-		return bkt.Put([]byte(accessToken.AccessToken), []byte(accessToken.Expiry.Format(time.RFC3339)))
+		err = bkt.Put([]byte(accessToken.AccessToken), []byte(accessToken.Expiry.Format(time.RFC3339)))
+		if err != nil {
+			return errors.Wrap(err, "cannot put token into bucket")
+		}
+
+		return nil
 	}); err != nil {
 		return errors.Wrap(err, "failed to batch token in database")
 	}
@@ -52,9 +57,12 @@ func (repo *boltTokenRepository) Create(ctx context.Context, accessToken *domain
 
 func (repo *boltTokenRepository) Get(ctx context.Context, accessToken string) (*domain.Token, error) {
 	result := &domain.Token{
+		Expiry:      time.Time{},
+		Scopes:      []string{},
 		AccessToken: accessToken,
 		TokenType:   "Bearer",
-		Expiry:      time.Time{},
+		ClientID:    "",
+		Me:          "",
 	}
 
 	if err := repo.db.View(func(tx *bolt.Tx) (err error) {
@@ -69,7 +77,7 @@ func (repo *boltTokenRepository) Get(ctx context.Context, accessToken string) (*
 		}
 
 		if result.Expiry, err = time.Parse(time.RFC3339, string(expiry)); err != nil {
-			return err
+			return errors.Wrap(err, "cannot parse expiry date")
 		}
 
 		return nil

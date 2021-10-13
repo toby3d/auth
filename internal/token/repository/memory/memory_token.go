@@ -41,8 +41,11 @@ func (repo *memoryTokenRepository) Get(ctx context.Context, accessToken string) 
 	}
 
 	return &domain.Token{
+		Expiry:      expiry.(time.Time),
+		Scopes:      []string{},
 		AccessToken: accessToken,
 		TokenType:   "Bearer",
-		Expiry:      expiry.(time.Time),
+		ClientID:    "",
+		Me:          "",
 	}, nil
 }
