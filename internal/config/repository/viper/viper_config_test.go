@@ -37,3 +37,20 @@ func TestGetInt(t *testing.T) {
 
 	assert.Equal(t, 42, repository.NewViperConfigRepository(v).GetInt("testing.answer"))
 }
+
+func TestGetBool(t *testing.T) {
+	t.Parallel()
+
+	v := viper.New()
+	_ = v.MergeConfigMap(map[string]interface{}{
+		"testing": map[string]interface{}{
+			"answer":   42,
+			"enabled":  true,
+			"disabled": false,
+		},
+	})
+
+	assert.False(t, repository.NewViperConfigRepository(v).GetBool("testing.answer"))
+	assert.True(t, repository.NewViperConfigRepository(v).GetBool("testing.enabled"))
+	assert.False(t, repository.NewViperConfigRepository(v).GetBool("testing.disabled"))
+}

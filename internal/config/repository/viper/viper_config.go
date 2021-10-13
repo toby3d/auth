@@ -23,3 +23,7 @@ func (v *viperConfigRepository) GetString(key string) string {
 func (v *viperConfigRepository) GetInt(key string) int {
 	return v.viper.GetInt(key)
 }
+
+func (v *viperConfigRepository) GetBool(key string) bool {
+	return v.viper.GetBool(key)
+}
