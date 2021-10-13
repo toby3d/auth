@@ -15,10 +15,6 @@ import (
 )
 
 type (
-	RequestHandler struct {
-		useCase token.UseCase
-	}
-
 	RevocationRequest struct {
 		Action string
 		Token  string
@@ -32,6 +28,10 @@ type (
 	}
 
 	RevocationResponse struct{}
+
+	RequestHandler struct {
+		tokener token.UseCase
+	}
 )
 
 const (
@@ -39,9 +39,9 @@ const (
 	ActionRevoke string = "revoke"
 )
 
-func NewRequestHandler(useCase token.UseCase) *RequestHandler {
+func NewRequestHandler(tokener token.UseCase) *RequestHandler {
 	return &RequestHandler{
-		useCase: useCase,
+		tokener: tokener,
 	}
 }
 
@@ -54,16 +54,11 @@ func (h *RequestHandler) Read(ctx *http.RequestCtx) {
 	ctx.SetContentType(common.MIMEApplicationJSON)
 	ctx.SetStatusCode(http.StatusOK)
 
-	encoder := json.NewEncoder(ctx)
 	rawToken := ctx.Request.Header.Peek(http.HeaderAuthorization)
 
-	token, err := h.useCase.Verify(ctx, string(bytes.TrimSpace(bytes.TrimPrefix(rawToken, []byte("Bearer")))))
+	token, err := h.tokener.Verify(ctx, string(bytes.TrimPrefix(rawToken, []byte("Bearer "))))
 	if err != nil {
-		ctx.SetStatusCode(http.StatusBadRequest)
-
-		if err = encoder.Encode(err); err != nil {
-			ctx.Error(err.Error(), http.StatusInternalServerError)
-		}
+		ctx.Error(err.Error(), http.StatusBadRequest)
 
 		return
 	}
@@ -74,16 +69,12 @@ func (h *RequestHandler) Read(ctx *http.RequestCtx) {
 		return
 	}
 
-	if err := encoder.Encode(&VerificationResponse{
-		Me:       token.Me,
+	if err := json.NewEncoder(ctx).Encode(&VerificationResponse{
 		ClientID: token.ClientID,
+		Me:       token.Me,
 		Scope:    strings.Join(token.Scopes, " "),
 	}); err != nil {
-		ctx.SetStatusCode(http.StatusInternalServerError)
-
-		if err = encoder.Encode(err); err != nil {
-			ctx.Error(err.Error(), http.StatusInternalServerError)
-		}
+		ctx.Error(err.Error(), http.StatusInternalServerError)
 	}
 }
 
@@ -102,30 +93,21 @@ func (h *RequestHandler) Revocation(ctx *http.RequestCtx) {
 	req := new(RevocationRequest)
 	if err := req.bind(ctx); err != nil {
 		ctx.SetStatusCode(http.StatusBadRequest)
-
-		if err = encoder.Encode(err); err != nil {
-			ctx.Error(err.Error(), http.StatusInternalServerError)
-		}
+		encoder.Encode(err)
 
 		return
 	}
 
-	if err := h.useCase.Revoke(ctx, req.Token); err != nil {
+	if err := h.tokener.Revoke(ctx, req.Token); err != nil {
 		ctx.SetStatusCode(http.StatusBadRequest)
-
-		if err = encoder.Encode(err); err != nil {
-			ctx.Error(err.Error(), http.StatusInternalServerError)
-		}
+		encoder.Encode(err)
 
 		return
 	}
 
 	if err := encoder.Encode(&RevocationResponse{}); err != nil {
 		ctx.SetStatusCode(http.StatusInternalServerError)
-
-		if err = encoder.Encode(err); err != nil {
-			ctx.Error(err.Error(), http.StatusInternalServerError)
-		}
+		encoder.Encode(err)
 	}
 }
 

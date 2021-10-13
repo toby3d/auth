@@ -7,11 +7,14 @@ import (
 	"testing"
 
 	"github.com/goccy/go-json"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	http "github.com/valyala/fasthttp"
 
 	"source.toby3d.me/website/oauth/internal/common"
+	configrepo "source.toby3d.me/website/oauth/internal/config/repository/viper"
+	configucase "source.toby3d.me/website/oauth/internal/config/usecase"
 	"source.toby3d.me/website/oauth/internal/domain"
 	delivery "source.toby3d.me/website/oauth/internal/token/delivery/http"
 	repository "source.toby3d.me/website/oauth/internal/token/repository/memory"
@@ -22,12 +25,16 @@ import (
 func TestVerification(t *testing.T) {
 	t.Parallel()
 
-	repo := repository.NewMemoryTokenRepository(new(sync.Map))
+	v := viper.New()
+	v.SetDefault("indieauth.jwtSigningAlgorithm", "HS256")
+	v.SetDefault("indieauth.jwtSecret", "hackme")
+
 	accessToken := domain.TestToken(t)
 
-	require.NoError(t, repo.Create(context.TODO(), accessToken))
-
-	client, _, cleanup := util.TestServe(t, delivery.NewRequestHandler(usecase.NewTokenUseCase(repo)).Read)
+	client, _, cleanup := util.TestServe(t, delivery.NewRequestHandler(usecase.NewTokenUseCase(
+		repository.NewMemoryTokenRepository(new(sync.Map)),
+		configucase.NewConfigUseCase(configrepo.NewViperConfigRepository(v)),
+	)).Read)
 	t.Cleanup(cleanup)
 
 	req := http.AcquireRequest()
@@ -56,12 +63,16 @@ func TestVerification(t *testing.T) {
 func TestRevocation(t *testing.T) {
 	t.Parallel()
 
-	repo := repository.NewMemoryTokenRepository(new(sync.Map))
+	v := viper.New()
+	v.SetDefault("indieauth.jwtSigningAlgorithm", "HS256")
+	v.SetDefault("indieauth.jwtSecret", "hackme")
+
+	tokens := repository.NewMemoryTokenRepository(new(sync.Map))
 	accessToken := domain.TestToken(t)
 
-	require.NoError(t, repo.Create(context.TODO(), domain.TestToken(t)))
-
-	client, _, cleanup := util.TestServe(t, delivery.NewRequestHandler(usecase.NewTokenUseCase(repo)).Update)
+	client, _, cleanup := util.TestServe(t, delivery.NewRequestHandler(
+		usecase.NewTokenUseCase(tokens, configucase.NewConfigUseCase(configrepo.NewViperConfigRepository(v))),
+	).Update)
 	t.Cleanup(cleanup)
 
 	req := http.AcquireRequest()
@@ -81,7 +92,7 @@ func TestRevocation(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode())
 	assert.Equal(t, `{}`, strings.TrimSpace(string(resp.Body())))
 
-	token, err := repo.Get(context.TODO(), accessToken.AccessToken)
+	result, err := tokens.Get(context.TODO(), accessToken.AccessToken)
 	require.NoError(t, err)
-	assert.Nil(t, token)
+	assert.Equal(t, accessToken.AccessToken, result.AccessToken)
 }

@@ -11,8 +11,6 @@ import (
 type Repository interface {
 	Get(ctx context.Context, accessToken string) (*domain.Token, error)
 	Create(ctx context.Context, accessToken *domain.Token) error
-	Update(ctx context.Context, accessToken *domain.Token) error
-	Remove(ctx context.Context, accessToken string) error
 }
 
 var ErrExist error = domain.Error{
