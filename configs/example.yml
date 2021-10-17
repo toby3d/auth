@@ -1,9 +1,23 @@
 ---
-url: https://example.org/
-database:
-  client: bolt
-  connection:
-    filename: ./development.db
+name: IndieAuth
+runMode: "dev"
 server:
-  host: "127.0.0.1"
+  protocol: http
+  domain: localhost
+  rootUrl: "{{protocol}}://{{domain}}:{{port}}/"
+  staticUrlPrefix: "/static"
+  host: "0.0.0.0"
   port: 3000
+  certFile: "https/cert.pem"
+  keyFile: "https/key.pem"
+  staticRootPath: "/"
+  enablePprof: false
+database:
+  type: bolt
+  path: data/indieauth.db
+indieauth:
+  enabled: true
+  accessTokenExpirationTime: 3600
+  jwtSigningAlgorithm: "RS256"
+  jwtSecret: ""
+  jwtSigningPrivateKeyFile: "jwt/private.pem"
