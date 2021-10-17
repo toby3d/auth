@@ -31,6 +31,11 @@ func NewToken() *Token {
 func TestToken(tb testing.TB) *Token {
 	tb.Helper()
 
+	require := require.New(tb)
+
+	nonce, err := random.String(50)
+	require.NoError(err)
+
 	client := TestClient(tb)
 	profile := TestProfile(tb)
 	now := time.Now().UTC().Round(time.Second)
@@ -48,10 +53,10 @@ func TestToken(tb testing.TB) *Token {
 
 	// optional
 	t.Set("scope", strings.Join(scopes, " "))
-	t.Set("nonce", random.New().String(32))
+	t.Set("nonce", nonce)
 
 	accessToken, err := jwt.Sign(t, jwa.HS256, []byte("hackme"))
-	require.NoError(tb, err)
+	require.NoError(err)
 
 	return &Token{
 		AccessToken: string(accessToken),

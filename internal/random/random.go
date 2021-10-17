@@ -1,12 +1,10 @@
 package random
 
 import (
-	"math/rand"
+	"crypto/rand"
+	"math/big"
 	"strings"
-	"time"
 )
-
-type Random struct{}
 
 const (
 	Uppercase    = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -18,13 +16,17 @@ const (
 	Hex          = Numeric + "abcdef"
 )
 
-func New() *Random {
-	rand.Seed(time.Now().UnixNano())
+func Bytes(length int) ([]byte, error) {
+	b := make([]byte, length)
 
-	return new(Random)
+	if _, err := rand.Read(b); err != nil {
+		return nil, err
+	}
+
+	return b, nil
 }
 
-func (r *Random) String(length int, charsets ...string) string {
+func String(length int, charsets ...string) (string, error) {
 	charset := strings.Join(charsets, "")
 
 	if charset == "" {
@@ -34,9 +36,13 @@ func (r *Random) String(length int, charsets ...string) string {
 	b := make([]byte, length)
 
 	for i := range b {
-		//nolint: gosec
-		b[i] = charset[rand.Int()%len(charset)]
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
+		if err != nil {
+			return "", err
+		}
+
+		b[i] = charset[n.Int64()]
 	}
 
-	return string(b)
+	return string(b), nil
 }

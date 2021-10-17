@@ -108,7 +108,12 @@ func CSRFWithConfig(config CSRFConfig) Interceptor {
 		if k := ctx.Request.Header.Cookie(config.CookieName); k != nil {
 			token = k
 		} else {
-			token = []byte(random.New().String(config.TokenLength))
+			var err error
+			if token, err = random.Bytes(config.TokenLength); err != nil {
+				ctx.Error(err.Error(), http.StatusInternalServerError)
+
+				return
+			}
 		}
 
 		switch string(ctx.Method()) {

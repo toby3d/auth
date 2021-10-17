@@ -4,13 +4,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/brianvoe/gofakeit/v6"
+	"github.com/stretchr/testify/require"
+
 	"source.toby3d.me/website/oauth/internal/random"
 )
 
 type Login struct {
+	PKCE
 	CreatedAt   time.Time
 	CompletedAt time.Time
-	PKCE
 	Scopes      []string
 	ClientID    string
 	RedirectURI string
@@ -25,10 +28,11 @@ type Login struct {
 func TestLogin(tb testing.TB) *Login {
 	tb.Helper()
 
-	now := time.Now().UTC()
+	code, err := random.String(8)
+	require.NoError(tb, err)
 
 	return &Login{
-		CreatedAt:   now.Add(-1 * time.Minute),
+		CreatedAt:   gofakeit.Date(),
 		CompletedAt: time.Time{},
 		PKCE: PKCE{
 			Method:    PKCEMethodS256,
@@ -40,7 +44,7 @@ func TestLogin(tb testing.TB) *Login {
 		RedirectURI: "https://app.example.com/redirect",
 		MeEntered:   "user.example.net",
 		MeResolved:  "https://user.example.net/",
-		Code:        random.New().String(8),
+		Code:        code,
 		Provider:    "mastodon",
 		IsCompleted: false,
 	}
@@ -50,15 +54,19 @@ func TestLogin(tb testing.TB) *Login {
 func TestLoginInvalid(tb testing.TB) *Login {
 	tb.Helper()
 
-	now := time.Now().UTC()
+	challenge, err := random.String(42)
+	require.NoError(tb, err)
+
+	verifier, err := random.String(64)
+	require.NoError(tb, err)
 
 	return &Login{
-		CreatedAt:   now.Add(-1 * time.Hour),
+		CreatedAt:   time.Now().UTC().Add(-1 * time.Hour),
 		CompletedAt: time.Time{},
 		PKCE: PKCE{
 			Method:    "UNDEFINED",
-			Challenge: random.New().String(42),
-			Verifier:  random.New().String(64),
+			Challenge: challenge,
+			Verifier:  verifier,
 		},
 		Scopes:      []string{},
 		ClientID:    "whoisit",
@@ -66,7 +74,7 @@ func TestLoginInvalid(tb testing.TB) *Login {
 		MeEntered:   "whoami",
 		MeResolved:  "",
 		Code:        "",
-		Provider:    "",
+		Provider:    "undefined",
 		IsCompleted: true,
 	}
 }
