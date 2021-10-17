@@ -46,6 +46,7 @@ func (repo *boltTokenRepository) Create(ctx context.Context, accessToken *domain
 	}
 
 	if err = repo.db.Update(func(tx *bolt.Tx) error {
+		//nolint: exhaustivestruct
 		bkt, err := tx.CreateBucketIfNotExists(Token{}.Bucket())
 		if err != nil {
 			return errors.Wrap(err, "cannot create bucket")

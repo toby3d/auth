@@ -29,7 +29,7 @@ func NewTokenUseCase(tokens token.Repository, configer config.UseCase) token.Use
 func (useCase *tokenUseCase) Verify(ctx context.Context, accessToken string) (*domain.Token, error) {
 	find, err := useCase.tokens.Get(ctx, accessToken)
 	if err != nil && !xerrors.Is(err, token.ErrNotExist) {
-		return nil, err
+		return nil, errors.Wrap(err, "cannot ckeck token in store")
 	}
 
 	if find != nil {

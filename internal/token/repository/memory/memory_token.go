@@ -2,7 +2,6 @@ package memory
 
 import (
 	"context"
-	"errors"
 	"path"
 	"sync"
 
@@ -18,8 +17,6 @@ type memoryTokenRepository struct {
 
 const DefaultPathPrefix string = "tokens"
 
-var ErrExist error = errors.New("token already exist")
-
 func NewMemoryTokenRepository(store *sync.Map) token.Repository {
 	return &memoryTokenRepository{
 		store: store,
@@ -33,7 +30,7 @@ func (repo *memoryTokenRepository) Create(ctx context.Context, accessToken *doma
 	}
 
 	if t != nil {
-		return ErrExist
+		return token.ErrExist
 	}
 
 	repo.store.Store(path.Join(DefaultPathPrefix, accessToken.AccessToken), accessToken)

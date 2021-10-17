@@ -12,4 +12,4 @@ type UseCase interface {
 	Revoke(ctx context.Context, accessToken string) error
 }
 
-var ErrRevoke error = errors.New("this token has been revoked")
+var ErrRevoke = errors.New("this token has been revoked")

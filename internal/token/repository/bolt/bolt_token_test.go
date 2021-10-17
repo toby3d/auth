@@ -19,12 +19,15 @@ import (
 func TestCreate(t *testing.T) {
 	t.Parallel()
 
+	//nolint: exhaustivestruct
 	db, cleanup := util.TestBolt(t, repository.Token{}.Bucket())
 	t.Cleanup(cleanup)
 
 	require.NoError(t, db.Update(func(tx *bolt.Tx) error {
+		//nolint: exhaustivestruct
 		_, err := tx.CreateBucketIfNotExists(repository.Token{}.Bucket())
 
+		//nolint: wrapcheck
 		return err
 	}))
 
@@ -38,7 +41,8 @@ func TestCreate(t *testing.T) {
 	require.NoError(t, db.View(func(tx *bolt.Tx) (err error) {
 		dto := new(repository.Token)
 
-		return dto.Bind(tx.Bucket(repository.Token{}.Bucket()).Get([]byte(accessToken.AccessToken)), result)
+		//nolint: wrapcheck
+		return dto.Bind(tx.Bucket(dto.Bucket()).Get([]byte(accessToken.AccessToken)), result)
 	}))
 	assert.Equal(t, accessToken, result)
 
@@ -48,12 +52,14 @@ func TestCreate(t *testing.T) {
 func TestGet(t *testing.T) {
 	t.Parallel()
 
+	//nolint: exhaustivestruct
 	db, cleanup := util.TestBolt(t, repository.Token{}.Bucket())
 	t.Cleanup(cleanup)
 
 	accessToken := domain.TestToken(t)
 
 	require.NoError(t, db.Update(func(tx *bolt.Tx) error {
+		//nolint: exhaustivestruct
 		bkt, err := tx.CreateBucketIfNotExists(repository.Token{}.Bucket())
 		if err != nil {
 			return errors.Wrap(err, "cannot create bucket")

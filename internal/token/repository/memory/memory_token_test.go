@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"source.toby3d.me/website/oauth/internal/domain"
+	"source.toby3d.me/website/oauth/internal/token"
 	repository "source.toby3d.me/website/oauth/internal/token/repository/memory"
 )
 
@@ -17,27 +18,27 @@ func TestCreate(t *testing.T) {
 	t.Parallel()
 
 	store := new(sync.Map)
-	token := domain.TestToken(t)
+	accessToken := domain.TestToken(t)
 
 	repo := repository.NewMemoryTokenRepository(store)
-	require.NoError(t, repo.Create(context.TODO(), token))
+	require.NoError(t, repo.Create(context.TODO(), accessToken))
 
-	result, ok := store.Load(path.Join(repository.DefaultPathPrefix, token.AccessToken))
+	result, ok := store.Load(path.Join(repository.DefaultPathPrefix, accessToken.AccessToken))
 	assert.True(t, ok)
-	assert.Equal(t, token, result)
+	assert.Equal(t, accessToken, result)
 
-	assert.ErrorIs(t, repo.Create(context.TODO(), token), repository.ErrExist)
+	assert.ErrorIs(t, repo.Create(context.TODO(), accessToken), token.ErrExist)
 }
 
 func TestGet(t *testing.T) {
 	t.Parallel()
 
 	store := new(sync.Map)
-	token := domain.TestToken(t)
+	accessToken := domain.TestToken(t)
 
-	store.Store(path.Join(repository.DefaultPathPrefix, token.AccessToken), token)
+	store.Store(path.Join(repository.DefaultPathPrefix, accessToken.AccessToken), accessToken)
 
-	result, err := repository.NewMemoryTokenRepository(store).Get(context.TODO(), token.AccessToken)
+	result, err := repository.NewMemoryTokenRepository(store).Get(context.TODO(), accessToken.AccessToken)
 	assert.NoError(t, err)
-	assert.Equal(t, token, result)
+	assert.Equal(t, accessToken, result)
 }

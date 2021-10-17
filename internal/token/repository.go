@@ -13,6 +13,6 @@ type Repository interface {
 }
 
 var (
-	ErrExist    error = errors.New("token already exist")
-	ErrNotExist error = errors.New("token not exist")
+	ErrExist    = errors.New("token already exist")
+	ErrNotExist = errors.New("token not exist")
 )
