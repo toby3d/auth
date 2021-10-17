@@ -44,13 +44,11 @@ func TestGetBool(t *testing.T) {
 	v := viper.New()
 	_ = v.MergeConfigMap(map[string]interface{}{
 		"testing": map[string]interface{}{
-			"answer":   42,
 			"enabled":  true,
 			"disabled": false,
 		},
 	})
 
-	assert.False(t, repository.NewViperConfigRepository(v).GetBool("testing.answer"))
 	assert.True(t, repository.NewViperConfigRepository(v).GetBool("testing.enabled"))
 	assert.False(t, repository.NewViperConfigRepository(v).GetBool("testing.disabled"))
 }
