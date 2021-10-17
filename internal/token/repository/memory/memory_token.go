@@ -2,9 +2,11 @@ package memory
 
 import (
 	"context"
+	"errors"
 	"path"
 	"sync"
-	"time"
+
+	"golang.org/x/xerrors"
 
 	"source.toby3d.me/website/oauth/internal/domain"
 	"source.toby3d.me/website/oauth/internal/token"
@@ -16,6 +18,8 @@ type memoryTokenRepository struct {
 
 const DefaultPathPrefix string = "tokens"
 
+var ErrExist error = errors.New("token already exist")
+
 func NewMemoryTokenRepository(store *sync.Map) token.Repository {
 	return &memoryTokenRepository{
 		store: store,
@@ -23,29 +27,30 @@ func NewMemoryTokenRepository(store *sync.Map) token.Repository {
 }
 
 func (repo *memoryTokenRepository) Create(ctx context.Context, accessToken *domain.Token) error {
-	key := path.Join(DefaultPathPrefix, accessToken.AccessToken)
-
-	if _, ok := repo.store.Load(key); ok {
-		return token.ErrExist
+	t, err := repo.Get(ctx, accessToken.AccessToken)
+	if err != nil && !xerrors.Is(err, token.ErrNotExist) {
+		return err
 	}
 
-	repo.store.Store(key, accessToken.Expiry)
+	if t != nil {
+		return ErrExist
+	}
+
+	repo.store.Store(path.Join(DefaultPathPrefix, accessToken.AccessToken), accessToken)
 
 	return nil
 }
 
 func (repo *memoryTokenRepository) Get(ctx context.Context, accessToken string) (*domain.Token, error) {
-	expiry, ok := repo.store.Load(path.Join(DefaultPathPrefix, accessToken))
+	t, ok := repo.store.Load(path.Join(DefaultPathPrefix, accessToken))
 	if !ok {
-		return nil, nil
+		return nil, token.ErrNotExist
 	}
 
-	return &domain.Token{
-		Expiry:      expiry.(time.Time),
-		Scopes:      []string{},
-		AccessToken: accessToken,
-		TokenType:   "Bearer",
-		ClientID:    "",
-		Me:          "",
-	}, nil
+	result, ok := t.(*domain.Token)
+	if !ok {
+		return nil, token.ErrNotExist
+	}
+
+	return result, nil
 }

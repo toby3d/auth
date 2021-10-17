@@ -12,38 +12,54 @@ import (
 	configrepo "source.toby3d.me/website/oauth/internal/config/repository/viper"
 	configucase "source.toby3d.me/website/oauth/internal/config/usecase"
 	"source.toby3d.me/website/oauth/internal/domain"
+	"source.toby3d.me/website/oauth/internal/token"
 	repository "source.toby3d.me/website/oauth/internal/token/repository/memory"
-	"source.toby3d.me/website/oauth/internal/token/usecase"
+	ucase "source.toby3d.me/website/oauth/internal/token/usecase"
 )
 
 func TestVerify(t *testing.T) {
 	t.Parallel()
 
 	v := viper.New()
-	v.SetDefault("indieauth.jwtSigningAlgorithm", "HS256")
-	v.SetDefault("indieauth.jwtSecret", "hackme")
+	v.Set("indieauth.jwtSigningAlgorithm", "HS256")
+	v.Set("indieauth.jwtSecret", "hackme")
 
 	repo := repository.NewMemoryTokenRepository(new(sync.Map))
-	accessToken := domain.TestToken(t)
+	useCase := ucase.NewTokenUseCase(repo, configucase.NewConfigUseCase(configrepo.NewViperConfigRepository(v)))
 
-	token, err := usecase.NewTokenUseCase(
-		repo, configucase.NewConfigUseCase(configrepo.NewViperConfigRepository(v)),
-	).Verify(context.TODO(), accessToken.AccessToken)
-	require.NoError(t, err)
-	assert.Equal(t, accessToken.AccessToken, token.AccessToken)
+	t.Run("valid", func(t *testing.T) {
+		t.Parallel()
+
+		accessToken := domain.TestToken(t)
+
+		result, err := useCase.Verify(context.TODO(), accessToken.AccessToken)
+		require.NoError(t, err)
+		assert.Equal(t, accessToken, result)
+	})
+
+	t.Run("revoke", func(t *testing.T) {
+		t.Parallel()
+
+		accessToken := domain.TestToken(t)
+		require.NoError(t, repo.Create(context.TODO(), accessToken))
+
+		result, err := useCase.Verify(context.TODO(), accessToken.AccessToken)
+		require.ErrorIs(t, err, token.ErrRevoke)
+		assert.Nil(t, result)
+	})
 }
 
 func TestRevoke(t *testing.T) {
 	t.Parallel()
 
 	v := viper.New()
-	v.SetDefault("indieauth.jwtSigningAlgorithm", "HS256")
-	v.SetDefault("indieauth.jwtSecret", "hackme")
+	v.Set("indieauth.jwtSigningAlgorithm", "HS256")
+	v.Set("indieauth.jwtSecret", "hackme")
 
 	repo := repository.NewMemoryTokenRepository(new(sync.Map))
 	accessToken := domain.TestToken(t)
 
-	require.NoError(t, usecase.NewTokenUseCase(
+	require.NoError(t, ucase.NewTokenUseCase(
 		repo, configucase.NewConfigUseCase(configrepo.NewViperConfigRepository(v)),
 	).Revoke(context.TODO(), accessToken.AccessToken))
 

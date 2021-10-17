@@ -13,17 +13,15 @@ import (
 )
 
 type Token struct {
-	Expiry      time.Time
 	Scopes      []string
 	AccessToken string
-	TokenType   string
 	ClientID    string
 	Me          string
 }
 
 func NewToken() *Token {
 	t := new(Token)
-	t.Expiry = time.Time{}
+	t.Scopes = make([]string, 0)
 
 	return t
 }
@@ -61,9 +59,7 @@ func TestToken(tb testing.TB) *Token {
 	return &Token{
 		AccessToken: string(accessToken),
 		ClientID:    t.Issuer(),
-		Expiry:      t.Expiration(),
 		Me:          t.Subject(),
 		Scopes:      scopes,
-		TokenType:   "Bearer",
 	}
 }

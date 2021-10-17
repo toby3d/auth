@@ -2,8 +2,7 @@ package token
 
 import (
 	"context"
-
-	"golang.org/x/xerrors"
+	"errors"
 
 	"source.toby3d.me/website/oauth/internal/domain"
 )
@@ -13,9 +12,7 @@ type Repository interface {
 	Create(ctx context.Context, accessToken *domain.Token) error
 }
 
-var ErrExist error = domain.Error{
-	Code:        "invalid_request",
-	Description: "this token is already exists",
-	URI:         "",
-	Frame:       xerrors.Caller(1),
-}
+var (
+	ErrExist    error = errors.New("token already exist")
+	ErrNotExist error = errors.New("token not exist")
+)

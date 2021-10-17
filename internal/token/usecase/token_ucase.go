@@ -7,6 +7,7 @@ import (
 	"github.com/lestrrat-go/jwx/jwa"
 	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/pkg/errors"
+	"golang.org/x/xerrors"
 
 	"source.toby3d.me/website/oauth/internal/config"
 	"source.toby3d.me/website/oauth/internal/domain"
@@ -26,13 +27,13 @@ func NewTokenUseCase(tokens token.Repository, configer config.UseCase) token.Use
 }
 
 func (useCase *tokenUseCase) Verify(ctx context.Context, accessToken string) (*domain.Token, error) {
-	token, err := useCase.tokens.Get(ctx, accessToken)
-	if err != nil {
-		return nil, errors.Wrap(err, "cannot find token in database")
+	find, err := useCase.tokens.Get(ctx, accessToken)
+	if err != nil && !xerrors.Is(err, token.ErrNotExist) {
+		return nil, err
 	}
 
-	if token != nil {
-		return nil, nil
+	if find != nil {
+		return nil, token.ErrRevoke
 	}
 
 	t, err := jwt.ParseString(accessToken, jwt.WithVerify(
@@ -47,20 +48,23 @@ func (useCase *tokenUseCase) Verify(ctx context.Context, accessToken string) (*d
 		return nil, errors.Wrap(err, "cannot validate JWT token")
 	}
 
-	token = &domain.Token{
-		Expiry:      t.Expiration(),
-		Scopes:      []string{},
+	result := &domain.Token{
 		AccessToken: accessToken,
-		TokenType:   "Bearer",
 		ClientID:    t.Issuer(),
 		Me:          t.Subject(),
+		Scopes:      make([]string, 0),
 	}
 
-	if scope, ok := t.Get("scope"); ok {
-		token.Scopes = strings.Fields(scope.(string))
+	rawScope, ok := t.Get("scope")
+	if !ok {
+		return result, nil
 	}
 
-	return token, nil
+	if scope, ok := rawScope.(string); ok {
+		result.Scopes = strings.Fields(scope)
+	}
+
+	return result, nil
 }
 
 func (useCase *tokenUseCase) Revoke(ctx context.Context, accessToken string) error {

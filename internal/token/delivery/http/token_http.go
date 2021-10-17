@@ -56,23 +56,27 @@ func (h *RequestHandler) Read(ctx *http.RequestCtx) {
 
 	rawToken := ctx.Request.Header.Peek(http.HeaderAuthorization)
 
-	token, err := h.tokener.Verify(ctx, string(bytes.TrimPrefix(rawToken, []byte("Bearer "))))
+	t, err := h.tokener.Verify(ctx, string(bytes.TrimPrefix(rawToken, []byte("Bearer "))))
 	if err != nil {
-		ctx.Error(err.Error(), http.StatusBadRequest)
+		if xerrors.Is(err, token.ErrRevoke) {
+			ctx.Error(http.StatusMessage(http.StatusUnauthorized), http.StatusUnauthorized)
+		} else {
+			ctx.Error(err.Error(), http.StatusBadRequest)
+		}
 
 		return
 	}
 
-	if token == nil {
-		ctx.SetStatusCode(http.StatusUnauthorized)
+	if t == nil {
+		ctx.Error(http.StatusMessage(http.StatusUnauthorized), http.StatusUnauthorized)
 
 		return
 	}
 
 	if err := json.NewEncoder(ctx).Encode(&VerificationResponse{
-		ClientID: token.ClientID,
-		Me:       token.Me,
-		Scope:    strings.Join(token.Scopes, " "),
+		ClientID: t.ClientID,
+		Me:       t.Me,
+		Scope:    strings.Join(t.Scopes, " "),
 	}); err != nil {
 		ctx.Error(err.Error(), http.StatusInternalServerError)
 	}
