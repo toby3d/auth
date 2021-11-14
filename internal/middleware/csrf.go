@@ -116,8 +116,8 @@ func CSRFWithConfig(config CSRFConfig) Interceptor {
 			}
 		}
 
-		switch string(ctx.Method()) {
-		case http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodTrace:
+		switch {
+		case ctx.IsGet(), ctx.IsHead(), ctx.IsOptions(), ctx.IsTrace():
 		default:
 			// NOTE(toby3d): validate token only for requests which are not defined as 'safe' by RFC7231
 			clientToken, err := extractor(ctx)
