@@ -3,8 +3,8 @@ package util
 
 import (
 	"crypto/tls"
+	_ "embed"
 	"net"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -12,23 +12,33 @@ import (
 	httputil "github.com/valyala/fasthttp/fasthttputil"
 )
 
-//nolint: exhaustivestruct
+//nolint: gochecknoglobals
+var (
+	//go:embed cert.pem
+	certData []byte
+	//go:embed key.pem
+	keyData []byte
+)
+
+// TestServe returns the InMemory HTTP-server and the client connected to it
+// with the specified handler.
 func TestServe(tb testing.TB, handler http.RequestHandler) (*http.Client, *http.Server, func()) {
 	tb.Helper()
 
+	//nolint: exhaustivestruct
 	server := &http.Server{
 		CloseOnShutdown:   true,
 		DisableKeepalive:  true,
-		Handler:           http.TimeoutHandler(handler, 1*time.Minute, "handler performance is too slow"),
 		ReduceMemoryUsage: true,
+		Handler:           http.TimeoutHandler(handler, 1*time.Second, "handler performance is too slow"),
 	}
 
 	ln := httputil.NewInmemoryListener()
 
 	//nolint: errcheck
-	go server.ServeTLS(ln, filepath.Join("..", "..", "..", "util", "cert.pem"),
-		filepath.Join("..", "..", "..", "util", "key.pem"))
+	go server.ServeTLSEmbed(ln, certData, keyData)
 
+	//nolint: exhaustivestruct
 	client := &http.Client{
 		TLSConfig: &tls.Config{
 			InsecureSkipVerify: true, //nolint: gosec
@@ -38,7 +48,8 @@ func TestServe(tb testing.TB, handler http.RequestHandler) (*http.Client, *http.
 		},
 	}
 
+	//nolint: errcheck
 	return client, server, func() {
-		server.Shutdown() //nolint: errcheck
+		server.Shutdown()
 	}
 }
