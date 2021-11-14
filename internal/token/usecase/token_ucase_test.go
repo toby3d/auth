@@ -2,10 +2,11 @@ package usecase_test
 
 import (
 	"context"
+	"strings"
 	"sync"
 	"testing"
 
-	"github.com/spf13/viper"
+	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -17,12 +18,38 @@ import (
 	ucase "source.toby3d.me/website/oauth/internal/token/usecase"
 )
 
-func TestVerify(t *testing.T) {
+func TestGenerate(t *testing.T) {
 	t.Parallel()
 
-	v := viper.New()
-	v.Set("indieauth.jwtSigningAlgorithm", "HS256")
-	v.Set("indieauth.jwtSecret", "hackme")
+	configer := configucase.NewConfigUseCase(configrepo.NewViperConfigRepository(domain.TestConfig(t)))
+	options := token.GenerateOptions{
+		ClientID:    "https://app.example.com/",
+		Me:          "https://user.example.net/",
+		Scopes:      []string{"create", "update", "delete"},
+		NonceLength: 42,
+	}
+
+	result, err := ucase.NewTokenUseCase(ucase.Config{
+		Configer: configer,
+		Tokens:   nil,
+	}).Generate(context.TODO(), options)
+	require.NoError(t, err)
+	assert.Equal(t, options.ClientID, result.ClientID)
+	assert.Equal(t, options.Me, result.Me)
+	assert.Equal(t, options.Scopes, result.Scopes)
+
+	token, err := jwt.ParseString(result.AccessToken)
+	require.NoError(t, err)
+	assert.Equal(t, options.Me, token.Subject())
+	assert.Equal(t, options.ClientID, token.Issuer())
+
+	scope, ok := token.Get("scope")
+	require.True(t, ok)
+	assert.Equal(t, strings.Join(options.Scopes, " "), scope)
+}
+
+func TestVerify(t *testing.T) {
+	t.Parallel()
 
 	repo := repository.NewMemoryTokenRepository(new(sync.Map))
 	useCase := ucase.NewTokenUseCase(repo, configucase.NewConfigUseCase(configrepo.NewViperConfigRepository(v)))

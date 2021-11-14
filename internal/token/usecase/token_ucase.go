@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/lestrrat-go/jwx/jwa"
 	"github.com/lestrrat-go/jwx/jwt"
@@ -11,19 +12,60 @@ import (
 
 	"source.toby3d.me/website/oauth/internal/config"
 	"source.toby3d.me/website/oauth/internal/domain"
+	"source.toby3d.me/website/oauth/internal/random"
 	"source.toby3d.me/website/oauth/internal/token"
 )
 
-type tokenUseCase struct {
-	tokens   token.Repository
-	configer config.UseCase
+type (
+	Config struct {
+		Configer config.UseCase
+		Tokens   token.Repository
+	}
+
+	tokenUseCase struct {
+		configer config.UseCase
+		tokens   token.Repository
+	}
+)
+
+func NewTokenUseCase(config Config) token.UseCase {
+	return &tokenUseCase{
+		configer: config.Configer,
+		tokens:   config.Tokens,
+	}
 }
 
-func NewTokenUseCase(tokens token.Repository, configer config.UseCase) token.UseCase {
-	return &tokenUseCase{
-		tokens:   tokens,
-		configer: configer,
+// Generate generates a new Token based on the session data.
+func (useCase *tokenUseCase) Generate(ctx context.Context, opts token.GenerateOptions) (*domain.Token, error) {
+	nonce, err := random.String(opts.NonceLength)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot generate code")
 	}
+
+	t := jwt.New()
+	now := time.Now().UTC().Round(time.Second)
+
+	t.Set(jwt.IssuerKey, opts.ClientID)
+	t.Set(jwt.SubjectKey, opts.Me)
+	t.Set(jwt.ExpirationKey, now.Add(useCase.configer.GetIndieAuthAccessTokenExpirationTime()))
+	t.Set(jwt.NotBeforeKey, now)
+	t.Set(jwt.IssuedAtKey, now)
+	t.Set("scope", strings.Join(opts.Scopes, " "))
+	t.Set("nonce", nonce)
+
+	token, err := jwt.Sign(t,
+		jwa.SignatureAlgorithm(useCase.configer.GetIndieAuthJWTSigningAlgorithm()),
+		[]byte(useCase.configer.GetIndieAuthJWTSecret()))
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot sign a new access token")
+	}
+
+	return &domain.Token{
+		Scopes:      opts.Scopes,
+		AccessToken: string(token),
+		ClientID:    opts.ClientID,
+		Me:          opts.Me,
+	}, nil
 }
 
 func (useCase *tokenUseCase) Verify(ctx context.Context, accessToken string) (*domain.Token, error) {
