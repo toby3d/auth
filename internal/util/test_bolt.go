@@ -9,10 +9,12 @@ import (
 	bolt "go.etcd.io/bbolt"
 )
 
-func TestBolt(tb testing.TB, buckets ...[]byte) (*bolt.DB, func()) {
+// TestBolt returns a temporary empty database bbolt in the temporary directory
+// with the cleanup function.
+func TestBolt(tb testing.TB) (*bolt.DB, func()) {
 	tb.Helper()
 
-	f, err := os.CreateTemp("", "bbolt_*.db")
+	f, err := os.CreateTemp(os.TempDir(), "bbolt_*.db")
 	require.NoError(tb, err)
 
 	filePath := f.Name()
@@ -21,18 +23,9 @@ func TestBolt(tb testing.TB, buckets ...[]byte) (*bolt.DB, func()) {
 	db, err := bolt.Open(filePath, os.ModePerm, nil)
 	require.NoError(tb, err)
 
-	for _, bucket := range buckets {
-		bucket := bucket
-
-		assert.NoError(tb, db.Update(func(tx *bolt.Tx) error {
-			_, err := tx.CreateBucket(bucket)
-
-			return err //nolint: errcheck
-		}))
-	}
-
+	//nolint: errcheck
 	return db, func() {
-		db.Close()          //nolint: errcheck
-		os.Remove(filePath) //nolint: errcheck
+		db.Close()
+		os.Remove(filePath)
 	}
 }
