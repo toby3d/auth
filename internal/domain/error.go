@@ -26,7 +26,7 @@ func (e Error) FormatError(p xerrors.Printer) error {
 	p.Printf("%s: %s", e.Code, e.Description)
 
 	if e.URI != "" {
-		p.Printf("%s", e.URI)
+		p.Printf(": %s", e.URI)
 	}
 
 	if p.Detail() {
