@@ -37,7 +37,7 @@ func (useCase *configUseCase) GetServerDomain() string {
 }
 
 func (useCase *configUseCase) GetServerRootURL() string {
-	t := fasttemplate.New(useCase.repo.GetString("server.rootUrl"), "{{", "}}")
+	t := fasttemplate.New(useCase.repo.GetString("server.rootUrl"), `{{`, `}}`)
 
 	data := make(map[string]interface{})
 	for _, key := range []string{
@@ -105,10 +105,18 @@ func (useCase *configUseCase) GetIndieAuthJWTSigningAlgorithm() string {
 	return useCase.repo.GetString("indieauth.jwtSigningAlgorithm")
 }
 
-func (useCase *configUseCase) GetIndieAuthJWTSecret() string {
-	return useCase.repo.GetString("indieauth.jwtSecret")
+func (useCase *configUseCase) GetIndieAuthJWTSecret() []byte {
+	return []byte(useCase.repo.GetString("indieauth.jwtSecret"))
 }
 
 func (useCase *configUseCase) GetIndieAuthJWTSigningPrivateKeyFile() string {
 	return filepath.Clean(useCase.repo.GetString("indieauth.jwtSigningPrivateKeyFile"))
+}
+
+func (useCase *configUseCase) GetIndieAuthCodeLength() int {
+	return useCase.repo.GetInt("indieauth.codeLength")
+}
+
+func (useCase *configUseCase) GetIndieAuthJWTNonceLength() int {
+	return useCase.repo.GetInt("indieauth.jwtNonceLength")
 }
