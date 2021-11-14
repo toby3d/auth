@@ -3,6 +3,7 @@ package middleware
 import http "github.com/valyala/fasthttp"
 
 type (
+	BeforeFunc     http.RequestHandler
 	Chain          []Interceptor
 	Interceptor    func(*http.RequestCtx, http.RequestHandler)
 	RequestHandler http.RequestHandler
@@ -14,7 +15,9 @@ type (
 var DefaultSkipper Skipper = func(*http.RequestCtx) bool { return false }
 
 func (count RequestHandler) Intercept(middleware Interceptor) RequestHandler {
-	return func(ctx *http.RequestCtx) { middleware(ctx, http.RequestHandler(count)) }
+	return func(ctx *http.RequestCtx) {
+		middleware(ctx, http.RequestHandler(count))
+	}
 }
 
 func (chain Chain) RequestHandler(handler http.RequestHandler) http.RequestHandler {
