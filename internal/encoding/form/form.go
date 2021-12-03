@@ -67,58 +67,71 @@ func Unmarshal(src *http.Args, dst interface{}) error {
 
 // Decode reads the next form-encoded value from its input and stores it in the
 // value pointed to by v.
-func (dec *Decoder) Decode(v interface{}) error {
-	dst := reflect.ValueOf(v).Elem()
-	if !dst.IsValid() {
+func (dec *Decoder) Decode(src interface{}) (err error) {
+	v := reflect.ValueOf(src).Elem()
+	if !v.IsValid() {
 		return errors.New("invalid input")
 	}
 
-	st := reflect.TypeOf(v).Elem()
+	defer func() {
+		if r := recover(); r != nil {
+			if ve, ok := r.(*reflect.ValueError); ok {
+				err = fmt.Errorf("recovered: %w", ve)
+			} else {
+				panic(r)
+			}
+		}
+	}()
 
-	for i := 0; i < dst.NumField(); i++ {
-		field := st.Field(i)
+	t := reflect.TypeOf(src).Elem()
+
+	for i := 0; i < v.NumField(); i++ {
+		ft := t.Field(i)
 
 		// NOTE(toby3d): get tag value as query name
-		tagValue, ok := field.Tag.Lookup(tagName)
+		tagValue, ok := ft.Tag.Lookup(tagName)
 		if !ok || tagValue == "" || tagValue == "-" || !dec.source.Has(tagValue) {
 			continue
 		}
 
+		field := v.Field(i)
+
 		// NOTE(toby3d): read struct field type
-		switch field.Type.Kind() {
+		switch ft.Type.Kind() {
 		case reflect.String:
-			dst.Field(i).SetString(string(dec.source.Peek(tagValue)))
+			field.SetString(string(dec.source.Peek(tagValue)))
 		case reflect.Int:
-			dst.Field(i).SetInt(int64(dec.source.GetUintOrZero(tagValue)))
+			field.SetInt(int64(dec.source.GetUintOrZero(tagValue)))
 		case reflect.Float64:
-			dst.Field(i).SetFloat(dec.source.GetUfloatOrZero(tagValue))
+			field.SetFloat(dec.source.GetUfloatOrZero(tagValue))
 		case reflect.Bool:
-			dst.Field(i).SetBool(dec.source.GetBool(tagValue))
+			field.SetBool(dec.source.GetBool(tagValue))
 		case reflect.Ptr: // NOTE(toby3d): pointer to another struct
+			field.Set(reflect.New(ft.Type.Elem()))
+
 			// NOTE(toby3d): check what custom unmarshal method exists
-			beforeFunc := dst.Field(i).MethodByName("UnmarshalForm")
-			if beforeFunc.IsNil() {
+			unmarshalFunc := field.MethodByName("UnmarshalForm")
+			if unmarshalFunc.IsZero() {
 				continue
 			}
 
-			dst.Field(i).Set(reflect.New(field.Type.Elem()))
-			beforeFunc.Call([]reflect.Value{reflect.ValueOf(dec.source.Peek(tagValue))})
+			unmarshalFunc.Call([]reflect.Value{reflect.ValueOf(dec.source.Peek(tagValue))})
 		case reflect.Slice:
-			switch field.Type.Elem().Kind() {
+			switch ft.Type.Elem().Kind() {
 			case reflect.Uint8: // NOTE(toby3d): bytes slice
-				dst.Field(i).SetBytes(dec.source.Peek(tagValue))
+				field.SetBytes(dec.source.Peek(tagValue))
 			case reflect.String: // NOTE(toby3d): string slice
 				values := dec.source.PeekMulti(tagValue)
-				slice := reflect.MakeSlice(field.Type, len(values), len(values))
+				slice := reflect.MakeSlice(ft.Type, len(values), len(values))
 
-				for j, v := range values {
-					slice.Index(j).SetString(string(v))
+				for j, vv := range values {
+					slice.Index(j).SetString(string(vv))
 				}
 
-				dst.Field(i).Set(slice)
+				field.Set(slice)
 			}
 		}
 	}
 
-	return nil
+	return
 }
