@@ -4,6 +4,7 @@ package form
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 
 	http "github.com/valyala/fasthttp"
@@ -34,6 +35,34 @@ func NewDecoder(args *http.Args) *Decoder {
 	return &Decoder{
 		source: args,
 	}
+}
+
+// Unmarshal parses the form-encoded data and stores the result in the value
+// pointed to by v. If v is nil or not a pointer, Unmarshal returns error.
+//
+// Unmarshal uses the reflection, allocating maps, slices, and pointers as
+// necessary, with the following additional rules:
+//
+// To unmarshal form into a pointer, Unmarshal first handles the case of the
+// form being the form literal null. In that case, Unmarshal sets the pointer to
+// nil. Otherwise, Unmarshal unmarshals the form into the value pointed at by
+// the pointer. If the pointer is nil, Unmarshal allocates a new value for it to
+// point to.
+//
+// To unmarshal form into a value implementing the Unmarshaler interface,
+// Unmarshal calls that value's UnmarshalForm method, including when the input
+// is a form null.
+//
+// To unmarshal form into a struct, Unmarshal matches incoming object keys to
+// the keys (either the struct field name or its tag), preferring an exact match
+// but also accepting a case-insensitive match. By default, object keys which
+// don't have a corresponding struct field are ignored.
+func Unmarshal(src *http.Args, dst interface{}) error {
+	if err := NewDecoder(src).Decode(dst); err != nil {
+		return fmt.Errorf("unmarshal: %w", err)
+	}
+
+	return nil
 }
 
 // Decode reads the next form-encoded value from its input and stores it in the

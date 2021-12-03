@@ -14,7 +14,7 @@ type (
 	ResponseType string
 
 	URI struct {
-		*http.URI
+		*http.URI `form:"-"`
 	}
 
 	TestResult struct {
@@ -44,7 +44,7 @@ const testData string = `response_type=code` + // NOTE(toby3d): string type alia
 	`&scope[]=update` +
 	`&scope[]=delete`
 
-func TestDecode(t *testing.T) {
+func TestUnmarshal(t *testing.T) {
 	t.Parallel()
 
 	args := http.AcquireArgs()
@@ -63,7 +63,7 @@ func TestDecode(t *testing.T) {
 	args.Parse(testData)
 
 	result := new(TestResult)
-	require.NoError(t, form.NewDecoder(args).Decode(result))
+	require.NoError(t, form.Unmarshal(args, result))
 	assert.Equal(t, &TestResult{
 		ClientID:            &URI{URI: clientId},
 		Me:                  &URI{URI: me},
