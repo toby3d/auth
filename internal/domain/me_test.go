@@ -9,7 +9,7 @@ import (
 	"source.toby3d.me/website/oauth/internal/domain"
 )
 
-func TestMeIsValid(t *testing.T) {
+func TestMe(t *testing.T) {
 	t.Parallel()
 
 	for _, testCase := range []struct {
@@ -62,9 +62,13 @@ func TestMeIsValid(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			me := new(domain.Me)
-			require.NoError(t, me.Parse([]byte(testCase.input)))
-			assert.Equal(t, testCase.isValid, me.IsValid())
+			result, err := domain.NewMe(testCase.input)
+			if testCase.isValid {
+				require.NoError(t, err)
+				assert.Equal(t, testCase.input, result.String())
+			} else {
+				assert.Error(t, err)
+			}
 		})
 	}
 }

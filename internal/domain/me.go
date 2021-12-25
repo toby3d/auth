@@ -3,112 +3,146 @@ package domain
 import (
 	"fmt"
 	"net"
+	"net/url"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	http "github.com/valyala/fasthttp"
+	"golang.org/x/xerrors"
 )
 
-// Me is a user URL identifier.
+// Me is a URL user identifier.
 type Me struct {
-	uri     *http.URI
-	isValid bool
+	me *http.URI
 }
 
-// UnmarshalForm implements a custom form.Unmarshaler.
-func (me *Me) UnmarshalForm(v []byte) error {
-	if err := me.Parse(v); err != nil {
-		return fmt.Errorf("cannot unmarshal form: %w", err)
+func NewMe(raw string) (*Me, error) {
+	me := http.AcquireURI()
+	if err := me.Parse(nil, []byte(raw)); err != nil {
+		return nil, Error{
+			Code:        "invalid_request",
+			Description: err.Error(),
+			URI:         "https://indieauth.net/source/#user-profile-url",
+			Frame:       xerrors.Caller(1),
+		}
 	}
 
-	return nil
-}
-
-// Parse parse and validate me identifier.
-func (me *Me) Parse(v []byte) error {
-	if me.uri != nil {
-		http.ReleaseURI(me.uri)
-	}
-
-	me.uri = http.AcquireURI()
-	if err := me.uri.Parse(nil, v); err != nil {
-		return fmt.Errorf("cannot parse me: %w", err)
-	}
-
-	// NOTE(toby3d): MUST have either an https or http scheme
-	scheme := string(me.uri.Scheme())
+	scheme := string(me.Scheme())
 	if scheme != "http" && scheme != "https" {
-		return nil
+		return nil, Error{
+			Code:        "invalid_request",
+			Description: "profile URL MUST have either an https or http scheme",
+			URI:         "https://indieauth.net/source/#user-profile-url",
+			Frame:       xerrors.Caller(1),
+		}
 	}
 
-	// NOTE(toby3d): MUST contain a path component (/ is a valid path)
-	// NOTE(toby3d): MUST NOT contain single-dot or double-dot path segments
-	path := string(me.uri.PathOriginal())
+	path := string(me.PathOriginal())
 	if path == "" || strings.Contains(path, "/.") || strings.Contains(path, "/..") {
-		return nil
+		return nil, Error{
+			Code: "invalid_request",
+			Description: "profile URL MUST contain a path component (/ is a valid path), MUST NOT " +
+				"contain single-dot or double-dot path segments",
+			URI:   "https://indieauth.net/source/#user-profile-url",
+			Frame: xerrors.Caller(1),
+		}
 	}
 
-	// NOTE(toby3d): MUST NOT contain a fragment component
-	if me.uri.Hash() != nil {
-		return nil
+	if me.Hash() != nil {
+		return nil, Error{
+			Code:        "invalid_request",
+			Description: "profile URL MUST NOT contain a fragment component",
+			URI:         "https://indieauth.net/source/#user-profile-url",
+			Frame:       xerrors.Caller(1),
+		}
 	}
 
-	// NOTE(toby3d): MUST NOT contain a username or password component
-	if me.uri.Username() != nil || me.uri.Password() != nil {
-		return nil
+	if me.Username() != nil || me.Password() != nil {
+		return nil, Error{
+			Code:        "invalid_request",
+			Description: "profile URL MUST NOT contain a username or password component",
+			URI:         "https://indieauth.net/source/#user-profile-url",
+			Frame:       xerrors.Caller(1),
+		}
 	}
 
-	// NOTE(toby3d): host names MUST be domain names
-	host := string(me.uri.Host())
-	if host == "" {
-		return nil
+	domain := string(me.Host())
+	if domain == "" {
+		return nil, Error{
+			Code:        "invalid_request",
+			Description: "profile host name MUST be a domain name",
+			URI:         "https://indieauth.net/source/#user-profile-url",
+			Frame:       xerrors.Caller(1),
+		}
 	}
 
-	// NOTE(toby3d): MUST NOT contain a port
-	if _, _, err := net.SplitHostPort(host); err == nil {
-		return nil
+	if _, port, _ := net.SplitHostPort(domain); port != "" {
+		return nil, Error{
+			Code:        "invalid_request",
+			Description: "profile MUST NOT contain a port",
+			URI:         "https://indieauth.net/source/#user-profile-url",
+			Frame:       xerrors.Caller(1),
+		}
 	}
 
-	// NOTE(toby3d): MUST NOT be ipv4 or ipv6 addresses
-	if net.ParseIP(host) != nil {
-		return nil
+	if net.ParseIP(domain) != nil {
+		return nil, Error{
+			Code:        "invalid_request",
+			Description: "profile MUST NOT be ipv4 or ipv6 addresses",
+			URI:         "https://indieauth.net/source/#user-profile-url",
+			Frame:       xerrors.Caller(1),
+		}
 	}
 
-	me.isValid = true
+	return &Me{me: me}, nil
+}
+
+// TestMe returns a valid random generated Me for tests.
+func TestMe(tb testing.TB) *Me {
+	tb.Helper()
+
+	me, err := NewMe("https://user.example.net/")
+	require.NoError(tb, err)
+
+	return me
+}
+
+// UnmarshalForm parses the value of the form key into the Me domain.
+func (m *Me) UnmarshalForm(v []byte) (err error) {
+	me, err := NewMe(string(v))
+	if err != nil {
+		return fmt.Errorf("UnmarshalForm: %w", err)
+	}
+	defer http.ReleaseURI(me.me) //nolint: wsl
+
+	me.me.CopyTo(m.me)
 
 	return nil
 }
 
-// String returns string representation of Me.
-func (me *Me) String() string {
-	if me.uri == nil {
-		return ""
-	}
-
-	return me.uri.String()
-}
-
-// URI returns copy of parsed *fasthttp.URI.
+// URI returns copy of parsed Me in *fasthttp.URI representation.
 // This copy MUST be released via fasthttp.ReleaseURI.
-func (me *Me) URI() *http.URI {
+func (m *Me) URI() *http.URI {
 	u := http.AcquireURI()
-	me.uri.CopyTo(u)
+	m.me.CopyTo(u)
 
 	return u
 }
 
-// IsValid returns true if Me is a valid identifier.
-func (me *Me) IsValid() bool {
-	return me.isValid
+// URL returns copy of parsed Me in *url.URL representation.
+func (m *Me) URL() *url.URL {
+	return &url.URL{
+		Scheme:   string(m.me.Scheme()),
+		Host:     string(m.me.Host()),
+		Path:     string(m.me.Path()),
+		RawPath:  string(m.me.PathOriginal()),
+		RawQuery: string(m.me.QueryString()),
+		Fragment: string(m.me.Hash()),
+	}
 }
 
-// TestMe returns a valid testing Me.
-func TestMe(tb testing.TB) *Me {
-	tb.Helper()
-
-	me := new(Me)
-	require.NoError(tb, me.Parse([]byte("https://user.example.net/")))
-
-	return me
+// String returns string representation of Me.
+func (m Me) String() string {
+	return m.me.String()
 }
