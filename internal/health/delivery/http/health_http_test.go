@@ -9,7 +9,7 @@ import (
 	http "github.com/valyala/fasthttp"
 
 	delivery "source.toby3d.me/website/oauth/internal/health/delivery/http"
-	"source.toby3d.me/website/oauth/internal/util"
+	"source.toby3d.me/website/oauth/internal/testing/httptest"
 )
 
 func TestRequestHandler(t *testing.T) {
@@ -18,13 +18,11 @@ func TestRequestHandler(t *testing.T) {
 	r := router.New()
 	delivery.NewRequestHandler().Register(r)
 
-	client, _, cleanup := util.TestServe(t, r.Handler)
+	client, _, cleanup := httptest.New(t, r.Handler)
 	t.Cleanup(cleanup)
 
-	req := http.AcquireRequest()
+	req := httptest.NewRequest(http.MethodGet, "https://app.example.com/health", nil)
 	defer http.ReleaseRequest(req)
-	req.Header.SetMethod(http.MethodGet)
-	req.SetRequestURI("https://app.example.com/health")
 
 	resp := http.AcquireResponse()
 	defer http.ReleaseResponse(resp)

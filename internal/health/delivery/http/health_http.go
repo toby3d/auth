@@ -10,14 +10,14 @@ import (
 type RequestHandler struct{}
 
 func NewRequestHandler() *RequestHandler {
-	return new(RequestHandler)
+	return &RequestHandler{}
 }
 
 func (h *RequestHandler) Register(r *router.Router) {
-	r.GET("/health", h.RequestHandler)
+	r.GET("/health", h.read)
 }
 
-func (h *RequestHandler) RequestHandler(ctx *http.RequestCtx) {
+func (h *RequestHandler) read(ctx *http.RequestCtx) {
 	ctx.SetContentType(common.MIMETextPlainCharsetUTF8)
 	ctx.SetStatusCode(http.StatusOK)
 }
