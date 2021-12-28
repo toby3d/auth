@@ -1,4 +1,4 @@
-package util
+package bolttest
 
 import (
 	"os"
@@ -9,9 +9,9 @@ import (
 	bolt "go.etcd.io/bbolt"
 )
 
-// TestBolt returns a temporary empty database bbolt in the temporary directory
+// New returns a temporary empty database bbolt in the temporary directory
 // with the cleanup function.
-func TestBolt(tb testing.TB) (*bolt.DB, func()) {
+func New(tb testing.TB) (*bolt.DB, func()) {
 	tb.Helper()
 
 	f, err := os.CreateTemp(os.TempDir(), "bbolt_*.db")
