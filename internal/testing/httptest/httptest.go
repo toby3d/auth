@@ -1,5 +1,5 @@
 //go:generate go run "$GOROOT/src/crypto/tls/generate_cert.go" --host 127.0.0.1,::1,localhost --start-date "Jan 1 00:00:00 1970" --duration=1000000h --ca --rsa-bits 1024 --ecdsa-curve P256
-package util
+package httptest
 
 import (
 	"crypto/tls"
@@ -12,7 +12,6 @@ import (
 	httputil "github.com/valyala/fasthttp/fasthttputil"
 )
 
-//nolint: gochecknoglobals
 var (
 	//go:embed cert.pem
 	certData []byte
@@ -20,9 +19,9 @@ var (
 	keyData []byte
 )
 
-// TestServe returns the InMemory HTTP-server and the client connected to it
-// with the specified handler.
-func TestServe(tb testing.TB, handler http.RequestHandler) (*http.Client, *http.Server, func()) {
+// New returns the InMemory Server and the Client connected to it with the
+// specified handler.
+func New(tb testing.TB, handler http.RequestHandler) (*http.Client, *http.Server, func()) {
 	tb.Helper()
 
 	//nolint: exhaustivestruct
@@ -52,4 +51,14 @@ func TestServe(tb testing.TB, handler http.RequestHandler) (*http.Client, *http.
 	return client, server, func() {
 		server.Shutdown()
 	}
+}
+
+// NewRequest returns  a new incoming server Request and cleanup function.
+func NewRequest(method, target string, body []byte) *http.Request {
+	req := http.AcquireRequest()
+	req.Header.SetMethod(method)
+	req.SetRequestURI(target)
+	req.SetBody(body)
+
+	return req
 }
