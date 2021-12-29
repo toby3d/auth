@@ -16,10 +16,10 @@ import (
 func TestGet(t *testing.T) {
 	t.Parallel()
 
-	store := new(sync.Map)
 	client := domain.TestClient(t)
 
-	store.Store(path.Join(repository.Key, client.ID), client)
+	store := new(sync.Map)
+	store.Store(path.Join(repository.DefaultPathPrefix, client.ID.String()), client)
 
 	result, err := repository.NewMemoryClientRepository(store).Get(context.TODO(), client.ID)
 	require.NoError(t, err)

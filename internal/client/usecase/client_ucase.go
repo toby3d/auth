@@ -2,27 +2,26 @@ package usecase
 
 import (
 	"context"
-
-	"github.com/pkg/errors"
+	"fmt"
 
 	"source.toby3d.me/website/oauth/internal/client"
 	"source.toby3d.me/website/oauth/internal/domain"
 )
 
 type clientUseCase struct {
-	clients client.Repository
+	repo client.Repository
 }
 
-func NewClientUseCase(clients client.Repository) client.UseCase {
+func NewClientUseCase(repo client.Repository) client.UseCase {
 	return &clientUseCase{
-		clients: clients,
+		repo: repo,
 	}
 }
 
-func (useCase *clientUseCase) Discovery(ctx context.Context, clientID string) (*domain.Client, error) {
-	c, err := useCase.clients.Get(ctx, clientID)
+func (useCase *clientUseCase) Discovery(ctx context.Context, id *domain.ClientID) (*domain.Client, error) {
+	c, err := useCase.repo.Get(ctx, id)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get client information")
+		return nil, fmt.Errorf("cannot discovery client by id: %w", err)
 	}
 
 	return c, nil

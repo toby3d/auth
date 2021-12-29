@@ -10,26 +10,32 @@ import (
 )
 
 type memoryClientRepository struct {
-	clients *sync.Map
+	store *sync.Map
 }
 
-const Key string = "clients"
+const DefaultPathPrefix string = "clients"
 
-func NewMemoryClientRepository(clients *sync.Map) client.Repository {
+func NewMemoryClientRepository(store *sync.Map) client.Repository {
 	return &memoryClientRepository{
-		clients: clients,
+		store: store,
 	}
 }
 
-func (repo *memoryClientRepository) Get(ctx context.Context, id string) (*domain.Client, error) {
-	src, ok := repo.clients.Load(path.Join(Key, id))
+func (repo *memoryClientRepository) Create(ctx context.Context, client *domain.Client) error {
+	repo.store.Store(path.Join(DefaultPathPrefix, client.ID.String()), client)
+
+	return nil
+}
+
+func (repo *memoryClientRepository) Get(ctx context.Context, id *domain.ClientID) (*domain.Client, error) {
+	src, ok := repo.store.Load(path.Join(DefaultPathPrefix, id.String()))
 	if !ok {
-		return nil, nil
+		return nil, client.ErrNotExist
 	}
 
 	c, ok := src.(*domain.Client)
 	if !ok {
-		return nil, nil
+		return nil, client.ErrNotExist
 	}
 
 	return c, nil
