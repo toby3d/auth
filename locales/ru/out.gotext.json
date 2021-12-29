@@ -1,0 +1,70 @@
+{
+    "language": "ru",
+    "messages": [
+        {
+            "id": "Authorize {Name0}",
+            "message": "Authorize {Name0}",
+            "translation": "",
+            "placeholders": [
+                {
+                    "id": "Name0",
+                    "string": "%[1]s",
+                    "type": "string",
+                    "underlyingType": "string",
+                    "argNum": 1,
+                    "expr": "p.Client.Name[0]"
+                }
+            ]
+        },
+        {
+            "id": "Authorize application",
+            "message": "Authorize application",
+            "translation": "Авторизовать приложение",
+            "translatorComment": "Заголовок страницы авторизации безымянного приложения"
+        },
+        {
+            "id": "Authorize",
+            "message": "Authorize",
+            "translation": ""
+        },
+        {
+            "id": "application",
+            "message": "application",
+            "translation": ""
+        },
+        {
+            "id": "Check your scopes",
+            "message": "Check your scopes",
+            "translation": "Проверь права доступа",
+            "translatorComment": "Имя секции с набором чекбоксов прав доступа на странице авторизации"
+        },
+        {
+            "id": "Deny",
+            "message": "Deny",
+            "translation": "Отказать",
+            "translatorComment": "Название кнопки прерывания процесса авторизациии приложения"
+        },
+        {
+            "id": "Allow",
+            "message": "Allow",
+            "translation": "Разрешить",
+            "translatorComment": "Название кнопки продолжения процесса авторизациии приложения"
+        },
+        {
+            "id": "Sign In",
+            "message": "Sign In",
+            "translation": "Войти",
+            "translatorComment": "Название кнопки в форме ввода адреса сайта для начала процесса входа"
+        },
+        {
+            "id": "Create a new remote token",
+            "message": "Create a new remote token",
+            "translation": ""
+        },
+        {
+            "id": "Send",
+            "message": "Send",
+            "translation": ""
+        }
+    ]
+}

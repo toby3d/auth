@@ -1,0 +1,51 @@
+{
+    "language": "ru",
+    "messages": [
+        {
+            "id": "Authorize {ClientName}",
+            "message": "Authorize {ClientName}",
+            "translation": "Авторизовать {ClientName}",
+            "translatorComment": "Заголовок страницы авторизации с именем приложения",
+            "placeholders": [
+                {
+                    "id": "ClientName",
+                    "string": "%[1]s",
+                    "type": "string",
+                    "underlyingType": "string",
+                    "argNum": 1,
+                    "expr": "p.ClientName"
+                }
+            ]
+        },
+        {
+            "id": "Authorize application",
+            "message": "Authorize application",
+            "translation": "Авторизовать приложение",
+            "translatorComment": "Заголовок страницы авторизации безымянного приложения"
+        },
+        {
+            "id": "Check your scopes",
+            "message": "Check your scopes",
+            "translation": "Проверь права доступа",
+            "translatorComment": "Имя секции с набором чекбоксов прав доступа на странице авторизации"
+        },
+        {
+            "id": "Deny",
+            "message": "Deny",
+            "translation": "Отказать",
+            "translatorComment": "Название кнопки прерывания процесса авторизациии приложения"
+        },
+        {
+            "id": "Allow",
+            "message": "Allow",
+            "translation": "Разрешить",
+            "translatorComment": "Название кнопки продолжения процесса авторизациии приложения"
+        },
+        {
+            "id": "Sign In",
+            "message": "Sign In",
+            "translation": "Войти",
+            "translatorComment": "Название кнопки в форме ввода адреса сайта для начала процесса входа"
+        }
+    ]
+}

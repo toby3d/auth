@@ -1,0 +1,85 @@
+{
+    "language": "en",
+    "messages": [
+        {
+            "id": "Authorize {Name0}",
+            "message": "Authorize {Name0}",
+            "translation": "Authorize {Name0}",
+            "translatorComment": "Copied from source.",
+            "placeholders": [
+                {
+                    "id": "Name0",
+                    "string": "%[1]s",
+                    "type": "string",
+                    "underlyingType": "string",
+                    "argNum": 1,
+                    "expr": "p.Client.Name[0]"
+                }
+            ],
+            "fuzzy": true
+        },
+        {
+            "id": "Authorize application",
+            "message": "Authorize application",
+            "translation": "Authorize application",
+            "translatorComment": "Authorization page header for an unnamed application",
+            "fuzzy": true
+        },
+        {
+            "id": "Authorize",
+            "message": "Authorize",
+            "translation": "Authorize",
+            "translatorComment": "Copied from source.",
+            "fuzzy": true
+        },
+        {
+            "id": "application",
+            "message": "application",
+            "translation": "application",
+            "translatorComment": "Copied from source.",
+            "fuzzy": true
+        },
+        {
+            "id": "Check your scopes",
+            "message": "Check your scopes",
+            "translation": "Check your scopes",
+            "translatorComment": "Name of the section with the set of access rights checkboxes on the login page",
+            "fuzzy": true
+        },
+        {
+            "id": "Deny",
+            "message": "Deny",
+            "translation": "Deny",
+            "translatorComment": "Name of the button to interrupt the application authorization process",
+            "fuzzy": true
+        },
+        {
+            "id": "Allow",
+            "message": "Allow",
+            "translation": "Allow",
+            "translatorComment": "The name of the button to continue the application authorization process",
+            "fuzzy": true
+        },
+        {
+            "id": "Sign In",
+            "message": "Sign In",
+            "translation": "Sign In",
+            "translatorComment": "The name of the button in the site address entry form to start the login process",
+            "fuzzy": true
+        },
+        {
+            "id": "Create a new remote token",
+            "message": "Create a new remote token",
+            "translation": "Create a new remote token",
+            "translatorComment": "Copied from source.",
+            "fuzzy": true
+        },
+        {
+            "id": "Send",
+            "message": "Send",
+            "translation": "Send",
+            "translatorComment": "Copied from source.",
+            "fuzzy": true
+        }
+    ]
+}
