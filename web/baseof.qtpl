@@ -1,33 +1,88 @@
+{% import (
+  "golang.org/x/text/language"
+  "golang.org/x/text/message"
+
+  "source.toby3d.me/website/oauth/internal/domain"
+) %}
+
 {% interface Page {
+  Body()
+  Head()
   Lang()
-	Title()
-	Head()
-	Body()
+  Title()
 } %}
 
 {% code
-  type BaseOf struct {}
+  type BaseOf struct {
+    Config   *domain.Config
+    Language language.Tag
+    Printer  *message.Printer
+  }
 %}
 
-{% func (p *BaseOf) Lang() %}en{% endfunc %}
+{% stripspace %}
+{% func (p *BaseOf) Lang() %}
+  {% if p.Language != language.Und %}
+    {%s p.Language.String() %}
+  {% else %}
+    en
+  {% endif %}
+{% endfunc %}
+{% endstripspace %}
 
-{% func (p *BaseOf) Title() %}Title{% endfunc %}
+{% collapsespace %}
+{% func (p *BaseOf) Title() %}
+  {%s p.Config.Name %}
+{% endfunc %}
 
-{% func (p *BaseOf) Head() %}{% endfunc %}
+{% func (p *BaseOf) Head() %}
+  {% comment %}https://evilmartians.com/chronicles/how-to-favicon-in-2021-six-files-that-fit-most-needs{% endcomment %}
+  <link
+    rel="icon"
+    href="{%s p.Config.Server.StaticURLPrefix %}/favicon.ico"
+    sizes="any">
+
+  <link
+    rel="icon"
+    href="{%s p.Config.Server.StaticURLPrefix %}/icon.svg"
+    type="image/svg+xml">
+
+  <link
+    rel="apple-touch-icon"
+    href="{%s p.Config.Server.StaticURLPrefix %}/apple-touch-icon.png">
+
+  <link
+    rel="manifest"
+    href="{%s p.Config.Server.StaticURLPrefix %}/manifest.webmanifest">
+{% endfunc %}
 
 {% func (p *BaseOf) Body() %}{% endfunc %}
 
-{% func PageTemplate(p Page) %}
-<!DOCTYPE html>
-<html lang="{%= p.Lang() %}">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{%= p.Title() %}</title>
-    {%= p.Head() %}
-  </head>
-  <body>
-    {%= p.Body() %}
-  </body>
-</html>
+{% func Template(p Page) %}
+  <!DOCTYPE html>
+  <html
+    class="page"
+    lang="{%= p.Lang() %}">
+
+    <head>
+      <meta charset="UTF-8">
+      <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+      {%= p.Head() %}
+      <title>{%= p.Title() %}</title>
+    </head>
+    <body class="page__body body">
+      {%= p.Body() %}
+    </body>
+  </html>
 {% endfunc %}
+
+{% func (p *BaseOf) T(str string, args ...interface{}) %}
+  {% code
+    result := p.Printer.Sprintf(str, args...)
+  %}
+  {%s result %}
+{% endfunc %}
+{% endcollapsespace %}

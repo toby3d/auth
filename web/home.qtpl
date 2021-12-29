@@ -1,0 +1,79 @@
+{% import "source.toby3d.me/website/oauth/internal/domain" %}
+
+{% code
+  type HomePage struct {
+    BaseOf
+    RedirectURI   []*domain.URL
+    Client        *domain.Client
+    AuthEndpoint,
+    State         string
+  }
+%}
+
+{% collapsespace %}
+{% func (p *HomePage) Head() %}
+  {%= p.BaseOf.Head() %}
+  {% for i := range p.RedirectURI %}
+    <link rel="redirect_uri" href="{%s p.RedirectURI[i].String() %}">
+  {% endfor %}
+{% endfunc %}
+
+{% func (p *HomePage) Body() %}
+  <div class="h-app h-x-app">
+    <img
+      class="u-logo"
+      src="{%s p.Client.Logo[0].String() %}"
+      alt="{%s p.Client.Name[0] %}"
+      crossorigin="anonymous"
+      decoding="async"
+      height="140"
+      importance="high"
+      referrerpolicy="no-referrer-when-downgrade"
+      width="140">
+
+    <h1>
+      <a
+        class="p-name u-url"
+        href="{%s p.Client.URL[0].String() %}">
+
+        {%s p.Client.Name[0] %}
+      </a>
+    </h1>
+
+    <form
+      method="get"
+      action="{%s p.AuthEndpoint %}"
+      enctype="application/x-www-form-urlencoded"
+      accept-charset="utf-8"
+      target="_self">
+
+      {% for name, value := range map[string]string {
+        "client_id":      p.Client.ID.String(),
+        "redirect_uri":   p.Client.RedirectURI[0].String(),
+        "response_type":  "code",
+        "state":          p.State,
+      } %}
+        <input
+          type="hidden"
+          name="{%s name %}"
+          value="{%s value %}">
+      {% endfor %}
+
+      <input
+        type="hidden"
+        name="scope"
+        value="{%s domain.ScopeProfile.String() %} {%s domain.ScopeEmail.String() %}">
+
+      <input
+        type="url"
+        name="me"
+        placeholder="https://example.com/"
+        inputmode="url"
+        autocomplete="url"
+        required>
+
+      <button type="submit">{%= p.T("Sign In") %}</button>
+    </form>
+  </div>
+{% endfunc %}
+{% endcollapsespace %}
