@@ -96,7 +96,7 @@ var DefaultMetadataResponse = MetadataResponse{
 	},
 }
 
-func New(config *domain.Config) *RequestHandler {
+func NewRequestHandler(config *domain.Config) *RequestHandler {
 	return &RequestHandler{
 		config: config,
 	}

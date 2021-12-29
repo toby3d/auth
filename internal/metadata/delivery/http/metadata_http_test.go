@@ -19,7 +19,7 @@ func TestMetadata(t *testing.T) {
 
 	r := router.New()
 	cfg := domain.TestConfig(t)
-	delivery.New(cfg).Register(r)
+	delivery.NewRequestHandler(cfg).Register(r)
 
 	client, _, cleanup := httptest.New(t, r.Handler)
 	t.Cleanup(cleanup)
