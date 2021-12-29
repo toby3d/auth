@@ -3,6 +3,7 @@ package domain
 import (
 	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -14,8 +15,8 @@ import (
 
 // ClientID is a URL client identifier.
 type ClientID struct {
-	cid   *http.URI
-	valid bool
+	clientID *http.URI
+	valid    bool
 }
 
 //nolint: gochecknoglobals
@@ -25,8 +26,8 @@ var (
 )
 
 func NewClientID(raw string) (*ClientID, error) {
-	cid := http.AcquireURI()
-	if err := cid.Parse(nil, []byte(raw)); err != nil {
+	clientID := http.AcquireURI()
+	if err := clientID.Parse(nil, []byte(raw)); err != nil {
 		return nil, Error{
 			Code:        "invalid_request",
 			Description: err.Error(),
@@ -35,7 +36,7 @@ func NewClientID(raw string) (*ClientID, error) {
 		}
 	}
 
-	scheme := string(cid.Scheme())
+	scheme := string(clientID.Scheme())
 	if scheme != "http" && scheme != "https" {
 		return nil, Error{
 			Code:        "invalid_request",
@@ -45,7 +46,7 @@ func NewClientID(raw string) (*ClientID, error) {
 		}
 	}
 
-	path := string(cid.PathOriginal())
+	path := string(clientID.PathOriginal())
 	if path == "" || strings.Contains(path, "/.") || strings.Contains(path, "/..") {
 		return nil, Error{
 			Code: "invalid_request",
@@ -56,7 +57,7 @@ func NewClientID(raw string) (*ClientID, error) {
 		}
 	}
 
-	if cid.Hash() != nil {
+	if clientID.Hash() != nil {
 		return nil, Error{
 			Code:        "invalid_request",
 			Description: "client identifier URL MUST NOT contain a fragment component",
@@ -65,7 +66,7 @@ func NewClientID(raw string) (*ClientID, error) {
 		}
 	}
 
-	if cid.Username() != nil || cid.Password() != nil {
+	if clientID.Username() != nil || clientID.Password() != nil {
 		return nil, Error{
 			Code:        "invalid_request",
 			Description: "client identifier URL MUST NOT contain a username or password component",
@@ -74,7 +75,7 @@ func NewClientID(raw string) (*ClientID, error) {
 		}
 	}
 
-	domain := string(cid.Host())
+	domain := string(clientID.Host())
 	if domain == "" {
 		return nil, Error{
 			Code:        "invalid_request",
@@ -88,7 +89,7 @@ func NewClientID(raw string) (*ClientID, error) {
 	if err != nil {
 		ipPort, err := netaddr.ParseIPPort(domain)
 		if err != nil {
-			return &ClientID{cid: cid}, nil
+			return &ClientID{clientID: clientID}, nil
 		}
 
 		ip = ipPort.IP()
@@ -104,28 +105,43 @@ func NewClientID(raw string) (*ClientID, error) {
 		}
 	}
 
-	return &ClientID{cid: cid}, nil
+	return &ClientID{clientID: clientID}, nil
 }
 
 // TestClientID returns a valid random generated ClientID for tests.
 func TestClientID(tb testing.TB) *ClientID {
 	tb.Helper()
 
-	cid, err := NewClientID("https://app.example.com/")
+	clientID, err := NewClientID("https://app.example.com/")
 	require.NoError(tb, err)
 
-	return cid
+	return clientID
 }
 
 // UnmarshalForm implements a custom form.Unmarshaler.
 func (cid *ClientID) UnmarshalForm(v []byte) error {
-	clientId, err := NewClientID(string(v))
+	clientID, err := NewClientID(string(v))
 	if err != nil {
 		return fmt.Errorf("UnmarshalForm: %w", err)
 	}
-	defer http.ReleaseURI(clientId.cid) //nolint: wsl
 
-	clientId.cid.CopyTo(cid.cid)
+	*cid = *clientID
+
+	return nil
+}
+
+func (cid *ClientID) UnmarshalJSON(v []byte) error {
+	src, err := strconv.Unquote(string(v))
+	if err != nil {
+		return err
+	}
+
+	clientID, err := NewClientID(src)
+	if err != nil {
+		return fmt.Errorf("UnmarshalJSON: %w", err)
+	}
+
+	*cid = *clientID
 
 	return nil
 }
@@ -134,23 +150,23 @@ func (cid *ClientID) UnmarshalForm(v []byte) error {
 // This copy MUST be released via fasthttp.ReleaseURI.
 func (cid *ClientID) URI() *http.URI {
 	u := http.AcquireURI()
-	cid.cid.CopyTo(u)
+	cid.clientID.CopyTo(u)
 
 	return u
 }
 
 func (cid *ClientID) URL() *url.URL {
 	return &url.URL{
-		Scheme:   string(cid.cid.Scheme()),
-		Host:     string(cid.cid.Host()),
-		Path:     string(cid.cid.Path()),
-		RawPath:  string(cid.cid.PathOriginal()),
-		RawQuery: string(cid.cid.QueryString()),
-		Fragment: string(cid.cid.Hash()),
+		Scheme:   string(cid.clientID.Scheme()),
+		Host:     string(cid.clientID.Host()),
+		Path:     string(cid.clientID.Path()),
+		RawPath:  string(cid.clientID.PathOriginal()),
+		RawQuery: string(cid.clientID.QueryString()),
+		Fragment: string(cid.clientID.Hash()),
 	}
 }
 
 // String returns string representation of client ID.
 func (cid *ClientID) String() string {
-	return cid.cid.String()
+	return cid.clientID.String()
 }

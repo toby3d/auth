@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -12,6 +13,7 @@ type (
 		slug string
 	}
 
+	// Scopes represent set of Scope domains.
 	Scopes []Scope
 )
 
@@ -74,7 +76,7 @@ var slugsScopes = map[string]Scope{
 
 // ParseScope parses scope slug into Scope domain.
 func ParseScope(slug string) (Scope, error) {
-	if scope, ok := slugsScopes[strings.ToLower(slug)]; !ok {
+	if scope, ok := slugsScopes[strings.ToLower(slug)]; ok {
 		return scope, nil
 	}
 
@@ -93,7 +95,55 @@ func (s *Scope) UnmarshalForm(v []byte) (err error) {
 	return nil
 }
 
+func (s *Scope) UnmarshalJSON(v []byte) error {
+	src, err := strconv.Unquote(string(v))
+	if err != nil {
+		return err
+	}
+
+	scope, err := ParseScope(src)
+	if err != nil {
+		return fmt.Errorf("scope: %w", err)
+	}
+
+	*s = scope
+
+	return nil
+}
+
+func (s *Scopes) UnmarshalJSON(v []byte) error {
+	src, err := strconv.Unquote(string(v))
+	if err != nil {
+		return err
+	}
+
+	result := make([]Scope, 0)
+
+	for _, scope := range strings.Fields(src) {
+		s, err := ParseScope(scope)
+		if err != nil {
+			return fmt.Errorf("scope: %w", err)
+		}
+
+		result = append(result, s)
+	}
+
+	*s = result
+
+	return nil
+}
+
 // String returns scope slug as string.
 func (s Scope) String() string {
 	return s.slug
+}
+
+func (s Scopes) String() string {
+	scopes := make([]string, len(s))
+
+	for i := range s {
+		scopes[i] = s[i].String()
+	}
+
+	return strings.Join(scopes, " ")
 }

@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"hash"
+	"strconv"
 	"strings"
 )
 
@@ -75,6 +76,22 @@ func ParseCodeChallengeMethod(slug string) (CodeChallengeMethod, error) {
 // UnmarshalForm implements custom unmarshler for form values.
 func (ccm *CodeChallengeMethod) UnmarshalForm(v []byte) error {
 	method, err := ParseCodeChallengeMethod(string(v))
+	if err != nil {
+		return fmt.Errorf("code_challenge_method: %w", err)
+	}
+
+	*ccm = method
+
+	return nil
+}
+
+func (ccm *CodeChallengeMethod) UnmarshalJSON(v []byte) error {
+	src, err := strconv.Unquote(string(v))
+	if err != nil {
+		return err
+	}
+
+	method, err := ParseCodeChallengeMethod(src)
 	if err != nil {
 		return fmt.Errorf("code_challenge_method: %w", err)
 	}

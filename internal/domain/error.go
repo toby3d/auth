@@ -6,6 +6,7 @@ import (
 	"golang.org/x/xerrors"
 )
 
+// Error describes the data of a typical error.
 //nolint: tagliatelle
 type Error struct {
 	Code        string        `json:"error"`
@@ -23,15 +24,17 @@ func (e Error) Format(s fmt.State, r rune) {
 }
 
 func (e Error) FormatError(p xerrors.Printer) error {
-	p.Printf("%s: %s", e.Code, e.Description)
+	p.Print(e.Description)
 
 	if e.URI != "" {
-		p.Printf(": %s", e.URI)
+		p.Print(": ", e.URI, "\n")
 	}
 
-	if p.Detail() {
-		e.Frame.Format(p)
+	if !p.Detail() {
+		return e
 	}
+
+	e.Frame.Format(p)
 
 	return nil
 }

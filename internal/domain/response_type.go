@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -48,6 +49,22 @@ func ParseResponseType(slug string) (ResponseType, error) {
 }
 
 func (rt *ResponseType) UnmarshalForm(src []byte) error {
+	responseType, err := ParseResponseType(string(src))
+	if err != nil {
+		return fmt.Errorf("response_type: %w", err)
+	}
+
+	*rt = responseType
+
+	return nil
+}
+
+func (rt *ResponseType) UnmarshalJSON(v []byte) error {
+	src, err := strconv.Unquote(string(v))
+	if err != nil {
+		return err
+	}
+
 	responseType, err := ParseResponseType(string(src))
 	if err != nil {
 		return fmt.Errorf("response_type: %w", err)

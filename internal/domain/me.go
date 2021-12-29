@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -109,14 +110,29 @@ func TestMe(tb testing.TB) *Me {
 }
 
 // UnmarshalForm parses the value of the form key into the Me domain.
-func (m *Me) UnmarshalForm(v []byte) (err error) {
+func (m *Me) UnmarshalForm(v []byte) error {
 	me, err := NewMe(string(v))
 	if err != nil {
 		return fmt.Errorf("UnmarshalForm: %w", err)
 	}
-	defer http.ReleaseURI(me.me) //nolint: wsl
 
-	me.me.CopyTo(m.me)
+	*m = *me
+
+	return nil
+}
+
+func (m *Me) UnmarshalJSON(v []byte) error {
+	src, err := strconv.Unquote(string(v))
+	if err != nil {
+		return err
+	}
+
+	me, err := NewMe(src)
+	if err != nil {
+		return fmt.Errorf("UnmarshalForm: %w", err)
+	}
+
+	*m = *me
 
 	return nil
 }
@@ -124,6 +140,10 @@ func (m *Me) UnmarshalForm(v []byte) (err error) {
 // URI returns copy of parsed Me in *fasthttp.URI representation.
 // This copy MUST be released via fasthttp.ReleaseURI.
 func (m *Me) URI() *http.URI {
+	if m.me == nil {
+		return nil
+	}
+
 	u := http.AcquireURI()
 	m.me.CopyTo(u)
 
@@ -132,6 +152,10 @@ func (m *Me) URI() *http.URI {
 
 // URL returns copy of parsed Me in *url.URL representation.
 func (m *Me) URL() *url.URL {
+	if m.me == nil {
+		return nil
+	}
+
 	return &url.URL{
 		Scheme:   string(m.me.Scheme()),
 		Host:     string(m.me.Host()),
@@ -143,6 +167,10 @@ func (m *Me) URL() *url.URL {
 }
 
 // String returns string representation of Me.
-func (m Me) String() string {
+func (m *Me) String() string {
+	if m.me == nil {
+		return ""
+	}
+
 	return m.me.String()
 }
