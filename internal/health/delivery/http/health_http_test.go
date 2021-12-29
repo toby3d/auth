@@ -29,4 +29,5 @@ func TestRequestHandler(t *testing.T) {
 
 	require.NoError(t, client.Do(req, resp))
 	assert.Equal(t, http.StatusOK, resp.StatusCode())
+	assert.Equal(t, `{}`, string(resp.Body()))
 }

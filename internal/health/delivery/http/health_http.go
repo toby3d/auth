@@ -18,6 +18,5 @@ func (h *RequestHandler) Register(r *router.Router) {
 }
 
 func (h *RequestHandler) read(ctx *http.RequestCtx) {
-	ctx.SetContentType(common.MIMETextPlainCharsetUTF8)
-	ctx.SetStatusCode(http.StatusOK)
+	ctx.SuccessString(common.MIMEApplicationJSONCharsetUTF8, `{}`)
 }
