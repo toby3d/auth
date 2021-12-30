@@ -12,7 +12,6 @@ import (
 	"source.toby3d.me/website/oauth/internal/common"
 	"source.toby3d.me/website/oauth/internal/domain"
 	"source.toby3d.me/website/oauth/internal/ticket"
-	"source.toby3d.me/website/oauth/internal/user"
 )
 
 type (
@@ -24,19 +23,18 @@ type (
 		Resource *domain.URL `form:"resource"`
 
 		// The access token should be used when acting on behalf of this URL.
+		// WARN(toby3d): deadcode for now
 		Subject *domain.Me `form:"subject"`
 	}
 
 	RequestHandler struct {
-		users   user.UseCase
-		tickets ticket.UseCase
+		useCase ticket.UseCase
 	}
 )
 
-func NewRequestHandler(tickets ticket.UseCase, users user.UseCase) *RequestHandler {
+func NewRequestHandler(useCase ticket.UseCase) *RequestHandler {
 	return &RequestHandler{
-		tickets: tickets,
-		users:   users,
+		useCase: useCase,
 	}
 }
 
@@ -58,20 +56,11 @@ func (h *RequestHandler) update(ctx *http.RequestCtx) {
 		return
 	}
 
-	// TODO(toby3d): fetch token endpoint on Resource URL instead
-	u, err := h.users.Fetch(ctx, req.Subject)
-	if err != nil {
-		ctx.SetStatusCode(http.StatusBadRequest)
-		encoder.Encode(domain.Error{
-			Code:        "invalid_request",
-			Description: err.Error(),
-			Frame:       xerrors.Caller(1),
-		})
-
-		return
-	}
-
-	token, err := h.tickets.Redeem(ctx, u.TokenEndpoint, req.Ticket)
+	token, err := h.useCase.Redeem(ctx, &domain.Ticket{
+		Ticket:   req.Ticket,
+		Resource: req.Resource,
+		Subject:  req.Subject,
+	})
 	if err != nil {
 		ctx.SetStatusCode(http.StatusBadRequest)
 		encoder.Encode(domain.Error{

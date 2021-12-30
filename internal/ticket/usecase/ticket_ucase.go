@@ -23,16 +23,23 @@ type (
 
 	ticketUseCase struct {
 		client *http.Client
+		repo   ticket.Repository
 	}
 )
 
-func NewTicketUseCase(client *http.Client) ticket.UseCase {
+func NewTicketUseCase(repo ticket.Repository, client *http.Client) ticket.UseCase {
 	return &ticketUseCase{
 		client: client,
+		repo:   repo,
 	}
 }
 
-func (useCase *ticketUseCase) Redeem(ctx context.Context, endpoint *domain.URL, ticket string) (*domain.Token, error) {
+func (useCase *ticketUseCase) Redeem(ctx context.Context, ticket *domain.Ticket) (*domain.Token, error) {
+	endpoint, err := useCase.repo.Get(ctx, ticket.Resource)
+	if err != nil {
+		return nil, fmt.Errorf("cannot discovery token endpoint: %w", err)
+	}
+
 	req := http.AcquireRequest()
 	defer http.ReleaseRequest(req)
 	req.Header.SetMethod(http.MethodPost)
@@ -40,7 +47,7 @@ func (useCase *ticketUseCase) Redeem(ctx context.Context, endpoint *domain.URL, 
 	req.Header.SetContentType(common.MIMEApplicationForm)
 	req.Header.Set(http.HeaderAccept, common.MIMEApplicationJSON)
 	req.PostArgs().Set("grant_type", domain.GrantTypeTicket.String())
-	req.PostArgs().Set("ticket", ticket)
+	req.PostArgs().Set("ticket", ticket.Ticket)
 
 	resp := http.AcquireResponse()
 	defer http.ReleaseResponse(resp)

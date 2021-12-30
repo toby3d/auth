@@ -14,8 +14,8 @@ import (
 	"source.toby3d.me/website/oauth/internal/common"
 	"source.toby3d.me/website/oauth/internal/domain"
 	"source.toby3d.me/website/oauth/internal/testing/httptest"
+	repo "source.toby3d.me/website/oauth/internal/ticket/repository/memory"
 	ucase "source.toby3d.me/website/oauth/internal/ticket/usecase"
-	userrepo "source.toby3d.me/website/oauth/internal/user/repository/memory"
 )
 
 func TestRedeem(t *testing.T) {
@@ -25,20 +25,23 @@ func TestRedeem(t *testing.T) {
 	ticket := domain.TestTicket(t)
 
 	store := new(sync.Map)
-	store.Store(path.Join(userrepo.DefaultPathPrefix, ticket.Subject.String()), domain.TestUser(t))
+	store.Store(
+		path.Join(repo.DefaultPathPrefix, ticket.Resource.String()),
+		domain.TestURL(t, "https://example.com/token"),
+	)
 
 	client, _, cleanup := httptest.New(t, func(ctx *http.RequestCtx) {
 		ctx.SuccessString(common.MIMEApplicationJSONCharsetUTF8, fmt.Sprintf(`{
-			"access_token": "%s",
 			"token_type": "Bearer",
+			"access_token": "%s",
 			"scope": "%s",
 			"me": "%s"
 		}`, token.AccessToken, token.Scope.String(), token.Me.String()))
 	})
 	t.Cleanup(cleanup)
 
-	result, err := ucase.NewTicketUseCase(client).
-		Redeem(context.Background(), domain.TestURL(t, "https://bob.example.com/token"), ticket.Ticket)
+	result, err := ucase.NewTicketUseCase(repo.NewMemoryTicketRepository(store), client).
+		Redeem(context.Background(), ticket)
 	require.NoError(t, err)
 	assert.Equal(t, token.AccessToken, result.AccessToken)
 	assert.Equal(t, token.Me.String(), result.Me.String())

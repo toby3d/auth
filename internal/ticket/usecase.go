@@ -8,5 +8,5 @@ import (
 
 type UseCase interface {
 	// Redeem transform received ticket into access token.
-	Redeem(ctx context.Context, endpoint *domain.URL, ticket string) (*domain.Token, error)
+	Redeem(ctx context.Context, ticket *domain.Ticket) (*domain.Token, error)
 }

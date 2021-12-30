@@ -15,9 +15,8 @@ import (
 	"source.toby3d.me/website/oauth/internal/domain"
 	"source.toby3d.me/website/oauth/internal/testing/httptest"
 	delivery "source.toby3d.me/website/oauth/internal/ticket/delivery/http"
+	ticketrepo "source.toby3d.me/website/oauth/internal/ticket/repository/memory"
 	ucase "source.toby3d.me/website/oauth/internal/ticket/usecase"
-	userrepo "source.toby3d.me/website/oauth/internal/user/repository/memory"
-	userucase "source.toby3d.me/website/oauth/internal/user/usecase"
 )
 
 // TODO(toby3d): looks ugly, refactor this?
@@ -30,7 +29,10 @@ func TestUpdate(t *testing.T) {
 	token := domain.TestToken(t)
 
 	store := new(sync.Map)
-	store.Store(path.Join(userrepo.DefaultPathPrefix, ticket.Subject.String()), domain.TestUser(t))
+	store.Store(
+		path.Join(ticketrepo.DefaultPathPrefix, ticket.Resource.String()),
+		domain.TestURL(t, "https://example.com/token"),
+	)
 
 	userClient, _, userCleanup := httptest.New(t, func(ctx *http.RequestCtx) {
 		ctx.SuccessString(common.MIMEApplicationJSONCharsetUTF8, fmt.Sprintf(`{
@@ -47,9 +49,8 @@ func TestUpdate(t *testing.T) {
 	client, _, cleanup := httptest.New(t, r.Handler)
 	t.Cleanup(cleanup)
 
-	delivery.NewRequestHandler(
-		ucase.NewTicketUseCase(userClient), userucase.NewUserUseCase(userrepo.NewMemoryUserRepository(store)),
-	).Register(r)
+	delivery.NewRequestHandler(ucase.NewTicketUseCase(ticketrepo.NewMemoryTicketRepository(store), userClient)).
+		Register(r)
 
 	req := httptest.NewRequest(http.MethodPost, "https://example.com/ticket", []byte(
 		`ticket=`+ticket.Ticket+

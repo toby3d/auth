@@ -21,14 +21,11 @@ import (
 	"golang.org/x/text/message"
 
 	clienthttpdelivery "source.toby3d.me/website/oauth/internal/client/delivery/http"
-	clientrepo "source.toby3d.me/website/oauth/internal/client/repository/http"
-	clientucase "source.toby3d.me/website/oauth/internal/client/usecase"
 	healthhttpdelivery "source.toby3d.me/website/oauth/internal/health/delivery/http"
 	metadatahttpdelivery "source.toby3d.me/website/oauth/internal/metadata/delivery/http"
 	tickethttpdelivery "source.toby3d.me/website/oauth/internal/ticket/delivery/http"
+	ticketrepo "source.toby3d.me/website/oauth/internal/ticket/repository/http"
 	ticketucase "source.toby3d.me/website/oauth/internal/ticket/usecase"
-	userrepo "source.toby3d.me/website/oauth/internal/user/repository/http"
-	userucase "source.toby3d.me/website/oauth/internal/user/usecase"
 )
 
 const (
@@ -84,9 +81,15 @@ func startServer(cmd *cobra.Command, args []string) {
 	healthhttpdelivery.NewRequestHandler().Register(r)
 	metadatahttpdelivery.NewRequestHandler(config).Register(r)
 	clienthttpdelivery.NewRequestHandler(config, client, matcher).Register(r)
+	/*
+		serverhttpdelivery.NewRequestHandler(serverhttpdelivery.Config{
+			Config:  config,
+			Clients: clientucase.NewClientUseCase(clientrepo.NewHTTPClientRepository(httpClient)),
+			Matcher: matcher,
+		}).Register(r)
+	*/
 	tickethttpdelivery.NewRequestHandler(
-		ticketucase.NewTicketUseCase(httpClient),
-		userucase.NewUserUseCase(userrepo.NewHTTPUserRepository(httpClient)),
+		ticketucase.NewTicketUseCase(ticketrepo.NewHTTPTicketRepository(httpClient), httpClient),
 	).Register(r)
 
 	if enablePprof {

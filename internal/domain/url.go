@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"net/url"
 	"strconv"
 	"testing"
 
@@ -58,4 +59,17 @@ func (u *URL) UnmarshalJSON(v []byte) error {
 	*u = *url
 
 	return nil
+}
+
+func (u *URL) URL() *url.URL {
+	if u.URI == nil {
+		return nil
+	}
+
+	result, err := url.ParseRequestURI(u.URI.String())
+	if err != nil {
+		return nil
+	}
+
+	return result
 }

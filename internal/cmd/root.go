@@ -7,7 +7,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	http "github.com/valyala/fasthttp"
 
 	"source.toby3d.me/website/oauth/internal/domain"
 )
@@ -67,17 +66,22 @@ func initConfig() {
 		log.Fatalln("fail to read config:", err)
 	}
 
-	u, logo, redirect := http.AcquireURI(), http.AcquireURI(), http.AcquireURI()
-	if err = u.Parse(nil, []byte(rootURL)); err != nil {
-		log.Fatalln("cannot parse client URL:", err)
+	url, err := domain.NewURL(rootURL)
+	if err != nil {
+		log.Fatalln("cannot parse root URL as client URL:", err)
 	}
 
-	u.CopyTo(logo)
-	u.CopyTo(redirect)
-	redirect.SetPath("/callback")
-	logo.SetPath(config.Server.StaticURLPrefix + "/icon.svg")
+	logo, err := domain.NewURL(rootURL + config.Server.StaticURLPrefix + "/icon.svg")
+	if err != nil {
+		log.Fatalln("cannot parse root URL as client URL:", err)
+	}
 
-	client.URL = []*http.URI{u}
-	client.Logo = []*http.URI{logo}
-	client.RedirectURI = []*http.URI{redirect}
+	redirectURI, err := domain.NewURL(rootURL + "/callback")
+	if err != nil {
+		log.Fatalln("cannot parse root URL as client URL:", err)
+	}
+
+	client.URL = []*domain.URL{url}
+	client.Logo = []*domain.URL{logo}
+	client.RedirectURI = []*domain.URL{redirectURI}
 }
