@@ -5,8 +5,8 @@ import (
 	"path"
 	"sync"
 
-	"source.toby3d.me/website/oauth/internal/client"
-	"source.toby3d.me/website/oauth/internal/domain"
+	"source.toby3d.me/website/indieauth/internal/client"
+	"source.toby3d.me/website/indieauth/internal/domain"
 )
 
 type memoryClientRepository struct {

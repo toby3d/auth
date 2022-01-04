@@ -10,10 +10,10 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/xerrors"
 
-	"source.toby3d.me/website/oauth/internal/config"
-	"source.toby3d.me/website/oauth/internal/domain"
-	"source.toby3d.me/website/oauth/internal/random"
-	"source.toby3d.me/website/oauth/internal/token"
+	"source.toby3d.me/website/indieauth/internal/config"
+	"source.toby3d.me/website/indieauth/internal/domain"
+	"source.toby3d.me/website/indieauth/internal/random"
+	"source.toby3d.me/website/indieauth/internal/token"
 )
 
 type (

@@ -39,37 +39,22 @@ func init() {
 }
 
 var messageKeyToIndex = map[string]int{
-	"Allow":                     6,
-	"Authorize":                 2,
-	"Authorize %s":              0,
-	"Authorize application":     1,
-	"Check your scopes":         4,
-	"Create a new remote token": 8,
-	"Deny":                      5,
-	"Send":                      9,
-	"Sign In":                   7,
-	"application":               3,
+	"Allow":   1,
+	"Deny":    0,
+	"Sign In": 2,
 }
 
-var enIndex = []uint32{ // 11 elements
-	0x00000000, 0x00000010, 0x00000026, 0x00000030,
-	0x0000003c, 0x0000004e, 0x00000053, 0x00000059,
-	0x00000061, 0x0000007b, 0x00000080,
-} // Size: 68 bytes
+var enIndex = []uint32{ // 4 elements
+	0x00000000, 0x00000005, 0x0000000b, 0x00000013,
+} // Size: 40 bytes
 
-const enData string = "" + // Size: 128 bytes
-	"\x02Authorize %[1]s\x02Authorize application\x02Authorize\x02application" +
-	"\x02Check your scopes\x02Deny\x02Allow\x02Sign In\x02Create a new remote" +
-	" token\x02Send"
+const enData string = "\x02Deny\x02Allow\x02Sign In"
 
-var ruIndex = []uint32{ // 11 elements
-	0x00000000, 0x00000000, 0x0000002e, 0x0000002e,
-	0x0000002e, 0x00000057, 0x00000068, 0x0000007b,
-	0x00000086, 0x00000086, 0x00000086,
-} // Size: 68 bytes
+var ruIndex = []uint32{ // 4 elements
+	0x00000000, 0x00000011, 0x00000024, 0x0000002f,
+} // Size: 40 bytes
 
-const ruData string = "" + // Size: 134 bytes
-	"\x02Авторизовать приложение\x02Проверь права доступа\x02Отказать\x02Разр" +
-	"ешить\x02Войти"
+const ruData string = "" + // Size: 47 bytes
+	"\x02Отказать\x02Разрешить\x02Войти"
 
-	// Total table size 398 bytes (0KiB); checksum: 1F3647E6
+	// Total table size 146 bytes (0KiB); checksum: 9261221B

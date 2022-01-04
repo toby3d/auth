@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	repository "source.toby3d.me/website/oauth/internal/client/repository/memory"
-	"source.toby3d.me/website/oauth/internal/domain"
+	repository "source.toby3d.me/website/indieauth/internal/client/repository/memory"
+	"source.toby3d.me/website/indieauth/internal/domain"
 )
 
 func TestGet(t *testing.T) {

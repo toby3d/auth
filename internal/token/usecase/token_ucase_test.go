@@ -10,12 +10,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	configrepo "source.toby3d.me/website/oauth/internal/config/repository/viper"
-	configucase "source.toby3d.me/website/oauth/internal/config/usecase"
-	"source.toby3d.me/website/oauth/internal/domain"
-	"source.toby3d.me/website/oauth/internal/token"
-	repository "source.toby3d.me/website/oauth/internal/token/repository/memory"
-	ucase "source.toby3d.me/website/oauth/internal/token/usecase"
+	configrepo "source.toby3d.me/website/indieauth/internal/config/repository/viper"
+	configucase "source.toby3d.me/website/indieauth/internal/config/usecase"
+	"source.toby3d.me/website/indieauth/internal/domain"
+	"source.toby3d.me/website/indieauth/internal/token"
+	repository "source.toby3d.me/website/indieauth/internal/token/repository/memory"
+	ucase "source.toby3d.me/website/indieauth/internal/token/usecase"
 )
 
 func TestGenerate(t *testing.T) {

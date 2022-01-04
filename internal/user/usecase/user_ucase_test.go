@@ -8,9 +8,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"source.toby3d.me/website/oauth/internal/domain"
-	repository "source.toby3d.me/website/oauth/internal/user/repository/memory"
-	ucase "source.toby3d.me/website/oauth/internal/user/usecase"
+	"source.toby3d.me/website/indieauth/internal/domain"
+	repository "source.toby3d.me/website/indieauth/internal/user/repository/memory"
+	ucase "source.toby3d.me/website/indieauth/internal/user/usecase"
 )
 
 func TestFetch(t *testing.T) {

@@ -11,11 +11,11 @@ import (
 	"github.com/stretchr/testify/require"
 	http "github.com/valyala/fasthttp"
 
-	"source.toby3d.me/website/oauth/internal/common"
-	"source.toby3d.me/website/oauth/internal/domain"
-	"source.toby3d.me/website/oauth/internal/testing/httptest"
-	repo "source.toby3d.me/website/oauth/internal/ticket/repository/memory"
-	ucase "source.toby3d.me/website/oauth/internal/ticket/usecase"
+	"source.toby3d.me/website/indieauth/internal/common"
+	"source.toby3d.me/website/indieauth/internal/domain"
+	"source.toby3d.me/website/indieauth/internal/testing/httptest"
+	repo "source.toby3d.me/website/indieauth/internal/ticket/repository/memory"
+	ucase "source.toby3d.me/website/indieauth/internal/ticket/usecase"
 )
 
 func TestRedeem(t *testing.T) {

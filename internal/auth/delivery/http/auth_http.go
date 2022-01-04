@@ -8,8 +8,8 @@ import (
 	json "github.com/goccy/go-json"
 	http "github.com/valyala/fasthttp"
 	"gitlab.com/toby3d/indieauth/internal/auth"
+	"gitlab.com/toby3d/indieauth/internal/domain"
 	"gitlab.com/toby3d/indieauth/internal/middleware"
-	"gitlab.com/toby3d/indieauth/internal/model"
 	"gitlab.com/toby3d/indieauth/internal/pkce"
 	"gitlab.com/toby3d/indieauth/web"
 )
@@ -82,15 +82,15 @@ func (h *Handler) Register(r *router.Router) {
 
 func (r *AuthorizeRequest) bind(ctx *http.RequestCtx) error {
 	if r.ClientID = string(ctx.QueryArgs().Peek("client_id")); r.ClientID == "" {
-		return model.Error{
-			Code:        model.ErrInvalidRequest.Code,
+		return domain.Error{
+			Code:        domain.ErrInvalidRequest.Code,
 			Description: "'client_id' query is required",
 		}
 	}
 
 	if r.ResponseType = string(ctx.QueryArgs().Peek("response_type")); r.ResponseType != "code" {
-		return model.Error{
-			Code:        model.ErrInvalidRequest.Code,
+		return domain.Error{
+			Code:        domain.ErrInvalidRequest.Code,
 			Description: "'response_type' must be 'code'",
 		}
 	}
@@ -98,8 +98,8 @@ func (r *AuthorizeRequest) bind(ctx *http.RequestCtx) error {
 	if ctx.QueryArgs().Has("code_challenge") {
 		r.CodeChallenge = string(ctx.QueryArgs().Peek("code_challenge"))
 		if len(r.CodeChallenge) < 43 || len(r.CodeChallenge) > 128 {
-			return model.Error{
-				Code:        model.ErrInvalidRequest.Code,
+			return domain.Error{
+				Code:        domain.ErrInvalidRequest.Code,
 				Description: "length of the 'code_challenge' value must be greater than 43 and less than 128 symbols",
 			}
 		}
@@ -110,12 +110,11 @@ func (r *AuthorizeRequest) bind(ctx *http.RequestCtx) error {
 		}
 
 		if _, err := pkce.New(r.CodeChallengeMethod); err != nil {
-			return model.Error{
-				Code:        model.ErrInvalidRequest.Code,
+			return domain.Error{
+				Code:        domain.ErrInvalidRequest.Code,
 				Description: err.Error(),
 			}
 		}
-
 	}
 
 	r.RedirectURI = string(ctx.QueryArgs().Peek("redirect_uri"))
@@ -179,22 +178,22 @@ func (r *RedirectRequest) bind(ctx *http.RequestCtx) (err error) {
 	r.RedirectURI = string(ctx.PostArgs().Peek("redirect_uri"))
 
 	if r.ClientID = string(ctx.PostArgs().Peek("client_id")); r.ClientID == "" {
-		return model.Error{
-			Code:        model.ErrInvalidRequest.Code,
+		return domain.Error{
+			Code:        domain.ErrInvalidRequest.Code,
 			Description: "'client_id' query is required",
 		}
 	}
 
 	if r.Authorize = string(ctx.PostArgs().Peek("authorize")); r.Authorize != "allow" && r.Authorize != "deny" {
-		return model.Error{
-			Code:        model.ErrInvalidRequest.Code,
+		return domain.Error{
+			Code:        domain.ErrInvalidRequest.Code,
 			Description: "invalid prompt action, try starting the authorization flow again",
 		}
 	}
 
 	if r.ResponseType = string(ctx.PostArgs().Peek("response_type")); r.ResponseType != "code" {
-		return model.Error{
-			Code:        model.ErrInvalidRequest.Code,
+		return domain.Error{
+			Code:        domain.ErrInvalidRequest.Code,
 			Description: "'response_type' must be 'code', try starting the authorization flow again",
 		}
 	}
@@ -203,8 +202,8 @@ func (r *RedirectRequest) bind(ctx *http.RequestCtx) (err error) {
 		r.CodeChallenge = string(ctx.PostArgs().Peek("code_challenge"))
 
 		if len(r.CodeChallenge) < 43 || len(r.CodeChallenge) > 128 {
-			return model.Error{
-				Code:        model.ErrInvalidRequest.Code,
+			return domain.Error{
+				Code:        domain.ErrInvalidRequest.Code,
 				Description: "length of the 'code_challenge' value must be greater than 43 and less than 128 symbols, try starting the authorization flow again",
 			}
 		}
@@ -216,8 +215,8 @@ func (r *RedirectRequest) bind(ctx *http.RequestCtx) (err error) {
 
 		_, err := pkce.New(r.CodeChallengeMethod)
 		if err != nil {
-			return model.Error{
-				Code:        model.ErrInvalidRequest.Code,
+			return domain.Error{
+				Code:        domain.ErrInvalidRequest.Code,
 				Description: err.Error(),
 			}
 		}
@@ -250,7 +249,7 @@ func (h *Handler) Redirect(ctx *http.RequestCtx) {
 
 	switch r.Authorize {
 	case "allow":
-		code, err := h.useCase.Approve(ctx, &model.Login{
+		code, err := h.useCase.Approve(ctx, &domain.Login{
 			CreatedAt:           time.Now().UTC().Unix(),
 			ClientID:            r.ClientID,
 			CodeChallenge:       r.CodeChallenge,
@@ -260,7 +259,7 @@ func (h *Handler) Redirect(ctx *http.RequestCtx) {
 			Scope:               r.Scope,
 		})
 		if err != nil {
-			query.Set("error", model.ErrServerError.Code)
+			query.Set("error", domain.ErrServerError.Code)
 			query.Set("error_description", err.Error())
 
 			redirectUri.RawQuery = query.Encode()
@@ -272,7 +271,7 @@ func (h *Handler) Redirect(ctx *http.RequestCtx) {
 
 		query.Set("code", code)
 	case "deny":
-		query.Set("error", model.ErrAccessDenied.Code)
+		query.Set("error", domain.ErrAccessDenied.Code)
 	}
 
 	redirectUri.RawQuery = query.Encode()
@@ -282,29 +281,29 @@ func (h *Handler) Redirect(ctx *http.RequestCtx) {
 
 func (r *ExchangeRequest) bind(ctx *http.RequestCtx) (err error) {
 	if r.GrantType = string(ctx.PostArgs().Peek("grant_type")); r.GrantType != "authorization_code" {
-		return model.Error{
-			Code:        model.ErrInvalidRequest.Code,
+		return domain.Error{
+			Code:        domain.ErrInvalidRequest.Code,
 			Description: "'grant_type' must be 'authorization_code'",
 		}
 	}
 
 	if r.RedirectURI = string(ctx.PostArgs().Peek("redirect_uri")); r.RedirectURI == "" {
-		return model.Error{
-			Code:        model.ErrInvalidRequest.Code,
+		return domain.Error{
+			Code:        domain.ErrInvalidRequest.Code,
 			Description: "'redirect_uri' query is required",
 		}
 	}
 
 	if r.ClientID = string(ctx.PostArgs().Peek("client_id")); r.ClientID == "" {
-		return model.Error{
-			Code:        model.ErrInvalidRequest.Code,
+		return domain.Error{
+			Code:        domain.ErrInvalidRequest.Code,
 			Description: "'client_id' query is required",
 		}
 	}
 
 	if r.Code = string(ctx.PostArgs().Peek("code")); r.Code == "" {
-		return model.Error{
-			Code:        model.ErrInvalidRequest.Code,
+		return domain.Error{
+			Code:        domain.ErrInvalidRequest.Code,
 			Description: "'code' query is required",
 		}
 	}
@@ -324,7 +323,7 @@ func (h *Handler) Exchange(ctx *http.RequestCtx) {
 		return
 	}
 
-	me, err := h.useCase.Exchange(ctx, &model.ExchangeRequest{
+	me, err := h.useCase.Exchange(ctx, &domain.ExchangeRequest{
 		ClientID:     req.ClientID,
 		Code:         req.Code,
 		CodeVerifier: req.CodeVerifier,
@@ -337,7 +336,7 @@ func (h *Handler) Exchange(ctx *http.RequestCtx) {
 	}
 
 	if me == "" {
-		ctx.Error(model.ErrUnauthorizedClient.Error(), http.StatusUnauthorized)
+		ctx.Error(domain.ErrUnauthorizedClient.Error(), http.StatusUnauthorized)
 
 		return
 	}

@@ -12,8 +12,8 @@ import (
 	http "github.com/valyala/fasthttp"
 	"willnorris.com/go/microformats"
 
-	"source.toby3d.me/website/oauth/internal/domain"
-	"source.toby3d.me/website/oauth/internal/ticket"
+	"source.toby3d.me/website/indieauth/internal/domain"
+	"source.toby3d.me/website/indieauth/internal/ticket"
 )
 
 type (

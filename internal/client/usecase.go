@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"source.toby3d.me/website/oauth/internal/domain"
+	"source.toby3d.me/website/indieauth/internal/domain"
 )
 
 type UseCase interface {

@@ -8,7 +8,7 @@ import (
 
 	http "github.com/valyala/fasthttp"
 	"gitlab.com/toby3d/indieauth/internal/auth"
-	"gitlab.com/toby3d/indieauth/internal/model"
+	"gitlab.com/toby3d/indieauth/internal/domain"
 	"gitlab.com/toby3d/indieauth/internal/pkce"
 	"gitlab.com/toby3d/indieauth/internal/random"
 	"willnorris.com/go/microformats"
@@ -26,7 +26,7 @@ func NewAuthUseCase(repo auth.Repository) auth.UseCase {
 	}
 }
 
-func (useCase *authUseCase) Discovery(ctx context.Context, clientId string) (*model.Client, error) {
+func (useCase *authUseCase) Discovery(ctx context.Context, clientId string) (*domain.Client, error) {
 	_, src, err := useCase.client.Get(nil, clientId)
 	if err != nil {
 		return nil, err
@@ -39,7 +39,7 @@ func (useCase *authUseCase) Discovery(ctx context.Context, clientId string) (*mo
 
 	data := microformats.Parse(bytes.NewReader(src), cid)
 
-	client := new(model.Client)
+	client := new(domain.Client)
 	client.RedirectURI = make([]string, 0)
 
 	for i := range data.Items {
@@ -68,7 +68,6 @@ func (useCase *authUseCase) Discovery(ctx context.Context, clientId string) (*mo
 				}
 			}
 		}
-
 	}
 
 	for key, values := range data.Rels {
@@ -80,8 +79,8 @@ func (useCase *authUseCase) Discovery(ctx context.Context, clientId string) (*mo
 	}
 
 	if client.URL != clientId {
-		return nil, model.Error{
-			Code:        model.ErrInvalidRequest.Code,
+		return nil, domain.Error{
+			Code:        domain.ErrInvalidRequest.Code,
 			Description: "'client_id' does not match the actual client URL",
 		}
 	}
@@ -89,7 +88,7 @@ func (useCase *authUseCase) Discovery(ctx context.Context, clientId string) (*mo
 	return client, nil
 }
 
-func (useCase *authUseCase) Approve(ctx context.Context, login *model.Login) (string, error) {
+func (useCase *authUseCase) Approve(ctx context.Context, login *domain.Login) (string, error) {
 	login.Code = random.New().String(32)
 
 	if err := useCase.repo.Create(ctx, login); err != nil {
@@ -99,7 +98,7 @@ func (useCase *authUseCase) Approve(ctx context.Context, login *model.Login) (st
 	return login.Code, nil
 }
 
-func (useCase *authUseCase) Exchange(ctx context.Context, req *model.ExchangeRequest) (string, error) {
+func (useCase *authUseCase) Exchange(ctx context.Context, req *domain.ExchangeRequest) (string, error) {
 	login, err := useCase.repo.Get(ctx, req.Code)
 	if err != nil {
 		return "", err
@@ -116,7 +115,7 @@ func (useCase *authUseCase) Exchange(ctx context.Context, req *model.ExchangeReq
 	}
 
 	if login.ClientID != req.ClientID || login.RedirectURI != req.RedirectURI {
-		return "", model.ErrInvalidRequest
+		return "", domain.ErrInvalidRequest
 	}
 
 	if login.CodeChallenge != "" {
@@ -130,7 +129,7 @@ func (useCase *authUseCase) Exchange(ctx context.Context, req *model.ExchangeReq
 		codeChallenge.Generate()
 
 		if login.CodeChallenge != codeChallenge.Challenge {
-			return "", model.ErrInvalidRequest
+			return "", domain.ErrInvalidRequest
 		}
 	}
 

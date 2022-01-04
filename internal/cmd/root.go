@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"source.toby3d.me/website/oauth/internal/domain"
+	"source.toby3d.me/website/indieauth/internal/domain"
 )
 
 //nolint: gochecknoglobals

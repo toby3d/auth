@@ -16,16 +16,16 @@ import (
 	"github.com/spf13/cobra"
 	http "github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/pprofhandler"
-	bolt "go.etcd.io/bbolt"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 
-	clienthttpdelivery "source.toby3d.me/website/oauth/internal/client/delivery/http"
-	healthhttpdelivery "source.toby3d.me/website/oauth/internal/health/delivery/http"
-	metadatahttpdelivery "source.toby3d.me/website/oauth/internal/metadata/delivery/http"
-	tickethttpdelivery "source.toby3d.me/website/oauth/internal/ticket/delivery/http"
-	ticketrepo "source.toby3d.me/website/oauth/internal/ticket/repository/http"
-	ticketucase "source.toby3d.me/website/oauth/internal/ticket/usecase"
+	// bolt "go.etcd.io/bbolt".
+	clienthttpdelivery "source.toby3d.me/website/indieauth/internal/client/delivery/http"
+	healthhttpdelivery "source.toby3d.me/website/indieauth/internal/health/delivery/http"
+	metadatahttpdelivery "source.toby3d.me/website/indieauth/internal/metadata/delivery/http"
+	tickethttpdelivery "source.toby3d.me/website/indieauth/internal/ticket/delivery/http"
+	ticketrepo "source.toby3d.me/website/indieauth/internal/ticket/repository/http"
+	ticketucase "source.toby3d.me/website/indieauth/internal/ticket/usecase"
 )
 
 const (
@@ -58,11 +58,13 @@ func init() {
 }
 
 func startServer(cmd *cobra.Command, args []string) {
-	store, err := bolt.Open(config.Database.Path, os.ModePerm, nil)
-	if err != nil {
-		log.Fatalln("failed to open database connection:", err)
-	}
-	defer store.Close()
+	/*
+		store, err := bolt.Open(config.Database.Path, os.ModePerm, nil)
+		if err != nil {
+			log.Fatalln("failed to open database connection:", err)
+		}
+		defer store.Close()
+	*/
 
 	httpClient := &http.Client{
 		Name: fmt.Sprintf("%s/0.1 (+%s)", config.Name, config.Server.GetAddress()),
@@ -135,7 +137,7 @@ func startServer(cmd *cobra.Command, args []string) {
 
 	<-done
 
-	if err = server.Shutdown(); err != nil {
+	if err := server.Shutdown(); err != nil {
 		log.Fatalln("failed shutdown of server:", err)
 	}
 

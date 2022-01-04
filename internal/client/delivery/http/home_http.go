@@ -9,10 +9,10 @@ import (
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 
-	"source.toby3d.me/website/oauth/internal/common"
-	"source.toby3d.me/website/oauth/internal/domain"
-	"source.toby3d.me/website/oauth/internal/random"
-	"source.toby3d.me/website/oauth/web"
+	"source.toby3d.me/website/indieauth/internal/common"
+	"source.toby3d.me/website/indieauth/internal/domain"
+	"source.toby3d.me/website/indieauth/internal/random"
+	"source.toby3d.me/website/indieauth/web"
 )
 
 type RequestHandler struct {

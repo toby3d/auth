@@ -1,60 +1,59 @@
-{% import "gitlab.com/toby3d/indieauth/internal/model" %}
+{% import "source.toby3d.me/website/indieauth/internal/domain" %}
 
-{% code
-  type AuthPage struct {
-    Client *model.Client
-    CodeChallenge string
-    CodeChallengeMethod string
-    CSRF []byte
-    Me string
-    RedirectURI string
-    ResponseType string
-    Scope string
-    State []byte
-  }
-%}
+{% code type AuthPage struct {
+  BaseOf
+  Client              *domain.Client
+  Me                  *domain.Me
+  RedirectURI         *domain.URL
+  CodeChallengeMethod domain.CodeChallengeMethod
+  ResponseType        domain.ResponseType
+  Scope               domain.Scopes
+  CodeChallenge       string
+  CSRF                string
+  State               string
+} %}
 
 {% func (p *AuthPage) Lang() %}
   en
 {% endfunc %}
 
 {% func (p *AuthPage) Title() %}
-  Authorize {%s p.Client.Name %}
+  Authorize {%s p.Client.Name[0] %}
 {% endfunc %}
 
 {% func (p *AuthPage) Head() %}
 {% endfunc %}
 
 {% func (p *AuthPage) Body() %}
-  {% if p.Client.Logo != "" %}
+  {% if p.Client.Logo[0] != nil %}
     <img
-      alt="{%s p.Client.Name %}"
+      alt="{%s p.Client.Name[0] %}"
       crossorigin="anonymous"
       decoding="async"
       height="140"
       importance="high"
       loading="lazy"
       referrerpolicy="no-referrer-when-downgrade"
-      src="{%s p.Client.Logo %}"
+      src="{%s p.Client.Logo[0].String() %}"
       width="140">
   {% endif %}
 
-  <h2>{%s p.Client.Name %}</h2>
+  <h2>{%s p.Client.Name[0] %}</h2>
 
   <form
     accept-charset="utf-8"
-    action="/authorize"
+    action="/api/authorize"
     autocomplete="off"
     enctype="application/x-www-form-urlencoded"
     method="post"
     novalidate="true"
     target="_self">
 
-    {% if p.CSRF != nil %}
+    {% if p.CSRF != "" %}
       <input
         name="_csrf"
         type="hidden"
-        value="{%z p.CSRF %}">
+        value="{%s p.CSRF %}">
     {% endif %}
 
     <input
@@ -65,17 +64,17 @@
     <input
       name="client_id"
       type="hidden"
-      value="{%s p.Client.URL %}">
+      value="{%s p.Client.URL[0].String() %}">
 
     <input
       name="redirect_uri"
       type="hidden"
-      value="{%s p.RedirectURI %}">
+      value="{%s p.RedirectURI.String() %}">
 
     <input
       name="state"
       type="hidden"
-      value="{%z p.State %}">
+      value="{%s p.State %}">
 
     {% if p.CodeChallenge != "" %}
       <input
@@ -86,35 +85,37 @@
       <input
         name="code_challenge_method"
         type="hidden"
-        value="{%s p.CodeChallengeMethod %}">
+        value="{%s p.CodeChallengeMethod.String() %}">
     {% endif %}
 
-    {% if p.Scope != "" %}
+    {% if len(p.Scope) != 0 %}
       <input
         name="scope"
         type="hidden"
-        value="{%s p.Scope %}">
+        value="{%s p.Scope.String() %}">
     {% endif %}
 
-    {% if p.Me != "" %}
+    {% if p.Me != nil %}
       <input
         name="me"
         type="hidden"
-        value="{%s p.Me %}">
+        value="{%s p.Me.String() %}">
     {% endif %}
 
     <button
       name="authorize"
       type="submit"
       value="deny">
-      Deny
+
+      {%= p.T("Deny") %}
     </button>
 
     <button
       name="authorize"
       type="submit"
       value="allow">
-      Allow
+
+      {%= p.T("Allow") %}
     </button>
   </form>
 {% endfunc %}

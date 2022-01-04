@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/require"
 	http "github.com/valyala/fasthttp"
 
-	"source.toby3d.me/website/oauth/internal/domain"
-	delivery "source.toby3d.me/website/oauth/internal/metadata/delivery/http"
-	"source.toby3d.me/website/oauth/internal/testing/httptest"
+	"source.toby3d.me/website/indieauth/internal/domain"
+	delivery "source.toby3d.me/website/indieauth/internal/metadata/delivery/http"
+	"source.toby3d.me/website/indieauth/internal/testing/httptest"
 )
 
 func TestMetadata(t *testing.T) {

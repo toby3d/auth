@@ -9,9 +9,9 @@ import (
 	http "github.com/valyala/fasthttp"
 	"golang.org/x/xerrors"
 
-	"source.toby3d.me/website/oauth/internal/common"
-	"source.toby3d.me/website/oauth/internal/domain"
-	"source.toby3d.me/website/oauth/internal/token"
+	"source.toby3d.me/website/indieauth/internal/common"
+	"source.toby3d.me/website/indieauth/internal/domain"
+	"source.toby3d.me/website/indieauth/internal/token"
 )
 
 type (

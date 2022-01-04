@@ -10,10 +10,10 @@ import (
 	"github.com/stretchr/testify/require"
 	bolt "go.etcd.io/bbolt"
 
-	"source.toby3d.me/website/oauth/internal/domain"
-	"source.toby3d.me/website/oauth/internal/token"
-	repository "source.toby3d.me/website/oauth/internal/token/repository/bolt"
-	"source.toby3d.me/website/oauth/internal/util"
+	"source.toby3d.me/website/indieauth/internal/domain"
+	"source.toby3d.me/website/indieauth/internal/token"
+	repository "source.toby3d.me/website/indieauth/internal/token/repository/bolt"
+	"source.toby3d.me/website/indieauth/internal/util"
 )
 
 func TestCreate(t *testing.T) {

@@ -1,14 +1,12 @@
-{% import "source.toby3d.me/website/oauth/internal/domain" %}
+{% import "source.toby3d.me/website/indieauth/internal/domain" %}
 
-{% code
-  type HomePage struct {
-    BaseOf
-    RedirectURI   []*domain.URL
-    Client        *domain.Client
-    AuthEndpoint,
-    State         string
-  }
-%}
+{% code type HomePage struct {
+  BaseOf
+  RedirectURI   []*domain.URL
+  Client        *domain.Client
+  AuthEndpoint,
+  State         string
+} %}
 
 {% collapsespace %}
 {% func (p *HomePage) Head() %}

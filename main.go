@@ -7,7 +7,7 @@ package main
 import (
 	_ "embed"
 
-	"source.toby3d.me/website/oauth/internal/cmd"
+	"source.toby3d.me/website/indieauth/internal/cmd"
 )
 
 func main() { cmd.Execute() }

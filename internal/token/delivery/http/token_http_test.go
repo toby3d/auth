@@ -12,14 +12,14 @@ import (
 	"github.com/stretchr/testify/require"
 	http "github.com/valyala/fasthttp"
 
-	"source.toby3d.me/website/oauth/internal/common"
-	configrepo "source.toby3d.me/website/oauth/internal/config/repository/viper"
-	configucase "source.toby3d.me/website/oauth/internal/config/usecase"
-	"source.toby3d.me/website/oauth/internal/domain"
-	delivery "source.toby3d.me/website/oauth/internal/token/delivery/http"
-	repository "source.toby3d.me/website/oauth/internal/token/repository/memory"
-	"source.toby3d.me/website/oauth/internal/token/usecase"
-	"source.toby3d.me/website/oauth/internal/util"
+	"source.toby3d.me/website/indieauth/internal/common"
+	configrepo "source.toby3d.me/website/indieauth/internal/config/repository/viper"
+	configucase "source.toby3d.me/website/indieauth/internal/config/usecase"
+	"source.toby3d.me/website/indieauth/internal/domain"
+	delivery "source.toby3d.me/website/indieauth/internal/token/delivery/http"
+	repository "source.toby3d.me/website/indieauth/internal/token/repository/memory"
+	"source.toby3d.me/website/indieauth/internal/token/usecase"
+	"source.toby3d.me/website/indieauth/internal/util"
 )
 
 func TestVerification(t *testing.T) {

@@ -12,10 +12,10 @@ import (
 	"github.com/stretchr/testify/require"
 	http "github.com/valyala/fasthttp"
 
-	"source.toby3d.me/website/oauth/internal/common"
-	"source.toby3d.me/website/oauth/internal/domain"
-	"source.toby3d.me/website/oauth/internal/testing/httptest"
-	repository "source.toby3d.me/website/oauth/internal/user/repository/http"
+	"source.toby3d.me/website/indieauth/internal/common"
+	"source.toby3d.me/website/indieauth/internal/domain"
+	"source.toby3d.me/website/indieauth/internal/testing/httptest"
+	repository "source.toby3d.me/website/indieauth/internal/user/repository/http"
 )
 
 const testBody string = `

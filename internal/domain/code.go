@@ -8,7 +8,7 @@ import (
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
 
-	"source.toby3d.me/website/oauth/internal/random"
+	"source.toby3d.me/website/indieauth/internal/random"
 )
 
 // Code describes the PKCE challenge to validate the security of the request.

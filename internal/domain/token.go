@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	http "github.com/valyala/fasthttp"
 
-	"source.toby3d.me/website/oauth/internal/random"
+	"source.toby3d.me/website/indieauth/internal/random"
 )
 
 type (

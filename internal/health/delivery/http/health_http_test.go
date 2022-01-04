@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 	http "github.com/valyala/fasthttp"
 
-	delivery "source.toby3d.me/website/oauth/internal/health/delivery/http"
-	"source.toby3d.me/website/oauth/internal/testing/httptest"
+	delivery "source.toby3d.me/website/indieauth/internal/health/delivery/http"
+	"source.toby3d.me/website/indieauth/internal/testing/httptest"
 )
 
 func TestRequestHandler(t *testing.T) {

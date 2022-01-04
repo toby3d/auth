@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"source.toby3d.me/website/oauth/internal/domain"
+	"source.toby3d.me/website/indieauth/internal/domain"
 )
 
 func TestParseCodeChallengeMethod(t *testing.T) {

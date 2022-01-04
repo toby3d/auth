@@ -9,9 +9,9 @@ import (
 	"golang.org/x/xerrors"
 
 	"source.toby3d.me/toby3d/form"
-	"source.toby3d.me/website/oauth/internal/common"
-	"source.toby3d.me/website/oauth/internal/domain"
-	"source.toby3d.me/website/oauth/internal/ticket"
+	"source.toby3d.me/website/indieauth/internal/common"
+	"source.toby3d.me/website/indieauth/internal/domain"
+	"source.toby3d.me/website/indieauth/internal/ticket"
 )
 
 type (
