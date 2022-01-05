@@ -74,7 +74,7 @@ type (
 
 //nolint: gochecknoglobals // NOTE(toby3d): structs cannot be contants.
 var DefaultMetadataResponse = MetadataResponse{
-	ServiceDocumentation:                       "https://indieauth.spec.indieweb.org/",
+	ServiceDocumentation:                       "https://indieauth.net/source/",
 	AuthorizationResponseIssParameterSupported: true,
 	ScopesSupported: []string{
 		domain.ScopeEmail.String(),
