@@ -2,8 +2,6 @@ package domain
 
 import (
 	"testing"
-
-	"github.com/stretchr/testify/require"
 )
 
 // Profile describes the data about the user.
@@ -28,16 +26,10 @@ func NewProfile() *Profile {
 func TestProfile(tb testing.TB) *Profile {
 	tb.Helper()
 
-	photo, err := NewURL("https://user.example.net/photo.jpg")
-	require.NoError(tb, err)
-
-	url, err := NewURL("https://user.example.net/")
-	require.NoError(tb, err)
-
 	return &Profile{
 		Email: []Email{"user@example.net"},
 		Name:  []string{"Example User"},
-		Photo: []*URL{photo},
-		URL:   []*URL{url},
+		Photo: []*URL{TestURL(tb, "https://user.example.net/photo.jpg")},
+		URL:   []*URL{TestURL(tb, "https://user.example.net/")},
 	}
 }
