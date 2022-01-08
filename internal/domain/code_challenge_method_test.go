@@ -17,7 +17,7 @@ import (
 	"source.toby3d.me/website/indieauth/internal/random"
 )
 
-func TestCodeChallengeMethod_Parse(t *testing.T) {
+func TestParseCodeChallengeMethod(t *testing.T) {
 	t.Parallel()
 
 	for _, testCase := range []struct {
@@ -72,47 +72,47 @@ func TestCodeChallengeMethod_Parse(t *testing.T) {
 func TestCodeChallengeMethod_Validate(t *testing.T) {
 	t.Parallel()
 
-	verifier, err := random.String(gofakeit.Number(42, 128))
+	verifier, err := random.String(gofakeit.Number(43, 128))
 	require.NoError(t, err)
 
 	for _, testCase := range []struct {
 		hash    hash.Hash
 		name    string
-		method  string
+		method  domain.CodeChallengeMethod
 		isValid bool
 	}{{
 		name:    "invalid",
-		method:  domain.CodeChallengeMethodS256.String(),
+		method:  domain.CodeChallengeMethodS256,
 		hash:    md5.New(),
 		isValid: false,
 	}, {
 		name:    "MD5",
-		method:  domain.CodeChallengeMethodMD5.String(),
+		method:  domain.CodeChallengeMethodMD5,
 		hash:    md5.New(),
 		isValid: true,
 	}, {
 		name:    "plain",
-		method:  domain.CodeChallengeMethodPLAIN.String(),
+		method:  domain.CodeChallengeMethodPLAIN,
 		hash:    nil,
 		isValid: true,
 	}, {
 		name:    "S1",
-		method:  domain.CodeChallengeMethodS1.String(),
+		method:  domain.CodeChallengeMethodS1,
 		hash:    sha1.New(),
 		isValid: true,
 	}, {
 		name:    "S256",
-		method:  domain.CodeChallengeMethodS256.String(),
+		method:  domain.CodeChallengeMethodS256,
 		hash:    sha256.New(),
 		isValid: true,
 	}, {
 		name:    "S512",
-		method:  domain.CodeChallengeMethodS512.String(),
+		method:  domain.CodeChallengeMethodS512,
 		hash:    sha512.New(),
 		isValid: true,
 	}, {
 		name:    "undefined",
-		method:  "und",
+		method:  domain.CodeChallengeMethodUndefined,
 		hash:    nil,
 		isValid: false,
 	}} {
@@ -121,17 +121,15 @@ func TestCodeChallengeMethod_Validate(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			method, _ := domain.ParseCodeChallengeMethod(testCase.method)
-			if method == domain.CodeChallengeMethodPLAIN ||
-				method == domain.CodeChallengeMethodUndefined {
-				assert.Equal(t, testCase.isValid, method.Validate(verifier, verifier))
+			if testCase.method == domain.CodeChallengeMethodPLAIN ||
+				testCase.method == domain.CodeChallengeMethodUndefined {
+				assert.Equal(t, testCase.isValid, testCase.method.Validate(verifier, verifier))
 
 				return
 			}
 
-			assert.Equal(t, testCase.isValid, method.Validate(base64.RawURLEncoding.EncodeToString(
-				testCase.hash.Sum([]byte(verifier)),
-			), verifier))
+			assert.Equal(t, testCase.isValid, testCase.method.Validate(base64.RawURLEncoding.EncodeToString(
+				testCase.hash.Sum([]byte(verifier))), verifier))
 		})
 	}
 }
