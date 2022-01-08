@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/sha512"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"hash"
@@ -106,6 +107,14 @@ func (ccm CodeChallengeMethod) String() string {
 	return ccm.slug
 }
 
-func (ccm CodeChallengeMethod) Encoder() hash.Hash {
-	return ccm.hash
+func (ccm CodeChallengeMethod) Validate(codeChallenge, verifier string) bool {
+	if ccm.slug == CodeChallengeMethodUndefined.slug {
+		return false
+	}
+
+	if ccm.slug == CodeChallengeMethodPLAIN.slug {
+		return codeChallenge == verifier
+	}
+
+	return codeChallenge == base64.RawURLEncoding.EncodeToString(ccm.hash.Sum([]byte(verifier)))
 }
