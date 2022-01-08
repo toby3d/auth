@@ -11,39 +11,56 @@ import (
 
 type (
 	Config struct {
-		Database  ConfigDatabase
-		IndieAuth ConfigIndieAuth
-		Server    ConfigServer
-		Name      string
-		RunMode   string
-	}
-
-	ConfigIndieAuth struct {
-		JWTSecret                 interface{}
-		AccessTokenExpirationTime time.Duration
-		JWTSigningAlgorithm       string
-		JWTSigningPrivateKeyFile  string
-		CodeLength                int
-		JWTNonceLength            int
-		Enabled                   bool
+		Code       ConfigCode       `yaml:"code"`
+		Database   ConfigDatabase   `yaml:"database"`
+		IndieAuth  ConfigIndieAuth  `yaml:"indieAuth"`
+		JWT        ConfigJWT        `yaml:"jwt"`
+		Server     ConfigServer     `yaml:"server"`
+		TicketAuth ConfigTicketAuth `yaml:"ticketAuth"`
+		Name       string           `yaml:"name"`
+		RunMode    string           `yaml:"runMode"`
 	}
 
 	ConfigServer struct {
-		CertificateFile string
-		Domain          string
-		Host            string
-		KeyFile         string
-		Protocol        string
-		RootURL         string
-		StaticRootPath  string
-		StaticURLPrefix string
-		Port            string
-		EnablePprof     bool
+		CertificateFile string `yaml:"certFile"`
+		Domain          string `yaml:"domain"`
+		Host            string `yaml:"host"`
+		KeyFile         string `yaml:"keyFile"`
+		Port            string `yaml:"port"`
+		Protocol        string `yaml:"protocol"`
+		RootURL         string `yaml:"rootUrl"`
+		StaticRootPath  string `yaml:"staticRootPath"`
+		StaticURLPrefix string `yaml:"staticUrlPrefix"`
+		EnablePprof     bool   `yaml:"enablePprof"`
 	}
 
 	ConfigDatabase struct {
-		Path string
-		Type string
+		Path string `yaml:"path"`
+		Type string `yaml:"type"` // memory
+	}
+
+	// Configuration of a one-time code after giving permission to an
+	// application. The client needs to request the server with this code to
+	// exchange it for a token or user information.
+	ConfigCode struct {
+		Expiry time.Duration `yaml:"expiry"` // 10m
+		Length int           `yaml:"length"` // 32
+	}
+
+	ConfigJWT struct {
+		Expiry      time.Duration `yaml:"expiry"` // 1h
+		Secret      interface{}   `yaml:"secret"`
+		Algorithm   string        `yaml:"algorithm"`   // HS256
+		NonceLength int           `yaml:"nonceLength"` // 22
+	}
+
+	ConfigIndieAuth struct {
+		Enabled bool `yaml:"enabled"` // true
+	}
+
+	ConfigTicketAuth struct {
+		Expiry time.Duration `yaml:"expiry"` // 1m
+		Length int           `yaml:"length"` // 24
 	}
 )
 
@@ -71,19 +88,6 @@ func TestConfig(tb testing.TB) *Config {
 	return &Config{
 		Name:    "IndieAuth",
 		RunMode: "dev",
-		Database: ConfigDatabase{
-			Path: filepath.Join("test", "development.db"),
-			Type: "bolt",
-		},
-		IndieAuth: ConfigIndieAuth{
-			AccessTokenExpirationTime: time.Hour,
-			CodeLength:                32, //nolint: gomnd
-			Enabled:                   true,
-			JWTNonceLength:            22, //nolint: gomnd
-			JWTSecret:                 []byte("hackme"),
-			JWTSigningAlgorithm:       "HS256",
-			JWTSigningPrivateKeyFile:  filepath.Join("jwt", "private.pem"),
-		},
 		Server: ConfigServer{
 			CertificateFile: filepath.Join("https", "cert.pem"),
 			Domain:          "localhost",
@@ -95,6 +99,27 @@ func TestConfig(tb testing.TB) *Config {
 			RootURL:         "{{protocol}}://{{domain}}:{{port}}/",
 			StaticRootPath:  "/",
 			StaticURLPrefix: "/static",
+		},
+		Database: ConfigDatabase{
+			Type: "memory",
+			Path: "",
+		},
+		Code: ConfigCode{
+			Expiry: 10 * time.Minute,
+			Length: 32,
+		},
+		JWT: ConfigJWT{
+			Expiry:      time.Hour,
+			NonceLength: 22,
+			Secret:      []byte("hackme"),
+			Algorithm:   "HS256",
+		},
+		IndieAuth: ConfigIndieAuth{
+			Enabled: true,
+		},
+		TicketAuth: ConfigTicketAuth{
+			Expiry: time.Minute,
+			Length: 24,
 		},
 	}
 }
