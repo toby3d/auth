@@ -1,6 +1,8 @@
 package domain
 
-import "testing"
+import (
+	"testing"
+)
 
 type User struct {
 	Me                    *Me

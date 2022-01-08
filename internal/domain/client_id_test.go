@@ -10,7 +10,7 @@ import (
 )
 
 //nolint: funlen
-func TestClientID(t *testing.T) {
+func TestNewClientID(t *testing.T) {
 	t.Parallel()
 
 	for _, testCase := range []struct {

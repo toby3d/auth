@@ -27,7 +27,7 @@ func (e Error) FormatError(p xerrors.Printer) error {
 	p.Print(e.Description)
 
 	if e.URI != "" {
-		p.Print(": ", e.URI, "\n")
+		p.Print(" (", e.URI, ")")
 	}
 
 	if !p.Detail() {

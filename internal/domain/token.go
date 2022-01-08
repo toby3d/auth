@@ -90,10 +90,10 @@ func TestToken(tb testing.TB) *Token {
 	cid := TestClientID(tb)
 	me := TestMe(tb)
 	now := time.Now().UTC().Round(time.Second)
-	scope := []Scope{
+	scope := Scopes{
 		ScopeCreate,
-		ScopeUpdate,
 		ScopeDelete,
+		ScopeUpdate,
 	}
 
 	// NOTE(toby3d): required

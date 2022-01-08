@@ -9,7 +9,8 @@ import (
 	"source.toby3d.me/website/indieauth/internal/domain"
 )
 
-func TestMe(t *testing.T) {
+//nolint: funlen
+func TestNewMe(t *testing.T) {
 	t.Parallel()
 
 	for _, testCase := range []struct {

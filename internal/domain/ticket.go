@@ -12,7 +12,7 @@ type Ticket struct {
 	Resource *URL
 
 	// The access token should be used when acting on behalf of this URL.
-	Subject *Me
+	Subject *URL
 }
 
 func TestTicket(tb testing.TB) *Ticket {
@@ -20,7 +20,7 @@ func TestTicket(tb testing.TB) *Ticket {
 
 	return &Ticket{
 		Resource: TestURL(tb, "https://alice.example.com/private/"),
-		Subject:  TestMe(tb),
+		Subject:  TestURL(tb, "https://bob.example.com/"),
 		Ticket:   "32985723984723985792834",
 	}
 }
