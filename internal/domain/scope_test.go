@@ -1,16 +1,16 @@
 package domain_test
 
 import (
-	"encoding/json"
 	"testing"
 
+	"github.com/goccy/go-json"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"source.toby3d.me/website/indieauth/internal/domain"
 )
 
-func TestScopesUnmarshalJSON(t *testing.T) {
+func TestScopes_UnmarshalJSON(t *testing.T) {
 	t.Parallel()
 
 	result := &struct {

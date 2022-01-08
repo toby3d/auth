@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -131,6 +132,18 @@ func (s *Scopes) UnmarshalJSON(v []byte) error {
 	*s = result
 
 	return nil
+}
+
+func (s Scopes) MarshalJSON() ([]byte, error) {
+	scopes := make([]string, len(s))
+
+	for i := range s {
+		scopes[i] = s[i].String()
+	}
+
+	sort.Strings(scopes)
+
+	return []byte(strconv.Quote(strings.Join(scopes, " "))), nil
 }
 
 // String returns scope slug as string.
