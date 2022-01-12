@@ -49,7 +49,7 @@ type (
 
 	ConfigJWT struct {
 		Expiry      time.Duration `yaml:"expiry"` // 1h
-		Secret      interface{}   `yaml:"secret"`
+		Secret      string        `yaml:"secret"`
 		Algorithm   string        `yaml:"algorithm"`   // HS256
 		NonceLength int           `yaml:"nonceLength"` // 22
 	}
@@ -63,23 +63,6 @@ type (
 		Length int           `yaml:"length"` // 24
 	}
 )
-
-// GetAddress return host:port address.
-func (cs *ConfigServer) GetAddress() string {
-	return net.JoinHostPort(cs.Host, cs.Port)
-}
-
-// GetRootURL returns generated from template RootURL.
-func (cs *ConfigServer) GetRootURL() string {
-	return fasttemplate.ExecuteString(cs.RootURL, `{{`, `}}`, map[string]interface{}{
-		"domain":          cs.Domain,
-		"host":            cs.Host,
-		"port":            cs.Port,
-		"protocol":        cs.Protocol,
-		"staticRootPath":  cs.StaticRootPath,
-		"staticUrlPrefix": cs.StaticURLPrefix,
-	})
-}
 
 // TestConfig returns a valid *viper.Viper with the generated test data filled in.
 func TestConfig(tb testing.TB) *Config {
@@ -111,7 +94,7 @@ func TestConfig(tb testing.TB) *Config {
 		JWT: ConfigJWT{
 			Expiry:      time.Hour,
 			NonceLength: 22,
-			Secret:      []byte("hackme"),
+			Secret:      "hackme",
 			Algorithm:   "HS256",
 		},
 		IndieAuth: ConfigIndieAuth{
@@ -122,4 +105,21 @@ func TestConfig(tb testing.TB) *Config {
 			Length: 24,
 		},
 	}
+}
+
+// GetAddress return host:port address.
+func (cs ConfigServer) GetAddress() string {
+	return net.JoinHostPort(cs.Host, cs.Port)
+}
+
+// GetRootURL returns generated from template RootURL.
+func (cs ConfigServer) GetRootURL() string {
+	return fasttemplate.ExecuteString(cs.RootURL, `{{`, `}}`, map[string]interface{}{
+		"domain":          cs.Domain,
+		"host":            cs.Host,
+		"port":            cs.Port,
+		"protocol":        cs.Protocol,
+		"staticRootPath":  cs.StaticRootPath,
+		"staticUrlPrefix": cs.StaticURLPrefix,
+	})
 }

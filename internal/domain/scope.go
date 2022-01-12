@@ -42,9 +42,7 @@ var (
 	// which include the following properties: name, `photo, url.
 	//
 	// NOTE(toby3d): https://indieauth.net/source/#profile-information
-	ScopeProfile = Scope{
-		slug: "profile",
-	}
+	ScopeProfile = Scope{slug: "profile"}
 
 	// This scope requests access to the user's email address in the
 	// following property: email.
@@ -54,9 +52,7 @@ var (
 	// and must be requested along with the profile scope if desired.
 	//
 	// NOTE(toby3d): https://indieauth.net/source/#profile-information
-	ScopeEmail = Scope{
-		slug: "email",
-	}
+	ScopeEmail = Scope{slug: "email"}
 )
 
 //nolint: gochecknoglobals // NOTE(toby3d): maps cannot be constants
@@ -85,29 +81,19 @@ func ParseScope(slug string) (Scope, error) {
 }
 
 // UnmarshalForm parses the value of the form key into the Scope domain.
-func (s *Scope) UnmarshalForm(v []byte) (err error) {
-	scope, err := ParseScope(string(v))
-	if err != nil {
-		return fmt.Errorf("scope: %w", err)
+func (s *Scopes) UnmarshalForm(v []byte) error {
+	scopes := make(Scopes, 0)
+
+	for _, rawScope := range strings.Fields(string(v)) {
+		scope, err := ParseScope(rawScope)
+		if err != nil {
+			return fmt.Errorf("scopes: %w", err)
+		}
+
+		*s = append(scopes, scope)
 	}
 
-	*s = scope
-
-	return nil
-}
-
-func (s *Scope) UnmarshalJSON(v []byte) error {
-	src, err := strconv.Unquote(string(v))
-	if err != nil {
-		return err
-	}
-
-	scope, err := ParseScope(src)
-	if err != nil {
-		return fmt.Errorf("scope: %w", err)
-	}
-
-	*s = scope
+	*s = scopes
 
 	return nil
 }

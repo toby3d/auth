@@ -61,7 +61,7 @@ func (u *URL) UnmarshalJSON(v []byte) error {
 	return nil
 }
 
-func (u *URL) URL() *url.URL {
+func (u URL) URL() *url.URL {
 	if u.URI == nil {
 		return nil
 	}

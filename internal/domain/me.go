@@ -18,6 +18,7 @@ type Me struct {
 	me *http.URI
 }
 
+//nolint: funlen
 func NewMe(raw string) (*Me, error) {
 	me := http.AcquireURI()
 	if err := me.Parse(nil, []byte(raw)); err != nil {
@@ -137,9 +138,13 @@ func (m *Me) UnmarshalJSON(v []byte) error {
 	return nil
 }
 
+func (m Me) MarshalJSON() ([]byte, error) {
+	return []byte(strconv.Quote(m.String())), nil
+}
+
 // URI returns copy of parsed Me in *fasthttp.URI representation.
 // This copy MUST be released via fasthttp.ReleaseURI.
-func (m *Me) URI() *http.URI {
+func (m Me) URI() *http.URI {
 	if m.me == nil {
 		return nil
 	}
@@ -151,7 +156,7 @@ func (m *Me) URI() *http.URI {
 }
 
 // URL returns copy of parsed Me in *url.URL representation.
-func (m *Me) URL() *url.URL {
+func (m Me) URL() *url.URL {
 	if m.me == nil {
 		return nil
 	}
@@ -167,7 +172,7 @@ func (m *Me) URL() *url.URL {
 }
 
 // String returns string representation of Me.
-func (m *Me) String() string {
+func (m Me) String() string {
 	if m.me == nil {
 		return ""
 	}

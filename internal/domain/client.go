@@ -76,7 +76,7 @@ func (c *Client) ValidateRedirectURI(redirectURI *URL) bool {
 	return false
 }
 
-func (c *Client) GetName() string {
+func (c Client) GetName() string {
 	if len(c.Name) < 1 {
 		return ""
 	}
@@ -84,7 +84,7 @@ func (c *Client) GetName() string {
 	return c.Name[0]
 }
 
-func (c *Client) GetURL() *URL {
+func (c Client) GetURL() *URL {
 	if len(c.URL) < 1 {
 		return nil
 	}
@@ -92,7 +92,7 @@ func (c *Client) GetURL() *URL {
 	return c.URL[0]
 }
 
-func (c *Client) GetLogo() *URL {
+func (c Client) GetLogo() *URL {
 	if len(c.Logo) < 1 {
 		return nil
 	}

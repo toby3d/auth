@@ -25,6 +25,7 @@ var (
 	localhostIPv6 = netaddr.MustParseIP("::1")
 )
 
+//nolint: funlen
 func NewClientID(raw string) (*ClientID, error) {
 	clientID := http.AcquireURI()
 	if err := clientID.Parse(nil, []byte(raw)); err != nil {
@@ -146,16 +147,20 @@ func (cid *ClientID) UnmarshalJSON(v []byte) error {
 	return nil
 }
 
+func (cid ClientID) MarshalJSON() ([]byte, error) {
+	return []byte(strconv.Quote(cid.String())), nil
+}
+
 // URI returns copy of parsed *fasthttp.URI.
 // This copy MUST be released via fasthttp.ReleaseURI.
-func (cid *ClientID) URI() *http.URI {
+func (cid ClientID) URI() *http.URI {
 	u := http.AcquireURI()
 	cid.clientID.CopyTo(u)
 
 	return u
 }
 
-func (cid *ClientID) URL() *url.URL {
+func (cid ClientID) URL() *url.URL {
 	return &url.URL{
 		Scheme:   string(cid.clientID.Scheme()),
 		Host:     string(cid.clientID.Host()),
@@ -167,6 +172,6 @@ func (cid *ClientID) URL() *url.URL {
 }
 
 // String returns string representation of client ID.
-func (cid *ClientID) String() string {
+func (cid ClientID) String() string {
 	return cid.clientID.String()
 }

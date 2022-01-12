@@ -28,14 +28,14 @@ type (
 		Issuer      *ClientID
 		NonceLength int
 		Scope       Scopes
-		Secret      interface{}
+		Secret      []byte
 		Subject     *Me
 	}
 )
 
 var DefaultNewTokenOptions = NewTokenOptions{
-	NonceLength: 32,
 	Algorithm:   "HS256",
+	NonceLength: 32,
 }
 
 func NewToken(opts NewTokenOptions) (*Token, error) {
@@ -83,7 +83,7 @@ func NewToken(opts NewTokenOptions) (*Token, error) {
 func TestToken(tb testing.TB) *Token {
 	tb.Helper()
 
-	nonce, err := random.String(42)
+	nonce, err := random.String(22)
 	require.NoError(tb, err)
 
 	t := jwt.New()
@@ -98,7 +98,7 @@ func TestToken(tb testing.TB) *Token {
 
 	// NOTE(toby3d): required
 	t.Set(jwt.IssuerKey, cid.String())
-	t.Set(jwt.SubjectKey, me.me.String())
+	t.Set(jwt.SubjectKey, me.String())
 	// TODO(toby3d): t.Set(jwt.AudienceKey, nil)
 	t.Set(jwt.ExpirationKey, now.Add(1*time.Hour))
 	t.Set(jwt.NotBeforeKey, now.Add(-1*time.Hour))
@@ -121,7 +121,7 @@ func TestToken(tb testing.TB) *Token {
 }
 
 // SetAuthHeader writes an Access Token to the request header.
-func (t *Token) SetAuthHeader(r *http.Request) {
+func (t Token) SetAuthHeader(r *http.Request) {
 	if t.AccessToken == "" {
 		return
 	}
@@ -129,7 +129,7 @@ func (t *Token) SetAuthHeader(r *http.Request) {
 	r.Header.Set(http.HeaderAuthorization, t.String())
 }
 
-func (t *Token) String() string {
+func (t Token) String() string {
 	if t.AccessToken == "" {
 		return ""
 	}

@@ -15,24 +15,18 @@ type ResponseType struct {
 
 //nolint: gochecknoglobals // NOTE(toby3d): structs cannot be constants
 var (
-	ResponseTypeUndefined ResponseType = ResponseType{
-		slug: "",
-	}
+	ResponseTypeUndefined ResponseType = ResponseType{slug: ""}
 
 	// Deprecated(toby3d): Only accept response_type=code requests, and for
 	// backwards-compatible support, treat response_type=id requests as
 	// response_type=code requests:
 	// https://aaronparecki.com/2020/12/03/1/indieauth-2020#response-type
-	ResponseTypeID ResponseType = ResponseType{
-		slug: "id",
-	}
+	ResponseTypeID ResponseType = ResponseType{slug: "id"}
 
 	// Indicates to the authorization server that an authorization code
 	// should be returned as the response:
 	// https://indieauth.net/source/#authorization-request-li-1
-	ResponseTypeCode ResponseType = ResponseType{
-		slug: "code",
-	}
+	ResponseTypeCode ResponseType = ResponseType{slug: "code"}
 )
 
 var ErrResponseTypeUnknown = errors.New("unknown grant type")
