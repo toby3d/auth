@@ -4,6 +4,7 @@ import (
 	"github.com/fasthttp/router"
 	http "github.com/valyala/fasthttp"
 
+	"source.toby3d.me/toby3d/middleware"
 	"source.toby3d.me/website/indieauth/internal/common"
 )
 
@@ -14,7 +15,11 @@ func NewRequestHandler() *RequestHandler {
 }
 
 func (h *RequestHandler) Register(r *router.Router) {
-	r.GET("/health", h.read)
+	chain := middleware.Chain{
+		middleware.LogFmt(),
+	}
+
+	r.GET("/health", chain.RequestHandler(h.read))
 }
 
 func (h *RequestHandler) read(ctx *http.RequestCtx) {
