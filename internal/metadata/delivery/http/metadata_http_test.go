@@ -1,10 +1,10 @@
 package http_test
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/fasthttp/router"
+	"github.com/goccy/go-json"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	http "github.com/valyala/fasthttp"
@@ -33,7 +33,7 @@ func TestMetadata(t *testing.T) {
 	assert.Equal(t, &delivery.MetadataResponse{
 		AuthorizationEndpoint: cfg.Server.GetRootURL() + "authorize",
 		Issuer:                cfg.Server.GetRootURL(),
-		ServiceDocumentation:  "https://indieauth.spec.indieweb.org/",
+		ServiceDocumentation:  "https://indieauth.net/source/",
 		TokenEndpoint:         cfg.Server.GetRootURL() + "token",
 		AuthorizationResponseIssParameterSupported: true,
 		GrantTypesSupported: []string{

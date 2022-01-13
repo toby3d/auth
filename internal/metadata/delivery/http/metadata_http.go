@@ -1,11 +1,11 @@
 package http
 
 import (
-	"encoding/json"
-
 	"github.com/fasthttp/router"
+	"github.com/goccy/go-json"
 	http "github.com/valyala/fasthttp"
 
+	"source.toby3d.me/toby3d/middleware"
 	"source.toby3d.me/website/indieauth/internal/common"
 	"source.toby3d.me/website/indieauth/internal/domain"
 )
@@ -103,7 +103,11 @@ func NewRequestHandler(config *domain.Config) *RequestHandler {
 }
 
 func (h *RequestHandler) Register(r *router.Router) {
-	r.GET("/.well-known/oauth-authorization-server", h.read)
+	chain := middleware.Chain{
+		middleware.LogFmt(),
+	}
+
+	r.GET("/.well-known/oauth-authorization-server", chain.RequestHandler(h.read))
 }
 
 func (h *RequestHandler) read(ctx *http.RequestCtx) {
