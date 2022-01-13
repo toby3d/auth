@@ -8,16 +8,15 @@ import (
 )
 
 type (
-	GenerateOptions struct {
-		ClientID    string
-		Me          string
-		Scopes      []string
-		NonceLength int
+	ExchangeOptions struct {
+		ClientID     *domain.ClientID
+		RedirectURI  *domain.URL
+		Code         string
+		CodeVerifier string
 	}
 
 	UseCase interface {
-		// Generate generates a new Token based on the session data.
-		Generate(ctx context.Context, opts GenerateOptions) (*domain.Token, error)
+		Exchange(ctx context.Context, opts ExchangeOptions) (*domain.Token, error)
 
 		// Verify checks the AccessToken and returns the associated information.
 		Verify(ctx context.Context, accessToken string) (*domain.Token, error)

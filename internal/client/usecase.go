@@ -12,4 +12,4 @@ type UseCase interface {
 	Discovery(ctx context.Context, id *domain.ClientID) (*domain.Client, error)
 }
 
-var ErrInvalidMe = errors.New("provided me is invalid")
+var ErrInvalidMe = errors.New("invalid me")

@@ -1,6 +1,7 @@
 package http_test
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/fasthttp/router"
@@ -12,16 +13,26 @@ import (
 
 	delivery "source.toby3d.me/website/indieauth/internal/client/delivery/http"
 	"source.toby3d.me/website/indieauth/internal/domain"
+	sessionrepo "source.toby3d.me/website/indieauth/internal/session/repository/memory"
 	"source.toby3d.me/website/indieauth/internal/testing/httptest"
+	tokenrepo "source.toby3d.me/website/indieauth/internal/token/repository/memory"
+	tokenucase "source.toby3d.me/website/indieauth/internal/token/usecase"
 )
 
 func TestRead(t *testing.T) {
 	t.Parallel()
 
+	store := new(sync.Map)
+	config := domain.TestConfig(t)
+
 	r := router.New()
-	delivery.NewRequestHandler(
-		domain.TestConfig(t), domain.TestClient(t), language.NewMatcher(message.DefaultCatalog.Languages()),
-	).Register(r)
+	delivery.NewRequestHandler(delivery.NewRequestHandlerOptions{
+		Client:  domain.TestClient(t),
+		Config:  config,
+		Matcher: language.NewMatcher(message.DefaultCatalog.Languages()),
+		Tokens: tokenucase.NewTokenUseCase(tokenrepo.NewMemoryTokenRepository(store),
+			sessionrepo.NewMemorySessionRepository(config, store), config),
+	}).Register(r)
 
 	client, _, cleanup := httptest.New(t, r.Handler)
 	t.Cleanup(cleanup)

@@ -1,23 +1,21 @@
 package http
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"net/url"
-	"strings"
 
-	"github.com/tomnomnom/linkheader"
 	http "github.com/valyala/fasthttp"
-	"willnorris.com/go/microformats"
 
 	"source.toby3d.me/website/indieauth/internal/client"
 	"source.toby3d.me/website/indieauth/internal/domain"
+	"source.toby3d.me/website/indieauth/internal/util"
 )
 
 type httpClientRepository struct {
 	client *http.Client
 }
+
+const DefaultMaxRedirectsCount int = 10
 
 const (
 	relRedirectURI string = "redirect_uri"
@@ -45,7 +43,7 @@ func (repo *httpClientRepository) Get(ctx context.Context, id *domain.ClientID) 
 	resp := http.AcquireResponse()
 	defer http.ReleaseResponse(resp)
 
-	if err := repo.client.Do(req, resp); err != nil {
+	if err := repo.client.DoRedirects(req, resp, DefaultMaxRedirectsCount); err != nil {
 		return nil, fmt.Errorf("failed to make a request to the client: %w", err)
 	}
 
@@ -55,115 +53,103 @@ func (repo *httpClientRepository) Get(ctx context.Context, id *domain.ClientID) 
 
 	client := &domain.Client{
 		ID:          id,
+		RedirectURI: make([]*domain.URL, 0),
 		Logo:        make([]*domain.URL, 0),
-		Name:        extractValues(resp, propertyName),
-		RedirectURI: extractEndpoints(resp, relRedirectURI),
 		URL:         make([]*domain.URL, 0),
+		Name:        make([]string, 0),
 	}
 
-	for _, v := range extractValues(resp, propertyLogo) {
-		u, err := domain.NewURL(v)
-		if err != nil {
-			continue
-		}
-
-		client.Logo = append(client.Logo, u)
-	}
-
-	for _, v := range extractValues(resp, propertyURL) {
-		u, err := domain.NewURL(v)
-		if err != nil {
-			continue
-		}
-
-		client.URL = append(client.URL, u)
-	}
+	extract(client, resp)
 
 	return client, nil
 }
 
-func extractEndpoints(resp *http.Response, name string) []*domain.URL {
-	results := make([]*domain.URL, 0)
-	endpoints, _ := extractEndpointsFromHeader(resp, name)
-	results = append(results, endpoints...)
-	endpoints, _ = extractEndpointsFromBody(resp, name)
-	results = append(results, endpoints...)
-
-	return results
-}
-
-func extractValues(resp *http.Response, key string) []string {
-	results := make([]string, 0)
-
-	for _, item := range microformats.Parse(bytes.NewReader(resp.Body()), nil).Items {
-		if len(item.Type) == 0 || (item.Type[0] != hApp && item.Type[0] != hXApp) {
+func extract(dst *domain.Client, src *http.Response) {
+	for _, u := range util.ExtractEndpoints(src, relRedirectURI) {
+		if containsURL(dst.RedirectURI, u) {
 			continue
 		}
 
-		properties, ok := item.Properties[key]
-		if !ok || len(properties) == 0 {
-			return nil
-		}
+		dst.RedirectURI = append(dst.RedirectURI, u)
+	}
 
-		for j := range properties {
-			switch p := properties[j].(type) {
-			case string:
-				results = append(results, p)
-			case map[string][]interface{}:
-				for _, val := range p["value"] {
-					v, ok := val.(string)
-					if !ok {
-						continue
-					}
-
-					results = append(results, v)
-				}
+	for _, t := range []string{hXApp, hApp} {
+		for _, name := range util.ExtractProperty(src, t, propertyName) {
+			n, ok := name.(string)
+			if !ok || containsString(dst.Name, n) {
+				continue
 			}
+
+			dst.Name = append(dst.Name, n)
 		}
 
-		return results
-	}
+		for _, logo := range util.ExtractProperty(src, t, propertyLogo) {
+			var err error
 
-	return nil
+			var u *domain.URL
+			switch l := logo.(type) {
+			case string:
+				u, err = domain.NewURL(l)
+			case map[string]string:
+				value, ok := l["value"]
+				if !ok {
+					continue
+				}
+
+				u, err = domain.NewURL(value)
+			}
+
+			if err != nil {
+				continue
+			}
+
+			if containsURL(dst.Logo, u) {
+				continue
+			}
+
+			dst.Logo = append(dst.Logo, u)
+		}
+
+		for _, url := range util.ExtractProperty(src, t, propertyURL) {
+			l, ok := url.(string)
+			if !ok {
+				continue
+			}
+
+			u, err := domain.NewURL(l)
+			if err != nil {
+				continue
+			}
+
+			if containsURL(dst.URL, u) {
+				continue
+			}
+
+			dst.URL = append(dst.URL, u)
+		}
+	}
 }
 
-func extractEndpointsFromHeader(resp *http.Response, name string) ([]*domain.URL, error) {
-	results := make([]*domain.URL, 0)
-
-	for _, link := range linkheader.Parse(string(resp.Header.Peek(http.HeaderLink))) {
-		if !strings.EqualFold(link.Rel, name) {
+func containsString(src []string, find string) bool {
+	for i := range src {
+		if src[i] != find {
 			continue
 		}
 
-		u := http.AcquireURI()
-		if err := u.Parse(resp.Header.Peek(http.HeaderHost), []byte(link.URL)); err != nil {
-			return nil, err
-		}
-
-		results = append(results, &domain.URL{URI: u})
+		return true
 	}
 
-	return results, nil
+	return false
 }
 
-func extractEndpointsFromBody(resp *http.Response, name string) ([]*domain.URL, error) {
-	host, err := url.Parse(string(resp.Header.Peek(http.HeaderHost)))
-	if err != nil {
-		return nil, fmt.Errorf("cannot parse host header: %w", err)
+func containsURL(src []*domain.URL, find *domain.URL) bool {
+	for i := range src {
+		if src[i].String() != find.String() {
+			continue
+		}
+
+		return true
 	}
 
-	endpoints, ok := microformats.Parse(bytes.NewReader(resp.Body()), host).Rels[name]
-	if !ok || len(endpoints) == 0 {
-		return nil, nil
-	}
-
-	results := make([]*domain.URL, 0)
-	for i := range endpoints {
-		u := http.AcquireURI()
-		u.Update(endpoints[i])
-
-		results = append(results, &domain.URL{URI: u})
-	}
-
-	return results, nil
+	return false
 }
