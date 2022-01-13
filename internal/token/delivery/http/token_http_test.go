@@ -6,82 +6,74 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/goccy/go-json"
-	"github.com/spf13/viper"
+	"github.com/fasthttp/router"
+	json "github.com/goccy/go-json"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	http "github.com/valyala/fasthttp"
 
 	"source.toby3d.me/website/indieauth/internal/common"
-	configrepo "source.toby3d.me/website/indieauth/internal/config/repository/viper"
-	configucase "source.toby3d.me/website/indieauth/internal/config/usecase"
 	"source.toby3d.me/website/indieauth/internal/domain"
+	sessionrepo "source.toby3d.me/website/indieauth/internal/session/repository/memory"
+	"source.toby3d.me/website/indieauth/internal/testing/httptest"
 	delivery "source.toby3d.me/website/indieauth/internal/token/delivery/http"
-	repository "source.toby3d.me/website/indieauth/internal/token/repository/memory"
-	"source.toby3d.me/website/indieauth/internal/token/usecase"
-	"source.toby3d.me/website/indieauth/internal/util"
+	tokenrepo "source.toby3d.me/website/indieauth/internal/token/repository/memory"
+	tokenucase "source.toby3d.me/website/indieauth/internal/token/usecase"
 )
 
 func TestVerification(t *testing.T) {
 	t.Parallel()
 
-	v := viper.New()
-	v.SetDefault("indieauth.jwtSigningAlgorithm", "HS256")
-	v.SetDefault("indieauth.jwtSecret", "hackme")
+	store := new(sync.Map)
+	config := domain.TestConfig(t)
+	token := domain.TestToken(t)
 
-	accessToken := domain.TestToken(t)
+	r := router.New()
+	// TODO(toby3d): provide tickets
+	delivery.NewRequestHandler(tokenucase.NewTokenUseCase(tokenrepo.NewMemoryTokenRepository(store),
+		sessionrepo.NewMemorySessionRepository(config, store), config)).Register(r)
 
-	client, _, cleanup := util.TestServe(t, delivery.NewRequestHandler(usecase.NewTokenUseCase(
-		repository.NewMemoryTokenRepository(new(sync.Map)),
-		configucase.NewConfigUseCase(configrepo.NewViperConfigRepository(v)),
-	)).Read)
+	client, _, cleanup := httptest.New(t, r.Handler)
 	t.Cleanup(cleanup)
 
-	req := http.AcquireRequest()
+	req := httptest.NewRequest(http.MethodGet, "https://app.example.com/token", nil)
 	defer http.ReleaseRequest(req)
-	req.Header.SetMethod(http.MethodGet)
-	req.SetRequestURI("https://app.example.com/token")
 	req.Header.Set(http.HeaderAccept, common.MIMEApplicationJSON)
-	req.Header.Set(http.HeaderAuthorization, "Bearer "+accessToken.AccessToken)
+	token.SetAuthHeader(req)
 
 	resp := http.AcquireResponse()
 	defer http.ReleaseResponse(resp)
 
 	require.NoError(t, client.Do(req, resp))
-
 	assert.Equal(t, http.StatusOK, resp.StatusCode())
 
-	token := new(delivery.VerificationResponse)
-	require.NoError(t, json.Unmarshal(resp.Body(), token))
-	assert.Equal(t, &delivery.VerificationResponse{
-		Me:       accessToken.Me,
-		ClientID: accessToken.ClientID,
-		Scope:    strings.Join(accessToken.Scopes, " "),
-	}, token)
+	result := new(delivery.VerificationResponse)
+	require.NoError(t, json.Unmarshal(resp.Body(), result))
+	assert.Equal(t, token.ClientID.String(), result.ClientID.String())
+	assert.Equal(t, token.Me.String(), result.Me.String())
+	assert.Equal(t, token.Scope.String(), result.Scope.String())
 }
 
 func TestRevocation(t *testing.T) {
 	t.Parallel()
 
-	v := viper.New()
-	v.SetDefault("indieauth.jwtSigningAlgorithm", "HS256")
-	v.SetDefault("indieauth.jwtSecret", "hackme")
-
-	tokens := repository.NewMemoryTokenRepository(new(sync.Map))
+	config := domain.TestConfig(t)
+	store := new(sync.Map)
+	tokens := tokenrepo.NewMemoryTokenRepository(store)
 	accessToken := domain.TestToken(t)
 
-	client, _, cleanup := util.TestServe(t, delivery.NewRequestHandler(
-		usecase.NewTokenUseCase(tokens, configucase.NewConfigUseCase(configrepo.NewViperConfigRepository(v))),
-	).Update)
+	r := router.New()
+	delivery.NewRequestHandler(tokenucase.NewTokenUseCase(tokens, sessionrepo.NewMemorySessionRepository(config,
+		store), config)).Register(r)
+
+	client, _, cleanup := httptest.New(t, r.Handler)
 	t.Cleanup(cleanup)
 
-	req := http.AcquireRequest()
+	req := httptest.NewRequest(http.MethodPost, "https://app.example.com/token", nil)
 	defer http.ReleaseRequest(req)
-	req.Header.SetMethod(http.MethodPost)
-	req.SetRequestURI("https://app.example.com/token")
-	req.Header.SetContentType(common.MIMEApplicationXWWWFormUrlencoded)
 	req.Header.Set(http.HeaderAccept, common.MIMEApplicationJSON)
-	req.PostArgs().Set("action", "revoke")
+	req.Header.SetContentType(common.MIMEApplicationForm)
+	req.PostArgs().Set("action", domain.ActionRevoke.String())
 	req.PostArgs().Set("token", accessToken.AccessToken)
 
 	resp := http.AcquireResponse()
