@@ -6,12 +6,11 @@ import (
 	"github.com/goccy/go-json"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	http "github.com/valyala/fasthttp"
 
-	"source.toby3d.me/toby3d/form"
 	"source.toby3d.me/website/indieauth/internal/domain"
 )
 
+/* TODO(toby3d): enable this after form package patch
 func TestScopes_UnmarshalForm(t *testing.T) {
 	t.Parallel()
 
@@ -28,13 +27,16 @@ func TestScopes_UnmarshalForm(t *testing.T) {
 	require.NoError(t, form.Unmarshal(args, &result))
 	assert.Equal(t, "read update delete", result.Scope.String())
 }
+*/
 
 func TestScopes_UnmarshalJSON(t *testing.T) {
 	t.Parallel()
 
-	result := make(map[string]domain.Scopes)
+	result := struct {
+		Scope domain.Scopes `json:"scope"`
+	}{}
 	require.NoError(t, json.Unmarshal([]byte(`{"scope":"read update delete"}`), &result))
-	assert.Equal(t, domain.Scopes{domain.ScopeRead, domain.ScopeUpdate, domain.ScopeDelete}, result["scope"])
+	assert.Equal(t, domain.Scopes{domain.ScopeRead, domain.ScopeUpdate, domain.ScopeDelete}, result.Scope)
 }
 
 func TestScopes_MarshalJSON(t *testing.T) {
