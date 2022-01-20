@@ -2,18 +2,17 @@
     "language": "ru",
     "messages": [
         {
-            "id": "Authorize {ClientName}",
-            "message": "Authorize {ClientName}",
-            "translation": "Авторизовать {ClientName}",
-            "translatorComment": "Заголовок страницы авторизации с именем приложения",
+            "id": "Authorize {Name}",
+            "message": "Authorize {Name}",
+            "translation": "Авторизовать {Name}",
             "placeholders": [
                 {
-                    "id": "ClientName",
+                    "id": "Name",
                     "string": "%[1]s",
                     "type": "string",
                     "underlyingType": "string",
                     "argNum": 1,
-                    "expr": "p.ClientName"
+                    "expr": "p.Client.GetName()"
                 }
             ]
         },
@@ -24,10 +23,9 @@
             "translatorComment": "Заголовок страницы авторизации безымянного приложения"
         },
         {
-            "id": "Check your scopes",
-            "message": "Check your scopes",
-            "translation": "Проверь права доступа",
-            "translatorComment": "Имя секции с набором чекбоксов прав доступа на странице авторизации"
+            "id": "Choose your scopes",
+            "message": "Choose your scopes",
+            "translation": "Выбери предоставляемые разрешения"
         },
         {
             "id": "Deny",

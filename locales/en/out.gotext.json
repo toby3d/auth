@@ -2,6 +2,37 @@
     "language": "en",
     "messages": [
         {
+            "id": "Authorize {Name}",
+            "message": "Authorize {Name}",
+            "translation": "Authorize {Name}",
+            "translatorComment": "Copied from source.",
+            "placeholders": [
+                {
+                    "id": "Name",
+                    "string": "%[1]s",
+                    "type": "string",
+                    "underlyingType": "string",
+                    "argNum": 1,
+                    "expr": "p.Client.GetName()"
+                }
+            ],
+            "fuzzy": true
+        },
+        {
+            "id": "Authorize application",
+            "message": "Authorize application",
+            "translation": "Authorize application",
+            "translatorComment": "Authorization page header for an unnamed application",
+            "fuzzy": true
+        },
+        {
+            "id": "Choose your scopes",
+            "message": "Choose your scopes",
+            "translation": "Choose your scopes",
+            "translatorComment": "Copied from source.",
+            "fuzzy": true
+        },
+        {
             "id": "Deny",
             "message": "Deny",
             "translation": "Deny",
@@ -20,6 +51,34 @@
             "message": "Sign In",
             "translation": "Sign In",
             "translatorComment": "The name of the button in the site address entry form to start the login process",
+            "fuzzy": true
+        },
+        {
+            "id": "TicketAuth",
+            "message": "TicketAuth",
+            "translation": "TicketAuth",
+            "translatorComment": "Copied from source.",
+            "fuzzy": true
+        },
+        {
+            "id": "Recipient",
+            "message": "Recipient",
+            "translation": "Recipient",
+            "translatorComment": "Copied from source.",
+            "fuzzy": true
+        },
+        {
+            "id": "Resource",
+            "message": "Resource",
+            "translation": "Resource",
+            "translatorComment": "Copied from source.",
+            "fuzzy": true
+        },
+        {
+            "id": "Send",
+            "message": "Send",
+            "translation": "Send",
+            "translatorComment": "Copied from source.",
             "fuzzy": true
         }
     ]
