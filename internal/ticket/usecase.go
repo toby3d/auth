@@ -7,6 +7,8 @@ import (
 )
 
 type UseCase interface {
-	// Redeem transform received ticket into access token.
-	Redeem(ctx context.Context, ticket *domain.Ticket) (*domain.Token, error)
+	Generate(ctx context.Context, ticket *domain.Ticket) error
+
+	// Exchange transform received ticket into access token.
+	Exchange(ctx context.Context, ticket *domain.Ticket) (*domain.Token, error)
 }

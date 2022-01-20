@@ -3,10 +3,9 @@ package usecase_test
 import (
 	"context"
 	"fmt"
-	"path"
-	"sync"
 	"testing"
 
+	"github.com/fasthttp/router"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	http "github.com/valyala/fasthttp"
@@ -14,23 +13,21 @@ import (
 	"source.toby3d.me/website/indieauth/internal/common"
 	"source.toby3d.me/website/indieauth/internal/domain"
 	"source.toby3d.me/website/indieauth/internal/testing/httptest"
-	repo "source.toby3d.me/website/indieauth/internal/ticket/repository/memory"
 	ucase "source.toby3d.me/website/indieauth/internal/ticket/usecase"
 )
 
-func TestRedeem(t *testing.T) {
+func TestExchange(t *testing.T) {
 	t.Parallel()
 
 	token := domain.TestToken(t)
 	ticket := domain.TestTicket(t)
 
-	store := new(sync.Map)
-	store.Store(
-		path.Join(repo.DefaultPathPrefix, ticket.Resource.String()),
-		domain.TestURL(t, "https://example.com/token"),
-	)
-
-	client, _, cleanup := httptest.New(t, func(ctx *http.RequestCtx) {
+	r := router.New()
+	r.GET(string(ticket.Resource.Path()), func(ctx *http.RequestCtx) {
+		ctx.SuccessString(common.MIMETextHTMLCharsetUTF8, `<link rel="token_endpoint" href="`+
+			ticket.Subject.String()+`token">`)
+	})
+	r.POST("/token", func(ctx *http.RequestCtx) {
 		ctx.SuccessString(common.MIMEApplicationJSONCharsetUTF8, fmt.Sprintf(`{
 			"token_type": "Bearer",
 			"access_token": "%s",
@@ -38,10 +35,11 @@ func TestRedeem(t *testing.T) {
 			"me": "%s"
 		}`, token.AccessToken, token.Scope.String(), token.Me.String()))
 	})
+
+	client, _, cleanup := httptest.New(t, r.Handler)
 	t.Cleanup(cleanup)
 
-	result, err := ucase.NewTicketUseCase(repo.NewMemoryTicketRepository(store), client).
-		Redeem(context.Background(), ticket)
+	result, err := ucase.NewTicketUseCase(nil, client).Exchange(context.Background(), ticket)
 	require.NoError(t, err)
 	assert.Equal(t, token.AccessToken, result.AccessToken)
 	assert.Equal(t, token.Me.String(), result.Me.String())

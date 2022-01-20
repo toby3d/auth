@@ -8,8 +8,9 @@ import (
 )
 
 type Repository interface {
-	// Get returns token endpoint founded by resource URL.
-	Get(ctx context.Context, resource *domain.URL) (*domain.URL, error)
+	Create(ctx context.Context, ticket *domain.Ticket) error
+	GetAndDelete(ctx context.Context, ticket string) (*domain.Ticket, error)
+	GC()
 }
 
 var ErrNotExist = errors.New("token_endpoint not found on resource URL")

@@ -1,8 +1,6 @@
 package http_test
 
 import (
-	"fmt"
-	"path"
 	"sync"
 	"testing"
 
@@ -10,6 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	http "github.com/valyala/fasthttp"
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 
 	"source.toby3d.me/website/indieauth/internal/common"
 	"source.toby3d.me/website/indieauth/internal/domain"
@@ -19,38 +19,41 @@ import (
 	ucase "source.toby3d.me/website/indieauth/internal/ticket/usecase"
 )
 
-// TODO(toby3d): looks ugly, refactor this?
 func TestUpdate(t *testing.T) {
 	t.Parallel()
 
+	config := domain.TestConfig(t)
 	ticket := domain.TestTicket(t)
-
-	// NOTE(toby3d): user token endpoint
 	token := domain.TestToken(t)
 
-	store := new(sync.Map)
-	store.Store(
-		path.Join(ticketrepo.DefaultPathPrefix, ticket.Resource.String()),
-		domain.TestURL(t, "https://example.com/token"),
-	)
-
-	userClient, _, userCleanup := httptest.New(t, func(ctx *http.RequestCtx) {
-		ctx.SuccessString(common.MIMEApplicationJSONCharsetUTF8, fmt.Sprintf(`{
-			"access_token": "%s",
-			"token_type": "Bearer",
-			"scope": "%s",
-			"me": "%s"
-		}`, token.AccessToken, token.Scope.String(), token.Me.String()))
+	userRouter := router.New()
+	// NOTE(toby3d): private resource
+	userRouter.GET(ticket.Resource.URL().EscapedPath(), func(ctx *http.RequestCtx) {
+		ctx.SuccessString(common.MIMETextHTMLCharsetUTF8,
+			`<link rel="token_endpoint" href="https://auth.example.org/token">`,
+		)
 	})
+	// NOTE(toby3d): token endpoint
+	userRouter.POST("/token", func(ctx *http.RequestCtx) {
+		ctx.SuccessString(common.MIMEApplicationJSONCharsetUTF8, `{
+			"access_token": "`+token.AccessToken+`",
+			"me": "`+token.Me.String()+`",
+			"scope": "`+token.Scope.String()+`",
+			"token_type": "Bearer"
+		}`)
+	})
+
+	userClient, _, userCleanup := httptest.New(t, userRouter.Handler)
 	t.Cleanup(userCleanup)
 
-	// NOTE(toby3d): current token endpoint
 	r := router.New()
+	delivery.NewRequestHandler(
+		ucase.NewTicketUseCase(ticketrepo.NewMemoryTicketRepository(new(sync.Map), config), userClient),
+		language.NewMatcher(message.DefaultCatalog.Languages()), config,
+	).Register(r)
+
 	client, _, cleanup := httptest.New(t, r.Handler)
 	t.Cleanup(cleanup)
-
-	delivery.NewRequestHandler(ucase.NewTicketUseCase(ticketrepo.NewMemoryTicketRepository(store), userClient)).
-		Register(r)
 
 	req := httptest.NewRequest(http.MethodPost, "https://example.com/ticket", []byte(
 		`ticket=`+ticket.Ticket+
