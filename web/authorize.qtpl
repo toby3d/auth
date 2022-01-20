@@ -1,121 +1,139 @@
 {% import "source.toby3d.me/website/indieauth/internal/domain" %}
 
-{% code type AuthPage struct {
+{% code type AuthorizePage struct {
   BaseOf
   Client              *domain.Client
-  Me                  *domain.Me
   RedirectURI         *domain.URL
+  Me                  *domain.Me
   CodeChallengeMethod domain.CodeChallengeMethod
   ResponseType        domain.ResponseType
   Scope               domain.Scopes
+  CSRF                []byte
   CodeChallenge       string
-  CSRF                string
   State               string
 } %}
 
-{% func (p *AuthPage) Lang() %}
-  en
-{% endfunc %}
-
-{% func (p *AuthPage) Title() %}
-  Authorize {%s p.Client.Name[0] %}
-{% endfunc %}
-
-{% func (p *AuthPage) Head() %}
-{% endfunc %}
-
-{% func (p *AuthPage) Body() %}
-  {% if p.Client.Logo[0] != nil %}
-    <img
-      alt="{%s p.Client.Name[0] %}"
-      crossorigin="anonymous"
-      decoding="async"
-      height="140"
-      importance="high"
-      loading="lazy"
-      referrerpolicy="no-referrer-when-downgrade"
-      src="{%s p.Client.Logo[0].String() %}"
-      width="140">
+{% func (p *AuthorizePage) Title() %}
+  {% if p.Client.GetName() == "" %}
+    {%= p.T("Authorize %s", p.Client.GetName()) %}
+  {% else %}
+    {%= p.T("Authorize application") %}
   {% endif %}
+{% endfunc %}
 
-  <h2>{%s p.Client.Name[0] %}</h2>
-
-  <form
-    accept-charset="utf-8"
-    action="/api/authorize"
-    autocomplete="off"
-    enctype="application/x-www-form-urlencoded"
-    method="post"
-    novalidate="true"
-    target="_self">
-
-    {% if p.CSRF != "" %}
-      <input
-        name="_csrf"
-        type="hidden"
-        value="{%s p.CSRF %}">
+{% func (p *AuthorizePage) Body() %}
+  <header>
+    {% if p.Client.GetLogo() != nil %}
+      <img
+        alt="{%s p.Client.GetName() %}"
+        crossorigin="anonymous"
+        decoding="async"
+        height="140"
+        importance="high"
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+        src="{%s p.Client.GetLogo().String() %}"
+        width="140">
     {% endif %}
 
-    <input
-      name="response_type"
-      type="hidden"
-      value="code">
+    <h2>
+      {% if p.Client.GetURL() != nil %}
+        <a href="{%s p.Client.GetURL().String() %}">
+      {% endif %}
+      {% if p.Client.GetName() != "" %}
+        {%s p.Client.GetName() %}
+      {% else %}
+        {%s p.Client.ID.String() %}
+      {% endif %}
+      {% if p.Client.GetURL() != nil %}
+        </a>
+      {% endif %}
+    </h2>
+  </header>
 
-    <input
-      name="client_id"
-      type="hidden"
-      value="{%s p.Client.URL[0].String() %}">
+  <main>
+    <form
+      accept-charset="utf-8"
+      action="/api/authorize"
+      autocomplete="off"
+      enctype="application/x-www-form-urlencoded"
+      method="post"
+      novalidate="true"
+      target="_self">
 
-    <input
-      name="redirect_uri"
-      type="hidden"
-      value="{%s p.RedirectURI.String() %}">
+      {% if p.CSRF != nil %}
+        <input
+          type="hidden"
+          name="_csrf"
+          value="{%z p.CSRF %}">
+      {% endif %}
 
-    <input
-      name="state"
-      type="hidden"
-      value="{%s p.State %}">
+      {% for key, val := range map[string]string{
+        "client_id":     p.Client.ID.String(),
+        "redirect_uri":  p.RedirectURI.String(),
+        "response_type": p.ResponseType.String(),
+        "state":         p.State,
+      } %}
+        <input
+          type="hidden"
+          name="{%s key %}"
+          value="{%s val %}">
+      {% endfor %}
 
-    {% if p.CodeChallenge != "" %}
-      <input
-        name="code_challenge"
-        type="hidden"
-        value="{%s p.CodeChallenge %}">
+      {% if len(p.Scope) > 0 %}
+      <fieldset>
+        <legend>{%= p.T("Choose your scopes") %}</legend>
 
-      <input
-        name="code_challenge_method"
-        type="hidden"
-        value="{%s p.CodeChallengeMethod.String() %}">
-    {% endif %}
+        {% for _, scope := range p.Scope %}
+          <div>
+            <label>
+              <input
+                type="checkbox"
+                name="scope[]"
+                value="{%s scope.String() %}"
+                checked>
 
-    {% if len(p.Scope) != 0 %}
-      <input
-        name="scope"
-        type="hidden"
-        value="{%s p.Scope.String() %}">
-    {% endif %}
+              {%s scope.String() %}
+            </label>
+          </div>
+        {% endfor %}
+      </fieldset>
+      {% endif %}
 
-    {% if p.Me != nil %}
-      <input
-        name="me"
-        type="hidden"
-        value="{%s p.Me.String() %}">
-    {% endif %}
+      {% if p.CodeChallenge != "" %}
+        <input
+          type="hidden"
+          name="code_challenge"
+          value="{%s p.CodeChallenge %}">
 
-    <button
-      name="authorize"
-      type="submit"
-      value="deny">
+        <input
+          type="hidden"
+          name="code_challenge_method"
+          value="{%s p.CodeChallengeMethod.String() %}">
+      {% endif %}
 
-      {%= p.T("Deny") %}
-    </button>
+      {% if p.Me != nil %}
+        <input
+          type="hidden"
+          name="me"
+          value="{%s p.Me.String() %}">
+      {% endif %}
 
-    <button
-      name="authorize"
-      type="submit"
-      value="allow">
+      <button
+        type="submit"
+        name="authorize"
+        value="deny">
 
-      {%= p.T("Allow") %}
-    </button>
-  </form>
+        {%= p.T("Deny") %}
+      </button>
+
+      <button
+        type="submit"
+        name="authorize"
+        value="allow">
+
+        {%= p.T("Allow") %}
+      </button>
+    </form>
+  </main>
 {% endfunc %}

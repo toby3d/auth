@@ -2,26 +2,24 @@
 
 {% code type HomePage struct {
   BaseOf
-  RedirectURI   []*domain.URL
-  Client        *domain.Client
-  AuthEndpoint,
-  State         string
+  Client *domain.Client
+  State  string
 } %}
 
 {% collapsespace %}
 {% func (p *HomePage) Head() %}
   {%= p.BaseOf.Head() %}
-  {% for i := range p.RedirectURI %}
-    <link rel="redirect_uri" href="{%s p.RedirectURI[i].String() %}">
+  {% for i := range p.Client.RedirectURI %}
+    <link rel="redirect_uri" href="{%s p.Client.RedirectURI[i].String() %}">
   {% endfor %}
 {% endfunc %}
 
 {% func (p *HomePage) Body() %}
-  <div class="h-app h-x-app">
+  <header class="h-app h-x-app">
     <img
       class="u-logo"
-      src="{%s p.Client.Logo[0].String() %}"
-      alt="{%s p.Client.Name[0] %}"
+      src="{%s p.Client.GetLogo().String() %}"
+      alt="{%s p.Client.GetName() %}"
       crossorigin="anonymous"
       decoding="async"
       height="140"
@@ -32,35 +30,33 @@
     <h1>
       <a
         class="p-name u-url"
-        href="{%s p.Client.URL[0].String() %}">
+        href="{%s p.Client.GetURL().String() %}">
 
-        {%s p.Client.Name[0] %}
+        {%s p.Client.GetName() %}
       </a>
     </h1>
+  </header>
 
+  <main>
     <form
       method="get"
-      action="{%s p.AuthEndpoint %}"
+      action="/authorize"
       enctype="application/x-www-form-urlencoded"
       accept-charset="utf-8"
       target="_self">
 
       {% for name, value := range map[string]string {
-        "client_id":      p.Client.ID.String(),
-        "redirect_uri":   p.Client.RedirectURI[0].String(),
-        "response_type":  "code",
-        "state":          p.State,
+        "client_id":     p.Client.ID.String(),
+        "redirect_uri":  p.Client.RedirectURI[0].String(),
+        "response_type": domain.ResponseTypeCode.String(),
+        "state":         p.State,
+        "scope":         domain.Scopes{domain.ScopeProfile, domain.ScopeEmail}.String(),
       } %}
         <input
           type="hidden"
           name="{%s name %}"
           value="{%s value %}">
       {% endfor %}
-
-      <input
-        type="hidden"
-        name="scope"
-        value="{%s domain.ScopeProfile.String() %} {%s domain.ScopeEmail.String() %}">
 
       <input
         type="url"
@@ -72,6 +68,6 @@
 
       <button type="submit">{%= p.T("Sign In") %}</button>
     </form>
-  </div>
+  </main>
 {% endfunc %}
 {% endcollapsespace %}

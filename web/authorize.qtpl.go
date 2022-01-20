@@ -21,61 +21,46 @@ var (
 )
 
 //line web/authorize.qtpl:3
-type AuthPage struct {
+type AuthorizePage struct {
 	BaseOf
 	Client              *domain.Client
-	Me                  *domain.Me
 	RedirectURI         *domain.URL
+	Me                  *domain.Me
 	CodeChallengeMethod domain.CodeChallengeMethod
 	ResponseType        domain.ResponseType
 	Scope               domain.Scopes
+	CSRF                []byte
 	CodeChallenge       string
-	CSRF                string
 	State               string
 }
 
 //line web/authorize.qtpl:16
-func (p *AuthPage) StreamLang(qw422016 *qt422016.Writer) {
+func (p *AuthorizePage) StreamTitle(qw422016 *qt422016.Writer) {
 //line web/authorize.qtpl:16
 	qw422016.N().S(`
-  en
-`)
+  `)
+//line web/authorize.qtpl:17
+	if p.Client.GetName() == "" {
+//line web/authorize.qtpl:17
+		qw422016.N().S(`
+    `)
 //line web/authorize.qtpl:18
-}
-
+		p.StreamT(qw422016, "Authorize %s", p.Client.GetName())
 //line web/authorize.qtpl:18
-func (p *AuthPage) WriteLang(qq422016 qtio422016.Writer) {
-//line web/authorize.qtpl:18
-	qw422016 := qt422016.AcquireWriter(qq422016)
-//line web/authorize.qtpl:18
-	p.StreamLang(qw422016)
-//line web/authorize.qtpl:18
-	qt422016.ReleaseWriter(qw422016)
-//line web/authorize.qtpl:18
-}
-
-//line web/authorize.qtpl:18
-func (p *AuthPage) Lang() string {
-//line web/authorize.qtpl:18
-	qb422016 := qt422016.AcquireByteBuffer()
-//line web/authorize.qtpl:18
-	p.WriteLang(qb422016)
-//line web/authorize.qtpl:18
-	qs422016 := string(qb422016.B)
-//line web/authorize.qtpl:18
-	qt422016.ReleaseByteBuffer(qb422016)
-//line web/authorize.qtpl:18
-	return qs422016
-//line web/authorize.qtpl:18
-}
-
+		qw422016.N().S(`
+  `)
+//line web/authorize.qtpl:19
+	} else {
+//line web/authorize.qtpl:19
+		qw422016.N().S(`
+    `)
 //line web/authorize.qtpl:20
-func (p *AuthPage) StreamTitle(qw422016 *qt422016.Writer) {
+		p.StreamT(qw422016, "Authorize application")
 //line web/authorize.qtpl:20
-	qw422016.N().S(`
-  Authorize `)
+		qw422016.N().S(`
+  `)
 //line web/authorize.qtpl:21
-	qw422016.E().S(p.Client.Name[0])
+	}
 //line web/authorize.qtpl:21
 	qw422016.N().S(`
 `)
@@ -83,7 +68,7 @@ func (p *AuthPage) StreamTitle(qw422016 *qt422016.Writer) {
 }
 
 //line web/authorize.qtpl:22
-func (p *AuthPage) WriteTitle(qq422016 qtio422016.Writer) {
+func (p *AuthorizePage) WriteTitle(qq422016 qtio422016.Writer) {
 //line web/authorize.qtpl:22
 	qw422016 := qt422016.AcquireWriter(qq422016)
 //line web/authorize.qtpl:22
@@ -94,7 +79,7 @@ func (p *AuthPage) WriteTitle(qq422016 qtio422016.Writer) {
 }
 
 //line web/authorize.qtpl:22
-func (p *AuthPage) Title() string {
+func (p *AuthorizePage) Title() string {
 //line web/authorize.qtpl:22
 	qb422016 := qt422016.AcquireByteBuffer()
 //line web/authorize.qtpl:22
@@ -109,254 +94,297 @@ func (p *AuthPage) Title() string {
 }
 
 //line web/authorize.qtpl:24
-func (p *AuthPage) StreamHead(qw422016 *qt422016.Writer) {
+func (p *AuthorizePage) StreamBody(qw422016 *qt422016.Writer) {
 //line web/authorize.qtpl:24
 	qw422016.N().S(`
-`)
-//line web/authorize.qtpl:25
-}
-
-//line web/authorize.qtpl:25
-func (p *AuthPage) WriteHead(qq422016 qtio422016.Writer) {
-//line web/authorize.qtpl:25
-	qw422016 := qt422016.AcquireWriter(qq422016)
-//line web/authorize.qtpl:25
-	p.StreamHead(qw422016)
-//line web/authorize.qtpl:25
-	qt422016.ReleaseWriter(qw422016)
-//line web/authorize.qtpl:25
-}
-
-//line web/authorize.qtpl:25
-func (p *AuthPage) Head() string {
-//line web/authorize.qtpl:25
-	qb422016 := qt422016.AcquireByteBuffer()
-//line web/authorize.qtpl:25
-	p.WriteHead(qb422016)
-//line web/authorize.qtpl:25
-	qs422016 := string(qb422016.B)
-//line web/authorize.qtpl:25
-	qt422016.ReleaseByteBuffer(qb422016)
-//line web/authorize.qtpl:25
-	return qs422016
-//line web/authorize.qtpl:25
-}
-
-//line web/authorize.qtpl:27
-func (p *AuthPage) StreamBody(qw422016 *qt422016.Writer) {
-//line web/authorize.qtpl:27
-	qw422016.N().S(`
-  `)
-//line web/authorize.qtpl:28
-	if p.Client.Logo[0] != nil {
-//line web/authorize.qtpl:28
-		qw422016.N().S(`
-    <img
-      alt="`)
-//line web/authorize.qtpl:30
-		qw422016.E().S(p.Client.Name[0])
-//line web/authorize.qtpl:30
-		qw422016.N().S(`"
-      crossorigin="anonymous"
-      decoding="async"
-      height="140"
-      importance="high"
-      loading="lazy"
-      referrerpolicy="no-referrer-when-downgrade"
-      src="`)
-//line web/authorize.qtpl:37
-		qw422016.E().S(p.Client.Logo[0].String())
-//line web/authorize.qtpl:37
-		qw422016.N().S(`"
-      width="140">
-  `)
-//line web/authorize.qtpl:39
-	}
-//line web/authorize.qtpl:39
-	qw422016.N().S(`
-
-  <h2>`)
-//line web/authorize.qtpl:41
-	qw422016.E().S(p.Client.Name[0])
-//line web/authorize.qtpl:41
-	qw422016.N().S(`</h2>
-
-  <form
-    accept-charset="utf-8"
-    action="/api/authorize"
-    autocomplete="off"
-    enctype="application/x-www-form-urlencoded"
-    method="post"
-    novalidate="true"
-    target="_self">
-
+  <header>
     `)
-//line web/authorize.qtpl:52
-	if p.CSRF != "" {
-//line web/authorize.qtpl:52
+//line web/authorize.qtpl:26
+	if p.Client.GetLogo() != nil {
+//line web/authorize.qtpl:26
 		qw422016.N().S(`
-      <input
-        name="_csrf"
-        type="hidden"
-        value="`)
-//line web/authorize.qtpl:56
-		qw422016.E().S(p.CSRF)
-//line web/authorize.qtpl:56
+      <img
+        alt="`)
+//line web/authorize.qtpl:28
+		qw422016.E().S(p.Client.GetName())
+//line web/authorize.qtpl:28
+		qw422016.N().S(`"
+        crossorigin="anonymous"
+        decoding="async"
+        height="140"
+        importance="high"
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+        src="`)
+//line web/authorize.qtpl:35
+		qw422016.E().S(p.Client.GetLogo().String())
+//line web/authorize.qtpl:35
+		qw422016.N().S(`"
+        width="140">
+    `)
+//line web/authorize.qtpl:37
+	}
+//line web/authorize.qtpl:37
+	qw422016.N().S(`
+
+    <h2>
+      `)
+//line web/authorize.qtpl:40
+	if p.Client.GetURL() != nil {
+//line web/authorize.qtpl:40
+		qw422016.N().S(`
+        <a href="`)
+//line web/authorize.qtpl:41
+		qw422016.E().S(p.Client.GetURL().String())
+//line web/authorize.qtpl:41
 		qw422016.N().S(`">
-    `)
-//line web/authorize.qtpl:57
+      `)
+//line web/authorize.qtpl:42
 	}
-//line web/authorize.qtpl:57
+//line web/authorize.qtpl:42
+	qw422016.N().S(`
+      `)
+//line web/authorize.qtpl:43
+	if p.Client.GetName() != "" {
+//line web/authorize.qtpl:43
+		qw422016.N().S(`
+        `)
+//line web/authorize.qtpl:44
+		qw422016.E().S(p.Client.GetName())
+//line web/authorize.qtpl:44
+		qw422016.N().S(`
+      `)
+//line web/authorize.qtpl:45
+	} else {
+//line web/authorize.qtpl:45
+		qw422016.N().S(`
+        `)
+//line web/authorize.qtpl:46
+		qw422016.E().S(p.Client.ID.String())
+//line web/authorize.qtpl:46
+		qw422016.N().S(`
+      `)
+//line web/authorize.qtpl:47
+	}
+//line web/authorize.qtpl:47
+	qw422016.N().S(`
+      `)
+//line web/authorize.qtpl:48
+	if p.Client.GetURL() != nil {
+//line web/authorize.qtpl:48
+		qw422016.N().S(`
+        </a>
+      `)
+//line web/authorize.qtpl:50
+	}
+//line web/authorize.qtpl:50
+	qw422016.N().S(`
+    </h2>
+  </header>
+
+  <main>
+    <form
+      accept-charset="utf-8"
+      action="/api/authorize"
+      autocomplete="off"
+      enctype="application/x-www-form-urlencoded"
+      method="post"
+      novalidate="true"
+      target="_self">
+
+      `)
+//line web/authorize.qtpl:64
+	if p.CSRF != nil {
+//line web/authorize.qtpl:64
+		qw422016.N().S(`
+        <input
+          type="hidden"
+          name="_csrf"
+          value="`)
+//line web/authorize.qtpl:68
+		qw422016.E().Z(p.CSRF)
+//line web/authorize.qtpl:68
+		qw422016.N().S(`">
+      `)
+//line web/authorize.qtpl:69
+	}
+//line web/authorize.qtpl:69
 	qw422016.N().S(`
 
-    <input
-      name="response_type"
-      type="hidden"
-      value="code">
-
-    <input
-      name="client_id"
-      type="hidden"
-      value="`)
-//line web/authorize.qtpl:67
-	qw422016.E().S(p.Client.URL[0].String())
-//line web/authorize.qtpl:67
-	qw422016.N().S(`">
-
-    <input
-      name="redirect_uri"
-      type="hidden"
-      value="`)
-//line web/authorize.qtpl:72
-	qw422016.E().S(p.RedirectURI.String())
-//line web/authorize.qtpl:72
-	qw422016.N().S(`">
-
-    <input
-      name="state"
-      type="hidden"
-      value="`)
-//line web/authorize.qtpl:77
-	qw422016.E().S(p.State)
-//line web/authorize.qtpl:77
-	qw422016.N().S(`">
-
-    `)
+      `)
+//line web/authorize.qtpl:71
+	for key, val := range map[string]string{
+		"client_id":     p.Client.ID.String(),
+		"redirect_uri":  p.RedirectURI.String(),
+		"response_type": p.ResponseType.String(),
+		"state":         p.State,
+	} {
+//line web/authorize.qtpl:76
+		qw422016.N().S(`
+        <input
+          type="hidden"
+          name="`)
 //line web/authorize.qtpl:79
+		qw422016.E().S(key)
+//line web/authorize.qtpl:79
+		qw422016.N().S(`"
+          value="`)
+//line web/authorize.qtpl:80
+		qw422016.E().S(val)
+//line web/authorize.qtpl:80
+		qw422016.N().S(`">
+      `)
+//line web/authorize.qtpl:81
+	}
+//line web/authorize.qtpl:81
+	qw422016.N().S(`
+
+      `)
+//line web/authorize.qtpl:83
+	if len(p.Scope) > 0 {
+//line web/authorize.qtpl:83
+		qw422016.N().S(`
+      <fieldset>
+        <legend>`)
+//line web/authorize.qtpl:85
+		p.StreamT(qw422016, "Choose your scopes")
+//line web/authorize.qtpl:85
+		qw422016.N().S(`</legend>
+
+        `)
+//line web/authorize.qtpl:87
+		for _, scope := range p.Scope {
+//line web/authorize.qtpl:87
+			qw422016.N().S(`
+          <div>
+            <label>
+              <input
+                type="checkbox"
+                name="scope[]"
+                value="`)
+//line web/authorize.qtpl:93
+			qw422016.E().S(scope.String())
+//line web/authorize.qtpl:93
+			qw422016.N().S(`"
+                checked>
+
+              `)
+//line web/authorize.qtpl:96
+			qw422016.E().S(scope.String())
+//line web/authorize.qtpl:96
+			qw422016.N().S(`
+            </label>
+          </div>
+        `)
+//line web/authorize.qtpl:99
+		}
+//line web/authorize.qtpl:99
+		qw422016.N().S(`
+      </fieldset>
+      `)
+//line web/authorize.qtpl:101
+	}
+//line web/authorize.qtpl:101
+	qw422016.N().S(`
+
+      `)
+//line web/authorize.qtpl:103
 	if p.CodeChallenge != "" {
-//line web/authorize.qtpl:79
+//line web/authorize.qtpl:103
 		qw422016.N().S(`
-      <input
-        name="code_challenge"
-        type="hidden"
-        value="`)
-//line web/authorize.qtpl:83
+        <input
+          type="hidden"
+          name="code_challenge"
+          value="`)
+//line web/authorize.qtpl:107
 		qw422016.E().S(p.CodeChallenge)
-//line web/authorize.qtpl:83
+//line web/authorize.qtpl:107
 		qw422016.N().S(`">
 
-      <input
-        name="code_challenge_method"
-        type="hidden"
-        value="`)
-//line web/authorize.qtpl:88
+        <input
+          type="hidden"
+          name="code_challenge_method"
+          value="`)
+//line web/authorize.qtpl:112
 		qw422016.E().S(p.CodeChallengeMethod.String())
-//line web/authorize.qtpl:88
+//line web/authorize.qtpl:112
 		qw422016.N().S(`">
-    `)
-//line web/authorize.qtpl:89
+      `)
+//line web/authorize.qtpl:113
 	}
-//line web/authorize.qtpl:89
+//line web/authorize.qtpl:113
 	qw422016.N().S(`
 
-    `)
-//line web/authorize.qtpl:91
-	if len(p.Scope) != 0 {
-//line web/authorize.qtpl:91
-		qw422016.N().S(`
-      <input
-        name="scope"
-        type="hidden"
-        value="`)
-//line web/authorize.qtpl:95
-		qw422016.E().S(p.Scope.String())
-//line web/authorize.qtpl:95
-		qw422016.N().S(`">
-    `)
-//line web/authorize.qtpl:96
-	}
-//line web/authorize.qtpl:96
-	qw422016.N().S(`
-
-    `)
-//line web/authorize.qtpl:98
+      `)
+//line web/authorize.qtpl:115
 	if p.Me != nil {
-//line web/authorize.qtpl:98
+//line web/authorize.qtpl:115
 		qw422016.N().S(`
-      <input
-        name="me"
-        type="hidden"
-        value="`)
-//line web/authorize.qtpl:102
+        <input
+          type="hidden"
+          name="me"
+          value="`)
+//line web/authorize.qtpl:119
 		qw422016.E().S(p.Me.String())
-//line web/authorize.qtpl:102
+//line web/authorize.qtpl:119
 		qw422016.N().S(`">
-    `)
-//line web/authorize.qtpl:103
+      `)
+//line web/authorize.qtpl:120
 	}
-//line web/authorize.qtpl:103
+//line web/authorize.qtpl:120
 	qw422016.N().S(`
 
-    <button
-      name="authorize"
-      type="submit"
-      value="deny">
+      <button
+        type="submit"
+        name="authorize"
+        value="deny">
 
-      `)
-//line web/authorize.qtpl:110
+        `)
+//line web/authorize.qtpl:127
 	p.StreamT(qw422016, "Deny")
-//line web/authorize.qtpl:110
+//line web/authorize.qtpl:127
 	qw422016.N().S(`
-    </button>
+      </button>
 
-    <button
-      name="authorize"
-      type="submit"
-      value="allow">
+      <button
+        type="submit"
+        name="authorize"
+        value="allow">
 
-      `)
-//line web/authorize.qtpl:118
+        `)
+//line web/authorize.qtpl:135
 	p.StreamT(qw422016, "Allow")
-//line web/authorize.qtpl:118
+//line web/authorize.qtpl:135
 	qw422016.N().S(`
-    </button>
-  </form>
+      </button>
+    </form>
+  </main>
 `)
-//line web/authorize.qtpl:121
+//line web/authorize.qtpl:139
 }
 
-//line web/authorize.qtpl:121
-func (p *AuthPage) WriteBody(qq422016 qtio422016.Writer) {
-//line web/authorize.qtpl:121
+//line web/authorize.qtpl:139
+func (p *AuthorizePage) WriteBody(qq422016 qtio422016.Writer) {
+//line web/authorize.qtpl:139
 	qw422016 := qt422016.AcquireWriter(qq422016)
-//line web/authorize.qtpl:121
+//line web/authorize.qtpl:139
 	p.StreamBody(qw422016)
-//line web/authorize.qtpl:121
+//line web/authorize.qtpl:139
 	qt422016.ReleaseWriter(qw422016)
-//line web/authorize.qtpl:121
+//line web/authorize.qtpl:139
 }
 
-//line web/authorize.qtpl:121
-func (p *AuthPage) Body() string {
-//line web/authorize.qtpl:121
+//line web/authorize.qtpl:139
+func (p *AuthorizePage) Body() string {
+//line web/authorize.qtpl:139
 	qb422016 := qt422016.AcquireByteBuffer()
-//line web/authorize.qtpl:121
+//line web/authorize.qtpl:139
 	p.WriteBody(qb422016)
-//line web/authorize.qtpl:121
+//line web/authorize.qtpl:139
 	qs422016 := string(qb422016.B)
-//line web/authorize.qtpl:121
+//line web/authorize.qtpl:139
 	qt422016.ReleaseByteBuffer(qb422016)
-//line web/authorize.qtpl:121
+//line web/authorize.qtpl:139
 	return qs422016
-//line web/authorize.qtpl:121
+//line web/authorize.qtpl:139
 }
