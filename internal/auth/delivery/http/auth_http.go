@@ -1,6 +1,7 @@
 package http
 
 import (
+	"crypto/subtle"
 	"fmt"
 	"path"
 	"strings"
@@ -120,16 +121,28 @@ func NewRequestHandler(opts NewRequestHandlerOptions) *RequestHandler {
 func (h *RequestHandler) Register(r *router.Router) {
 	chain := middleware.Chain{
 		middleware.CSRFWithConfig(middleware.CSRFConfig{
+			CookieSameSite: http.CookieSameSiteStrictMode,
+			CookieName:     "_csrf",
+			TokenLookup:    "form:_csrf",
+			CookieSecure:   true,
+			CookieHTTPOnly: true,
 			Skipper: func(ctx *http.RequestCtx) bool {
 				matched, _ := path.Match("/api/*", string(ctx.Path()))
 
 				return ctx.IsPost() && matched
 			},
-			CookieSameSite: http.CookieSameSiteLaxMode,
-			CookieName:     "_csrf",
-			TokenLookup:    "form:_csrf",
-			CookieSecure:   true,
-			CookieHTTPOnly: true,
+		}),
+		middleware.BasicAuthWithConfig(middleware.BasicAuthConfig{
+			Skipper: func(ctx *http.RequestCtx) bool {
+				matched, _ := path.Match("/api/*", string(ctx.Path()))
+
+				return !matched
+			},
+			Validator: func(ctx *http.RequestCtx, login, password string) (bool, error) {
+				// TODO(toby3d): change this
+				return subtle.ConstantTimeCompare([]byte(login), []byte("admin")) == 1 &&
+					subtle.ConstantTimeCompare([]byte(password), []byte("hackme")) == 1, nil
+			},
 		}),
 		middleware.LogFmt(),
 	}
