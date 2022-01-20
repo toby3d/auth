@@ -2,7 +2,6 @@ package http_test
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -85,12 +84,11 @@ func testHandler(tb testing.TB, user *domain.User) http.RequestHandler {
 		))
 	})
 	r.GET(string(user.IndieAuthMetadata.Path()), func(ctx *http.RequestCtx) {
-		ctx.SetContentType(common.MIMEApplicationJSONCharsetUTF8)
-		json.NewEncoder(ctx).Encode(repository.Response{
-			Issuer:                &domain.URL{URI: user.Me.URI()},
-			AuthorizationEndpoint: user.AuthorizationEndpoint,
-			TokenEndpoint:         user.TokenEndpoint,
-		})
+		ctx.SuccessString(common.MIMEApplicationJSONCharsetUTF8, `{
+			"issuer": "`+user.Me.String()+`",
+			"authorization_endpoint": "`+user.AuthorizationEndpoint.String()+`",
+			"token_endpoint": "`+user.TokenEndpoint.String()+`"
+		}`)
 	})
 
 	return r.Handler
