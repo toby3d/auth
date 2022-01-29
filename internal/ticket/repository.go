@@ -2,7 +2,6 @@ package ticket
 
 import (
 	"context"
-	"errors"
 
 	"source.toby3d.me/website/indieauth/internal/domain"
 )
@@ -13,4 +12,4 @@ type Repository interface {
 	GC()
 }
 
-var ErrNotExist = errors.New("token_endpoint not found on resource URL")
+var ErrNotExist error = domain.NewError(domain.ErrorCodeInvalidRequest, "ticket not exist or expired", "")

@@ -11,7 +11,6 @@ import (
 
 	"source.toby3d.me/website/indieauth/internal/domain"
 	"source.toby3d.me/website/indieauth/internal/ticket"
-	"source.toby3d.me/website/indieauth/internal/token"
 )
 
 type (
@@ -62,9 +61,7 @@ func (repo *sqlite3TicketRepository) Create(ctx context.Context, t *domain.Ticke
 	return nil
 }
 
-func (repo *sqlite3TicketRepository) GetAndDelete(ctx context.Context, ticket string) (*domain.Ticket, error) {
-	t := new(Ticket)
-
+func (repo *sqlite3TicketRepository) GetAndDelete(ctx context.Context, t string) (*domain.Ticket, error) {
 	tx, err := repo.db.Beginx()
 	if err != nil {
 		tx.Rollback()
@@ -72,17 +69,18 @@ func (repo *sqlite3TicketRepository) GetAndDelete(ctx context.Context, ticket st
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
 
-	if err = tx.GetContext(ctx, t, QueryTable+QueryGet, ticket); err != nil {
+	tkt := new(Ticket)
+	if err = tx.GetContext(ctx, tkt, QueryTable+QueryGet, t); err != nil {
 		defer tx.Rollback()
 
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, token.ErrNotExist
+			return nil, ticket.ErrNotExist
 		}
 
 		return nil, fmt.Errorf("cannot find ticket in db: %w", err)
 	}
 
-	if _, err = tx.ExecContext(ctx, QueryDelete, ticket); err != nil {
+	if _, err = tx.ExecContext(ctx, QueryDelete, t); err != nil {
 		tx.Rollback()
 
 		return nil, fmt.Errorf("cannot remove ticket from db: %w", err)
@@ -93,7 +91,8 @@ func (repo *sqlite3TicketRepository) GetAndDelete(ctx context.Context, ticket st
 	}
 
 	result := new(domain.Ticket)
-	t.Populate(result)
+
+	tkt.Populate(result)
 
 	return result, nil
 }

@@ -2,6 +2,7 @@ package memory
 
 import (
 	"context"
+	"fmt"
 	"path"
 	"sync"
 	"time"
@@ -43,12 +44,12 @@ func (repo *memoryTicketRepository) Create(_ context.Context, t *domain.Ticket) 
 func (repo *memoryTicketRepository) GetAndDelete(_ context.Context, t string) (*domain.Ticket, error) {
 	src, ok := repo.store.LoadAndDelete(path.Join(DefaultPathPrefix, t))
 	if !ok {
-		return nil, ticket.ErrNotExist
+		return nil, fmt.Errorf("cannot find ticket in store: %w", ticket.ErrNotExist)
 	}
 
 	result, ok := src.(*Ticket)
 	if !ok {
-		return nil, ticket.ErrNotExist
+		return nil, fmt.Errorf("cannot decode ticket in store: %w", ticket.ErrNotExist)
 	}
 
 	return result.Ticket, nil

@@ -1,6 +1,7 @@
 package http
 
 import (
+	"errors"
 	"fmt"
 	"path"
 
@@ -9,7 +10,6 @@ import (
 	http "github.com/valyala/fasthttp"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
-	"golang.org/x/xerrors"
 
 	"source.toby3d.me/toby3d/form"
 	"source.toby3d.me/toby3d/middleware"
@@ -75,7 +75,7 @@ func (h *RequestHandler) Register(r *router.Router) {
 	// TODO(toby3d): secure this via JWT middleware
 	r.GET("/ticket", chain.RequestHandler(h.handleRender))
 	r.POST("/api/ticket", chain.RequestHandler(h.handleSend))
-	r.POST("/ticket", chain.RequestHandler(h.handleExchange))
+	r.POST("/ticket", chain.RequestHandler(h.handleRedeem))
 }
 
 func (h *RequestHandler) handleRender(ctx *http.RequestCtx) {
@@ -120,22 +120,14 @@ func (h *RequestHandler) handleSend(ctx *http.RequestCtx) {
 	var err error
 	if ticket.Ticket, err = random.String(h.config.TicketAuth.Length); err != nil {
 		ctx.SetStatusCode(http.StatusInternalServerError)
-		encoder.Encode(&domain.Error{
-			Code:        "unauthorized_client",
-			Description: err.Error(),
-			Frame:       xerrors.Caller(1),
-		})
+		encoder.Encode(domain.NewError(domain.ErrorCodeServerError, err.Error(), ""))
 
 		return
 	}
 
 	if err = h.tickets.Generate(ctx, ticket); err != nil {
 		ctx.SetStatusCode(http.StatusInternalServerError)
-		encoder.Encode(&domain.Error{
-			Code:        "unauthorized_client",
-			Description: err.Error(),
-			Frame:       xerrors.Caller(1),
-		})
+		encoder.Encode(domain.NewError(domain.ErrorCodeServerError, err.Error(), ""))
 
 		return
 	}
@@ -143,7 +135,7 @@ func (h *RequestHandler) handleSend(ctx *http.RequestCtx) {
 	ctx.SetStatusCode(http.StatusOK)
 }
 
-func (h *RequestHandler) handleExchange(ctx *http.RequestCtx) {
+func (h *RequestHandler) handleRedeem(ctx *http.RequestCtx) {
 	ctx.SetContentType(common.MIMEApplicationJSONCharsetUTF8)
 	ctx.SetStatusCode(http.StatusOK)
 
@@ -157,18 +149,14 @@ func (h *RequestHandler) handleExchange(ctx *http.RequestCtx) {
 		return
 	}
 
-	token, err := h.tickets.Exchange(ctx, &domain.Ticket{
+	token, err := h.tickets.Redeem(ctx, &domain.Ticket{
 		Ticket:   req.Ticket,
 		Resource: req.Resource,
 		Subject:  req.Subject,
 	})
 	if err != nil {
 		ctx.SetStatusCode(http.StatusBadRequest)
-		encoder.Encode(domain.Error{
-			Code:        "invalid_request",
-			Description: err.Error(),
-			Frame:       xerrors.Caller(1),
-		})
+		encoder.Encode(domain.NewError(domain.ErrorCodeServerError, err.Error(), ""))
 
 		return
 	}
@@ -184,71 +172,74 @@ func (h *RequestHandler) handleExchange(ctx *http.RequestCtx) {
 }
 
 func (req *GenerateRequest) bind(ctx *http.RequestCtx) (err error) {
+	indieAuthError := new(domain.Error)
 	if err = form.Unmarshal(ctx.Request.PostArgs(), req); err != nil {
-		return domain.Error{
-			Code:        "invalid_request",
-			Description: err.Error(),
-			URI:         "https://indieweb.org/IndieAuth_Ticket_Auth#Create_the_IndieAuth_ticket",
-			Frame:       xerrors.Caller(1),
+		if errors.As(err, indieAuthError) {
+			return indieAuthError
 		}
+
+		return domain.NewError(
+			domain.ErrorCodeInvalidRequest,
+			err.Error(),
+			"https://indieweb.org/IndieAuth_Ticket_Auth#Create_the_IndieAuth_ticket",
+		)
 	}
 
 	if req.Resource == nil {
-		return domain.Error{
-			Code:        "invalid_request",
-			Description: "resource value MUST be set",
-			URI:         "https://indieweb.org/IndieAuth_Ticket_Auth#Create_the_IndieAuth_ticket",
-			Frame:       xerrors.Caller(1),
-		}
+		return domain.NewError(
+			domain.ErrorCodeInvalidRequest,
+			"resource value MUST be set",
+			"https://indieweb.org/IndieAuth_Ticket_Auth#Create_the_IndieAuth_ticket",
+		)
 	}
 
 	if req.Subject == nil {
-		return domain.Error{
-			Code:        "invalid_request",
-			Description: "subject value MUST be set",
-			URI:         "https://indieweb.org/IndieAuth_Ticket_Auth#Create_the_IndieAuth_ticket",
-			Frame:       xerrors.Caller(1),
-		}
+		return domain.NewError(
+			domain.ErrorCodeInvalidRequest,
+			"subject value MUST be set",
+			"https://indieweb.org/IndieAuth_Ticket_Auth#Create_the_IndieAuth_ticket",
+		)
 	}
 
 	return nil
 }
 
 func (req *ExchangeRequest) bind(ctx *http.RequestCtx) (err error) {
+	indieAuthError := new(domain.Error)
 	if err = form.Unmarshal(ctx.Request.PostArgs(), req); err != nil {
-		return domain.Error{
-			Code:        "invalid_request",
-			Description: err.Error(),
-			URI:         "https://indieweb.org/IndieAuth_Ticket_Auth#Create_the_IndieAuth_ticket",
-			Frame:       xerrors.Caller(1),
+		if errors.As(err, indieAuthError) {
+			return indieAuthError
 		}
+
+		return domain.NewError(
+			domain.ErrorCodeInvalidRequest,
+			err.Error(),
+			"https://indieweb.org/IndieAuth_Ticket_Auth#Create_the_IndieAuth_ticket",
+		)
 	}
 
 	if req.Ticket == "" {
-		return domain.Error{
-			Code:        "invalid_request",
-			Description: "ticket parameter is required",
-			URI:         "https://indieweb.org/IndieAuth_Ticket_Auth#Create_the_IndieAuth_ticket",
-			Frame:       xerrors.Caller(1),
-		}
+		return domain.NewError(
+			domain.ErrorCodeInvalidRequest,
+			"ticket parameter is required",
+			"https://indieweb.org/IndieAuth_Ticket_Auth#Create_the_IndieAuth_ticket",
+		)
 	}
 
 	if req.Resource == nil {
-		return domain.Error{
-			Code:        "invalid_request",
-			Description: "resource value MUST be set",
-			URI:         "https://indieweb.org/IndieAuth_Ticket_Auth#Create_the_IndieAuth_ticket",
-			Frame:       xerrors.Caller(1),
-		}
+		return domain.NewError(
+			domain.ErrorCodeInvalidRequest,
+			"resource parameter is required",
+			"https://indieweb.org/IndieAuth_Ticket_Auth#Create_the_IndieAuth_ticket",
+		)
 	}
 
 	if req.Subject == nil {
-		return domain.Error{
-			Code:        "invalid_request",
-			Description: "subject value MUST be set",
-			URI:         "https://indieweb.org/IndieAuth_Ticket_Auth#Create_the_IndieAuth_ticket",
-			Frame:       xerrors.Caller(1),
-		}
+		return domain.NewError(
+			domain.ErrorCodeInvalidRequest,
+			"subject parameter is required",
+			"https://indieweb.org/IndieAuth_Ticket_Auth#Create_the_IndieAuth_ticket",
+		)
 	}
 
 	return nil

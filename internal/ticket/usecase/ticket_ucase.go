@@ -23,23 +23,25 @@ type (
 	}
 
 	ticketUseCase struct {
+		config  *domain.Config
 		client  *http.Client
 		tickets ticket.Repository
 	}
 )
 
-func NewTicketUseCase(tickets ticket.Repository, client *http.Client) ticket.UseCase {
+func NewTicketUseCase(tickets ticket.Repository, client *http.Client, config *domain.Config) ticket.UseCase {
 	return &ticketUseCase{
 		client:  client,
 		tickets: tickets,
+		config:  config,
 	}
 }
 
-func (useCase *ticketUseCase) Generate(ctx context.Context, ticket *domain.Ticket) error {
+func (useCase *ticketUseCase) Generate(ctx context.Context, t *domain.Ticket) error {
 	req := http.AcquireRequest()
 	defer http.ReleaseRequest(req)
 	req.Header.SetMethod(http.MethodGet)
-	req.SetRequestURIBytes(ticket.Subject.RequestURI())
+	req.SetRequestURI(t.Subject.String())
 
 	resp := http.AcquireResponse()
 	defer http.ReleaseResponse(resp)
@@ -54,16 +56,16 @@ func (useCase *ticketUseCase) Generate(ctx context.Context, ticket *domain.Ticke
 	if metadata, err := util.ExtractMetadata(resp, useCase.client); err == nil && metadata != nil {
 		ticketEndpoint = metadata.TicketEndpoint
 	} else { // NOTE(toby3d): fallback to old links searching
-		if endpoints := util.ExtractEndpoints(resp, "ticket_endpoint"); endpoints != nil && len(endpoints) > 0 {
+		if endpoints := util.ExtractEndpoints(resp, "ticket_endpoint"); len(endpoints) > 0 {
 			ticketEndpoint = endpoints[len(endpoints)-1]
 		}
 	}
 
 	if ticketEndpoint == nil {
-		return fmt.Errorf("cannot discovery ticket_endpoint on ticket resource")
+		return ticket.ErrTicketEndpointNotExist
 	}
 
-	if err := useCase.tickets.Create(ctx, ticket); err != nil {
+	if err := useCase.tickets.Create(ctx, t); err != nil {
 		return fmt.Errorf("cannot save ticket in store: %w", err)
 	}
 
@@ -71,9 +73,9 @@ func (useCase *ticketUseCase) Generate(ctx context.Context, ticket *domain.Ticke
 	req.Header.SetMethod(http.MethodPost)
 	req.SetRequestURIBytes(ticketEndpoint.RequestURI())
 	req.Header.SetContentType(common.MIMEApplicationForm)
-	req.PostArgs().Set("ticket", ticket.Ticket)
-	req.PostArgs().Set("subject", ticket.Subject.String())
-	req.PostArgs().Set("resource", ticket.Resource.String())
+	req.PostArgs().Set("ticket", t.Ticket)
+	req.PostArgs().Set("subject", t.Subject.String())
+	req.PostArgs().Set("resource", t.Resource.String())
 	resp.Reset()
 
 	if err := useCase.client.Do(req, resp); err != nil {
@@ -83,10 +85,10 @@ func (useCase *ticketUseCase) Generate(ctx context.Context, ticket *domain.Ticke
 	return nil
 }
 
-func (useCase *ticketUseCase) Exchange(ctx context.Context, ticket *domain.Ticket) (*domain.Token, error) {
+func (useCase *ticketUseCase) Redeem(ctx context.Context, t *domain.Ticket) (*domain.Token, error) {
 	req := http.AcquireRequest()
 	defer http.ReleaseRequest(req)
-	req.SetRequestURI(ticket.Resource.String())
+	req.SetRequestURI(t.Resource.String())
 	req.Header.SetMethod(http.MethodGet)
 
 	resp := http.AcquireResponse()
@@ -102,13 +104,13 @@ func (useCase *ticketUseCase) Exchange(ctx context.Context, ticket *domain.Ticke
 	if metadata, err := util.ExtractMetadata(resp, useCase.client); err == nil && metadata != nil {
 		tokenEndpoint = metadata.TokenEndpoint
 	} else { // NOTE(toby3d): fallback to old links searching
-		if endpoints := util.ExtractEndpoints(resp, "token_endpoint"); endpoints != nil && len(endpoints) > 0 {
+		if endpoints := util.ExtractEndpoints(resp, "token_endpoint"); len(endpoints) > 0 {
 			tokenEndpoint = endpoints[len(endpoints)-1]
 		}
 	}
 
 	if tokenEndpoint == nil {
-		return nil, fmt.Errorf("cannot discovery token_endpoint on ticket resource")
+		return nil, ticket.ErrTokenEndpointNotExist
 	}
 
 	req.Reset()
@@ -117,7 +119,7 @@ func (useCase *ticketUseCase) Exchange(ctx context.Context, ticket *domain.Ticke
 	req.Header.SetContentType(common.MIMEApplicationForm)
 	req.Header.Set(http.HeaderAccept, common.MIMEApplicationJSON)
 	req.PostArgs().Set("grant_type", domain.GrantTypeTicket.String())
-	req.PostArgs().Set("ticket", ticket.Ticket)
+	req.PostArgs().Set("ticket", t.Ticket)
 	resp.Reset()
 
 	if err := useCase.client.Do(req, resp); err != nil {
@@ -137,4 +139,26 @@ func (useCase *ticketUseCase) Exchange(ctx context.Context, ticket *domain.Ticke
 		Me:          data.Me,
 		Scope:       data.Scope,
 	}, nil
+}
+
+func (useCase *ticketUseCase) Exchange(ctx context.Context, ticket string) (*domain.Token, error) {
+	t, err := useCase.tickets.GetAndDelete(ctx, ticket)
+	if err != nil {
+		return nil, fmt.Errorf("cannot find provided ticket: %w", err)
+	}
+
+	token, err := domain.NewToken(domain.NewTokenOptions{
+		Algorithm:  useCase.config.JWT.Algorithm,
+		Expiration: useCase.config.JWT.Expiry,
+		// TODO(toby3d): Issuer: &domain.ClientID{},
+		NonceLength: useCase.config.JWT.NonceLength,
+		Scope:       domain.Scopes{domain.ScopeRead},
+		Secret:      []byte(useCase.config.JWT.Secret),
+		Subject:     t.Subject,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate a new access token: %w", err)
+	}
+
+	return token, nil
 }

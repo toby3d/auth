@@ -9,6 +9,17 @@ import (
 type UseCase interface {
 	Generate(ctx context.Context, ticket *domain.Ticket) error
 
-	// Exchange transform received ticket into access token.
-	Exchange(ctx context.Context, ticket *domain.Ticket) (*domain.Token, error)
+	// Redeem transform received ticket into access token.
+	Redeem(ctx context.Context, ticket *domain.Ticket) (*domain.Token, error)
+
+	Exchange(ctx context.Context, ticket string) (*domain.Token, error)
 }
+
+var (
+	ErrTicketEndpointNotExist error = domain.NewError(
+		domain.ErrorCodeServerError, "ticket_endpoint not found on ticket resource", "",
+	)
+	ErrTokenEndpointNotExist error = domain.NewError(
+		domain.ErrorCodeServerError, "token_endpoint not found on ticket resource", "",
+	)
+)

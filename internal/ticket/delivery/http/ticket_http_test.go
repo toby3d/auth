@@ -48,7 +48,7 @@ func TestUpdate(t *testing.T) {
 
 	r := router.New()
 	delivery.NewRequestHandler(
-		ucase.NewTicketUseCase(ticketrepo.NewMemoryTicketRepository(new(sync.Map), config), userClient),
+		ucase.NewTicketUseCase(ticketrepo.NewMemoryTicketRepository(new(sync.Map), config), userClient, config),
 		language.NewMatcher(message.DefaultCatalog.Languages()), config,
 	).Register(r)
 

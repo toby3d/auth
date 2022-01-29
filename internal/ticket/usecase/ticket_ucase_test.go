@@ -16,7 +16,7 @@ import (
 	ucase "source.toby3d.me/website/indieauth/internal/ticket/usecase"
 )
 
-func TestExchange(t *testing.T) {
+func TestRedeem(t *testing.T) {
 	t.Parallel()
 
 	token := domain.TestToken(t)
@@ -39,7 +39,8 @@ func TestExchange(t *testing.T) {
 	client, _, cleanup := httptest.New(t, r.Handler)
 	t.Cleanup(cleanup)
 
-	result, err := ucase.NewTicketUseCase(nil, client).Exchange(context.Background(), ticket)
+	result, err := ucase.NewTicketUseCase(nil, client, domain.TestConfig(t)).
+		Redeem(context.Background(), ticket)
 	require.NoError(t, err)
 	assert.Equal(t, token.AccessToken, result.AccessToken)
 	assert.Equal(t, token.Me.String(), result.Me.String())
