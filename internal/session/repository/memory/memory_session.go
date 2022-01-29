@@ -2,6 +2,7 @@ package memory
 
 import (
 	"context"
+	"fmt"
 	"path"
 	"sync"
 	"time"
@@ -40,15 +41,29 @@ func (repo *memorySessionRepository) Create(_ context.Context, state *domain.Ses
 	return nil
 }
 
-func (repo *memorySessionRepository) GetAndDelete(_ context.Context, code string) (*domain.Session, error) {
-	src, ok := repo.store.LoadAndDelete(path.Join(DefaultPathPrefix, code))
+func (repo *memorySessionRepository) Get(_ context.Context, code string) (*domain.Session, error) {
+	src, ok := repo.store.Load(path.Join(DefaultPathPrefix, code))
 	if !ok {
-		return nil, session.ErrNotExist
+		return nil, fmt.Errorf("cannot find session in store: %w", session.ErrNotExist)
 	}
 
 	result, ok := src.(*Session)
 	if !ok {
-		return nil, session.ErrNotExist
+		return nil, fmt.Errorf("cannot decode session in store: %w", session.ErrNotExist)
+	}
+
+	return result.Session, nil
+}
+
+func (repo *memorySessionRepository) GetAndDelete(_ context.Context, code string) (*domain.Session, error) {
+	src, ok := repo.store.LoadAndDelete(path.Join(DefaultPathPrefix, code))
+	if !ok {
+		return nil, fmt.Errorf("cannot find session in store: %w", session.ErrNotExist)
+	}
+
+	result, ok := src.(*Session)
+	if !ok {
+		return nil, fmt.Errorf("cannot decode session in store: %w", session.ErrNotExist)
 	}
 
 	return result.Session, nil

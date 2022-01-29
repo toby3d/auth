@@ -71,6 +71,18 @@ func (repo *sqlite3SessionRepository) Create(ctx context.Context, session *domai
 	return nil
 }
 
+func (repo *sqlite3SessionRepository) Get(ctx context.Context, code string) (*domain.Session, error) {
+	s := new(Session)
+	if err := repo.db.GetContext(ctx, s, QueryTable+QueryGet, code); err != nil {
+		return nil, fmt.Errorf("cannot find session in db: %w", err)
+	}
+
+	result := new(domain.Session)
+	s.Populate(result)
+
+	return result, nil
+}
+
 func (repo *sqlite3SessionRepository) GetAndDelete(ctx context.Context, code string) (*domain.Session, error) {
 	s := new(Session)
 

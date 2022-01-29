@@ -32,6 +32,22 @@ func TestCreate(t *testing.T) {
 	assert.Equal(t, session.Code, result.Code)
 }
 
+func TestGet(t *testing.T) {
+	t.Parallel()
+
+	db, cleanup := sqltest.Open(t)
+	t.Cleanup(cleanup)
+
+	session := domain.TestSession(t)
+	_, err := db.NamedExec(repository.QueryTable+repository.QueryCreate, repository.NewSession(session))
+	require.NoError(t, err)
+
+	result, err := repository.NewSQLite3SessionRepository(domain.TestConfig(t), db).
+		Get(context.Background(), session.Code)
+	require.NoError(t, err)
+	assert.Equal(t, session.Code, result.Code)
+}
+
 func TestGetAndDelete(t *testing.T) {
 	t.Parallel()
 
@@ -46,4 +62,6 @@ func TestGetAndDelete(t *testing.T) {
 		GetAndDelete(context.Background(), session.Code)
 	require.NoError(t, err)
 	assert.Equal(t, session.Code, result.Code)
+
+	assert.Error(t, db.Get(result, repository.QueryGet, session.Code), "session MUST be destroyed after successful"+" query")
 }
