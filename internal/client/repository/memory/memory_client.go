@@ -2,6 +2,7 @@ package memory
 
 import (
 	"context"
+	"fmt"
 	"path"
 	"sync"
 
@@ -30,12 +31,12 @@ func (repo *memoryClientRepository) Create(ctx context.Context, client *domain.C
 func (repo *memoryClientRepository) Get(ctx context.Context, id *domain.ClientID) (*domain.Client, error) {
 	src, ok := repo.store.Load(path.Join(DefaultPathPrefix, id.String()))
 	if !ok {
-		return nil, client.ErrNotExist
+		return nil, fmt.Errorf("cannot find client in store: %w", client.ErrNotExist)
 	}
 
 	c, ok := src.(*domain.Client)
 	if !ok {
-		return nil, client.ErrNotExist
+		return nil, fmt.Errorf("cannot decode client from store: %w", client.ErrNotExist)
 	}
 
 	return c, nil

@@ -1,7 +1,7 @@
 package http
 
 import (
-	"fmt"
+	"errors"
 	"strings"
 
 	"github.com/fasthttp/router"
@@ -19,9 +19,11 @@ import (
 
 type (
 	CallbackRequest struct {
-		Code  string           `form:"code"`
-		State string           `form:"state"`
-		Iss   *domain.ClientID `form:"iss"`
+		Iss              *domain.ClientID `form:"iss"`
+		Code             string           `form:"code"`
+		Error            string           `form:"error"`
+		ErrorDescription string           `form:"error_description"`
+		State            string           `form:"state"`
 	}
 
 	NewRequestHandlerOptions struct {
@@ -92,6 +94,12 @@ func (h *RequestHandler) handleCallback(ctx *http.RequestCtx) {
 		return
 	}
 
+	if req.Error != "" {
+		ctx.Error(req.ErrorDescription, http.StatusUnauthorized)
+
+		return
+	}
+
 	// TODO(toby3d): load and check state
 
 	if req.Iss.String() != h.client.ID.String() {
@@ -100,7 +108,7 @@ func (h *RequestHandler) handleCallback(ctx *http.RequestCtx) {
 		return
 	}
 
-	token, err := h.tokens.Exchange(ctx, token.ExchangeOptions{
+	token, _, err := h.tokens.Exchange(ctx, token.ExchangeOptions{
 		ClientID:     h.client.ID,
 		RedirectURI:  h.client.RedirectURI[0],
 		Code:         req.Code,
@@ -127,8 +135,14 @@ func (h *RequestHandler) handleCallback(ctx *http.RequestCtx) {
 }
 
 func (req *CallbackRequest) bind(ctx *http.RequestCtx) error {
+	indieAuthError := new(domain.Error)
+
 	if err := form.Unmarshal(ctx.QueryArgs(), req); err != nil {
-		return fmt.Errorf("cannot unmarshal request: %w", err)
+		if errors.As(err, indieAuthError) {
+			return indieAuthError
+		}
+
+		return domain.NewError(domain.ErrorCodeInvalidRequest, err.Error(), "")
 	}
 
 	return nil

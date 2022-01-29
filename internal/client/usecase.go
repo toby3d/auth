@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"errors"
 
 	"source.toby3d.me/website/indieauth/internal/domain"
 )
@@ -12,4 +11,8 @@ type UseCase interface {
 	Discovery(ctx context.Context, id *domain.ClientID) (*domain.Client, error)
 }
 
-var ErrInvalidMe = errors.New("invalid me")
+var ErrInvalidMe error = domain.NewError(
+	domain.ErrorCodeInvalidRequest,
+	"cannot fetch client endpoints on provided me",
+	"",
+)

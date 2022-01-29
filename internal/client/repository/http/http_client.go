@@ -15,17 +15,15 @@ type httpClientRepository struct {
 	client *http.Client
 }
 
-const DefaultMaxRedirectsCount int = 10
-
 const (
+	DefaultMaxRedirectsCount int = 10
+
+	hApp           string = "h-app"
+	hXApp          string = "h-x-app"
+	propertyLogo   string = "logo"
+	propertyName   string = "name"
+	propertyURL    string = "url"
 	relRedirectURI string = "redirect_uri"
-
-	hApp  string = "h-app"
-	hXApp string = "h-x-app"
-
-	propertyLogo string = "logo"
-	propertyName string = "name"
-	propertyURL  string = "url"
 )
 
 func NewHTTPClientRepository(c *http.Client) client.Repository {
@@ -48,7 +46,7 @@ func (repo *httpClientRepository) Get(ctx context.Context, id *domain.ClientID) 
 	}
 
 	if resp.StatusCode() == http.StatusNotFound {
-		return nil, client.ErrNotExist
+		return nil, fmt.Errorf("%w: status on client page is not 200", client.ErrNotExist)
 	}
 
 	client := &domain.Client{
