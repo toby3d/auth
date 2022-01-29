@@ -171,20 +171,25 @@ func (e Error) SetReirectURI(u *http.URI) {
 }
 
 // NewError creates a new Error with the stack pointing to the function call
-// line.
+// line number.
 //
 // If no code or ErrorCodeUndefined is provided, ErrorCodeAccessDenied will be
 // used instead.
-func NewError(code ErrorCode, description string) *Error {
+func NewError(code ErrorCode, description, uri string, requestState ...string) *Error {
 	if code == ErrorCodeUndefined {
 		code = ErrorCodeAccessDenied
+	}
+
+	var state string
+	if len(requestState) > 0 {
+		state = requestState[0]
 	}
 
 	return &Error{
 		Code:        code,
 		Description: description,
-		URI:         "",
-		State:       "",
+		URI:         uri,
+		State:       state,
 		frame:       xerrors.Caller(1),
 	}
 }

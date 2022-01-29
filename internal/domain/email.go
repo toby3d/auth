@@ -11,7 +11,7 @@ type Email struct {
 	host string
 }
 
-var ErrEmailInvalid error = NewError(ErrorCodeInvalidRequest, "cannot parse email")
+var ErrEmailInvalid error = NewError(ErrorCodeInvalidRequest, "cannot parse email", "")
 
 // ParseEmail parse strings to email identifier.
 func ParseEmail(src string) (*Email, error) {

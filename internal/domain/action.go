@@ -25,7 +25,7 @@ var (
 	ActionTicket = Action{uid: "ticket"}
 )
 
-var ErrActionUnknown error = NewError(ErrorCodeInvalidRequest, "unknown action method")
+var ErrActionUnknown error = NewError(ErrorCodeInvalidRequest, "unknown action method", "")
 
 // ParseAction parse string identifier of action into struct enum.
 func ParseAction(uid string) (Action, error) {

@@ -7,6 +7,6 @@ import (
 )
 
 func ExampleNewError() {
-	fmt.Printf("%v", domain.NewError(domain.ErrorCodeInvalidRequest, "client_id MUST be provided"))
+	fmt.Printf("%v", domain.NewError(domain.ErrorCodeInvalidRequest, "client_id MUST be provided", ""))
 	// Output: invalid_request: client_id MUST be provided
 }

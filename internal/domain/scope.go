@@ -20,7 +20,7 @@ type (
 	Scopes []Scope
 )
 
-var ErrScopeUnknown error = NewError(ErrorCodeInvalidRequest, "unknown scope")
+var ErrScopeUnknown error = NewError(ErrorCodeInvalidRequest, "unknown scope", "https://indieweb.org/scope")
 
 //nolint: gochecknoglobals // NOTE(toby3d): structs cannot be constants
 var (

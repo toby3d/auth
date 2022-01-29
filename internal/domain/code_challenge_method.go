@@ -54,7 +54,11 @@ var (
 	}
 )
 
-var ErrCodeChallengeMethodUnknown error = NewError(ErrorCodeInvalidRequest, "unknown code_challene_method")
+var ErrCodeChallengeMethodUnknown error = NewError(
+	ErrorCodeInvalidRequest,
+	"unknown code_challene_method",
+	"https://indieauth.net/source/#authorization-request",
+)
 
 //nolint: gochecknoglobals // NOTE(toby3d): maps cannot be constants
 var slugsMethods = map[string]CodeChallengeMethod{
