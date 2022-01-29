@@ -101,10 +101,10 @@ func NewMe(raw string) (*Me, error) {
 }
 
 // TestMe returns a valid random generated Me for tests.
-func TestMe(tb testing.TB) *Me {
+func TestMe(tb testing.TB, src string) *Me {
 	tb.Helper()
 
-	me, err := NewMe("https://user.example.net/")
+	me, err := NewMe(src)
 	require.NoError(tb, err)
 
 	return me

@@ -19,7 +19,7 @@ func TestUser(tb testing.TB) *User {
 	tb.Helper()
 
 	return &User{
-		Me:                    TestMe(tb),
+		Me:                    TestMe(tb, "https://user.example.net/"),
 		Profile:               TestProfile(tb),
 		AuthorizationEndpoint: TestURL(tb, "https://example.org/auth"),
 		IndieAuthMetadata:     TestURL(tb, "https://example.org/.well-known/oauth-authorization-server"),

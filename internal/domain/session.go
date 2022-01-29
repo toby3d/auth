@@ -17,7 +17,7 @@ func TestSession(tb testing.TB) *Session {
 
 	return &Session{
 		ClientID:            TestClientID(tb),
-		Me:                  TestMe(tb),
+		Me:                  TestMe(tb, "https://user.example.net/"),
 		RedirectURI:         TestURL(tb, "https://example.com/callback"),
 		CodeChallengeMethod: CodeChallengeMethodPLAIN,
 		Scope:               Scopes{ScopeProfile, ScopeEmail},

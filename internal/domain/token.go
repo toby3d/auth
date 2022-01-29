@@ -88,7 +88,7 @@ func TestToken(tb testing.TB) *Token {
 
 	t := jwt.New()
 	cid := TestClientID(tb)
-	me := TestMe(tb)
+	me := TestMe(tb, "https://user.example.net/")
 	now := time.Now().UTC().Round(time.Second)
 	scope := Scopes{
 		ScopeCreate,
