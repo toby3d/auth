@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -29,7 +28,11 @@ var (
 	ResponseTypeCode ResponseType = ResponseType{uid: "code"}
 )
 
-var ErrResponseTypeUnknown error = errors.New("unknown grant type")
+var ErrResponseTypeUnknown error = NewError(
+	ErrorCodeUnsupportedResponseType,
+	"unknown grant type",
+	"https://indieauth.net/source/#authorization-request",
+)
 
 // ParseResponseType parse string as response type struct enum.
 func ParseResponseType(uid string) (ResponseType, error) {
