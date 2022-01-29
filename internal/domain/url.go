@@ -12,15 +12,13 @@ type URL struct {
 	*http.URI
 }
 
-func NewURL(src string) (*URL, error) {
-	u := &URL{
-		URI: http.AcquireURI(),
-	}
-	if err := u.URI.Parse(nil, []byte(src)); err != nil {
+func ParseURL(src string) (*URL, error) {
+	u := http.AcquireURI()
+	if err := u.Parse(nil, []byte(src)); err != nil {
 		return nil, err
 	}
 
-	return u, nil
+	return &URL{URI: u}, nil
 }
 
 func TestURL(tb testing.TB, src string) *URL {
@@ -35,7 +33,7 @@ func TestURL(tb testing.TB, src string) *URL {
 }
 
 func (u *URL) UnmarshalForm(v []byte) error {
-	url, err := NewURL(string(v))
+	url, err := ParseURL(string(v))
 	if err != nil {
 		return err
 	}
@@ -51,7 +49,7 @@ func (u *URL) UnmarshalJSON(v []byte) error {
 		return err
 	}
 
-	url, err := NewURL(src)
+	url, err := ParseURL(src)
 	if err != nil {
 		return err
 	}

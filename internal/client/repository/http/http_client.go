@@ -89,14 +89,14 @@ func extract(dst *domain.Client, src *http.Response) {
 			var u *domain.URL
 			switch l := logo.(type) {
 			case string:
-				u, err = domain.NewURL(l)
+				u, err = domain.ParseURL(l)
 			case map[string]string:
 				value, ok := l["value"]
 				if !ok {
 					continue
 				}
 
-				u, err = domain.NewURL(value)
+				u, err = domain.ParseURL(value)
 			}
 
 			if err != nil {
@@ -116,7 +116,7 @@ func extract(dst *domain.Client, src *http.Response) {
 				continue
 			}
 
-			u, err := domain.NewURL(l)
+			u, err := domain.ParseURL(l)
 			if err != nil {
 				continue
 			}

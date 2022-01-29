@@ -147,7 +147,7 @@ func extractProfile(dst *domain.Profile, src *http.Response) {
 			continue
 		}
 
-		u, err := domain.NewURL(url)
+		u, err := domain.ParseURL(url)
 		if err != nil {
 			continue
 		}
@@ -161,7 +161,7 @@ func extractProfile(dst *domain.Profile, src *http.Response) {
 			continue
 		}
 
-		p, err := domain.NewURL(photo)
+		p, err := domain.ParseURL(photo)
 		if err != nil {
 			continue
 		}

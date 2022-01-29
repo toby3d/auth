@@ -131,7 +131,7 @@ func (t *Session) Populate(dst *domain.Session) {
 	dst.CodeChallenge = t.CodeChallenge
 	dst.CodeChallengeMethod, _ = domain.ParseCodeChallengeMethod(t.CodeChallengeMethod)
 	dst.Me, _ = domain.ParseMe(t.Me)
-	dst.RedirectURI, _ = domain.NewURL(t.RedirectURI)
+	dst.RedirectURI, _ = domain.ParseURL(t.RedirectURI)
 
 	for _, scope := range strings.Fields(t.Scope) {
 		s, err := domain.ParseScope(scope)

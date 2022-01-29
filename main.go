@@ -106,17 +106,17 @@ func init() {
 		logger.Fatalln("fail to read config:", err)
 	}
 
-	url, err := domain.NewURL(rootURL)
+	url, err := domain.ParseURL(rootURL)
 	if err != nil {
 		logger.Fatalln("cannot parse root URL as client URL:", err)
 	}
 
-	logo, err := domain.NewURL(rootURL + config.Server.StaticURLPrefix + "/icon.svg")
+	logo, err := domain.ParseURL(rootURL + config.Server.StaticURLPrefix + "/icon.svg")
 	if err != nil {
 		logger.Fatalln("cannot parse root URL as client URL:", err)
 	}
 
-	redirectURI, err := domain.NewURL(rootURL + "/callback")
+	redirectURI, err := domain.ParseURL(rootURL + "/callback")
 	if err != nil {
 		logger.Fatalln("cannot parse root URL as client URL:", err)
 	}
