@@ -16,10 +16,18 @@ import (
 	"source.toby3d.me/website/indieauth/internal/domain"
 	sessionrepo "source.toby3d.me/website/indieauth/internal/session/repository/memory"
 	"source.toby3d.me/website/indieauth/internal/testing/httptest"
+	ticketrepo "source.toby3d.me/website/indieauth/internal/ticket/repository/memory"
+	ticketucase "source.toby3d.me/website/indieauth/internal/ticket/usecase"
 	delivery "source.toby3d.me/website/indieauth/internal/token/delivery/http"
 	tokenrepo "source.toby3d.me/website/indieauth/internal/token/repository/memory"
 	tokenucase "source.toby3d.me/website/indieauth/internal/token/usecase"
 )
+
+/* TODO(toby3d)
+func TestExchange(t *testing.T) {
+	t.Parallel()
+}
+*/
 
 func TestVerification(t *testing.T) {
 	t.Parallel()
@@ -30,8 +38,18 @@ func TestVerification(t *testing.T) {
 
 	r := router.New()
 	// TODO(toby3d): provide tickets
-	delivery.NewRequestHandler(tokenucase.NewTokenUseCase(tokenrepo.NewMemoryTokenRepository(store),
-		sessionrepo.NewMemorySessionRepository(config, store), config)).Register(r)
+	delivery.NewRequestHandler(
+		tokenucase.NewTokenUseCase(
+			tokenrepo.NewMemoryTokenRepository(store),
+			sessionrepo.NewMemorySessionRepository(config, store),
+			config,
+		),
+		ticketucase.NewTicketUseCase(
+			ticketrepo.NewMemoryTicketRepository(store, config),
+			new(http.Client),
+			config,
+		),
+	).Register(r)
 
 	client, _, cleanup := httptest.New(t, r.Handler)
 	t.Cleanup(cleanup)
@@ -63,8 +81,18 @@ func TestRevocation(t *testing.T) {
 	accessToken := domain.TestToken(t)
 
 	r := router.New()
-	delivery.NewRequestHandler(tokenucase.NewTokenUseCase(tokens, sessionrepo.NewMemorySessionRepository(config,
-		store), config)).Register(r)
+	delivery.NewRequestHandler(
+		tokenucase.NewTokenUseCase(
+			tokens,
+			sessionrepo.NewMemorySessionRepository(config, store),
+			config,
+		),
+		ticketucase.NewTicketUseCase(
+			ticketrepo.NewMemoryTicketRepository(store, config),
+			new(http.Client),
+			config,
+		),
+	).Register(r)
 
 	client, _, cleanup := httptest.New(t, r.Handler)
 	t.Cleanup(cleanup)

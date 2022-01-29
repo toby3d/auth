@@ -2,7 +2,6 @@ package token
 
 import (
 	"context"
-	"errors"
 
 	"source.toby3d.me/website/indieauth/internal/domain"
 )
@@ -13,6 +12,6 @@ type Repository interface {
 }
 
 var (
-	ErrExist    = errors.New("token already exist")
-	ErrNotExist = errors.New("token not exist")
+	ErrExist    error = domain.NewError(domain.ErrorCodeServerError, "token already exist", "")
+	ErrNotExist error = domain.NewError(domain.ErrorCodeServerError, "token not exist", "")
 )

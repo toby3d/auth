@@ -14,9 +14,11 @@ import (
 	usecase "source.toby3d.me/website/indieauth/internal/token/usecase"
 )
 
+/* TODO(toby3d)
 func TestExchange(t *testing.T) {
 	t.Parallel()
 }
+*/
 
 func TestVerify(t *testing.T) {
 	t.Parallel()

@@ -19,12 +19,9 @@ type tokenUseCase struct {
 	tokens   token.Repository
 }
 
-//nolint: gochecknoinits
-func init() {
-	jwt.RegisterCustomField("scope", make(domain.Scopes, 0))
-}
-
 func NewTokenUseCase(tokens token.Repository, sessions session.Repository, config *domain.Config) token.UseCase {
+	jwt.RegisterCustomField("scope", make(domain.Scopes, 0))
+
 	return &tokenUseCase{
 		sessions: sessions,
 		config:   config,
@@ -32,39 +29,31 @@ func NewTokenUseCase(tokens token.Repository, sessions session.Repository, confi
 	}
 }
 
-func (useCase *tokenUseCase) Exchange(ctx context.Context, opts token.ExchangeOptions) (*domain.Token, error) {
+func (useCase *tokenUseCase) Exchange(ctx context.Context, opts token.ExchangeOptions) (*domain.Token, *domain.Profile,
+	error) {
 	session, err := useCase.sessions.GetAndDelete(ctx, opts.Code)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get session from store: %w", err)
+		return nil, nil, fmt.Errorf("cannot get session from store: %w", err)
 	}
 
 	if opts.ClientID.String() != session.ClientID.String() {
-		return nil, domain.Error{
-			Code:        "invalid_request",
-			Description: "client's URL MUST match the client_id used in the authentication request",
-			URI:         "https://indieauth.net/source/#request",
-			Frame:       xerrors.Caller(1),
-		}
+		return nil, nil, token.ErrMismatchClientID
 	}
 
 	if opts.RedirectURI.String() != session.RedirectURI.String() {
-		return nil, domain.Error{
-			Code:        "invalid_request",
-			Description: "client's redirect URL MUST match the initial authentication request",
-			URI:         "https://indieauth.net/source/#request",
-			Frame:       xerrors.Caller(1),
-		}
+		return nil, nil, token.ErrMismatchRedirectURI
 	}
 
 	if session.CodeChallenge != "" &&
 		!session.CodeChallengeMethod.Validate(session.CodeChallenge, opts.CodeVerifier) {
-		return nil, domain.Error{
-			Code: "invalid_request",
-			Description: "code_verifier is not hashes to the same value as given in " +
-				"the code_challenge in the original authorization request",
-			URI:   "https://indieauth.net/source/#request",
-			Frame: xerrors.Caller(1),
-		}
+		return nil, nil, token.ErrMismatchPKCE
+	}
+
+	// NOTE(toby3d): If the authorization code was issued with no scope, the
+	// token endpoint MUST NOT issue an access token, as empty scopes are
+	// invalid per Section 3.3 of OAuth 2.0 RFC6749.
+	if session.Scope.IsEmpty() {
+		return nil, nil, token.ErrEmptyScope
 	}
 
 	t, err := domain.NewToken(domain.NewTokenOptions{
@@ -77,10 +66,18 @@ func (useCase *tokenUseCase) Exchange(ctx context.Context, opts token.ExchangeOp
 		Subject:     session.Me,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot generate a new access token: %w", err)
+		return nil, nil, fmt.Errorf("cannot generate a new access token: %w", err)
 	}
 
-	return t, nil
+	if !session.Scope.Has(domain.ScopeProfile) {
+		return t, nil, nil
+	}
+
+	p := new(domain.Profile)
+
+	// TODO(toby3d): if session.Scope.Has(domain.ScopeEmail) {}
+
+	return t, p, nil
 }
 
 func (useCase *tokenUseCase) Verify(ctx context.Context, accessToken string) (*domain.Token, error) {
