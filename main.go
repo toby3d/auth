@@ -102,7 +102,7 @@ func init() {
 	rootURL := config.Server.GetRootURL()
 	client.Name = []string{config.Name}
 
-	if client.ID, err = domain.NewClientID(rootURL); err != nil {
+	if client.ID, err = domain.ParseClientID(rootURL); err != nil {
 		logger.Fatalln("fail to read config:", err)
 	}
 

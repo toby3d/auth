@@ -10,7 +10,7 @@ import (
 )
 
 //nolint: funlen
-func TestNewClientID(t *testing.T) {
+func TestParseClientID(t *testing.T) {
 	t.Parallel()
 
 	for _, testCase := range []struct {
@@ -67,7 +67,7 @@ func TestNewClientID(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			result, err := domain.NewClientID(testCase.input)
+			result, err := domain.ParseClientID(testCase.input)
 			if testCase.isValid {
 				require.NoError(t, err)
 				assert.Equal(t, testCase.input, result.String())

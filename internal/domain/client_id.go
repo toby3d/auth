@@ -26,7 +26,7 @@ var (
 )
 
 //nolint: funlen
-func NewClientID(raw string) (*ClientID, error) {
+func ParseClientID(raw string) (*ClientID, error) {
 	clientID := http.AcquireURI()
 	if err := clientID.Parse(nil, []byte(raw)); err != nil {
 		return nil, Error{
@@ -113,7 +113,7 @@ func NewClientID(raw string) (*ClientID, error) {
 func TestClientID(tb testing.TB) *ClientID {
 	tb.Helper()
 
-	clientID, err := NewClientID("https://app.example.com/")
+	clientID, err := ParseClientID("https://app.example.com/")
 	require.NoError(tb, err)
 
 	return clientID
@@ -121,7 +121,7 @@ func TestClientID(tb testing.TB) *ClientID {
 
 // UnmarshalForm implements a custom form.Unmarshaler.
 func (cid *ClientID) UnmarshalForm(v []byte) error {
-	clientID, err := NewClientID(string(v))
+	clientID, err := ParseClientID(string(v))
 	if err != nil {
 		return fmt.Errorf("UnmarshalForm: %w", err)
 	}
@@ -137,7 +137,7 @@ func (cid *ClientID) UnmarshalJSON(v []byte) error {
 		return err
 	}
 
-	clientID, err := NewClientID(src)
+	clientID, err := ParseClientID(src)
 	if err != nil {
 		return fmt.Errorf("UnmarshalJSON: %w", err)
 	}

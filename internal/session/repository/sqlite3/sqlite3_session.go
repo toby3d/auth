@@ -126,7 +126,7 @@ func NewSession(src *domain.Session) *Session {
 }
 
 func (t *Session) Populate(dst *domain.Session) {
-	dst.ClientID, _ = domain.NewClientID(t.ClientID)
+	dst.ClientID, _ = domain.ParseClientID(t.ClientID)
 	dst.Code = t.Code
 	dst.CodeChallenge = t.CodeChallenge
 	dst.CodeChallengeMethod, _ = domain.ParseCodeChallengeMethod(t.CodeChallengeMethod)
