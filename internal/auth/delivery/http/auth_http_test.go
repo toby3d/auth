@@ -19,6 +19,7 @@ import (
 	clientrepo "source.toby3d.me/website/indieauth/internal/client/repository/memory"
 	clientucase "source.toby3d.me/website/indieauth/internal/client/usecase"
 	"source.toby3d.me/website/indieauth/internal/domain"
+	profilerepo "source.toby3d.me/website/indieauth/internal/profile/repository/memory"
 	sessionrepo "source.toby3d.me/website/indieauth/internal/session/repository/memory"
 	"source.toby3d.me/website/indieauth/internal/testing/httptest"
 	userrepo "source.toby3d.me/website/indieauth/internal/user/repository/memory"
@@ -33,19 +34,25 @@ func TestRender(t *testing.T) {
 	s := session.New(session.NewDefaultConfig())
 	require.NoError(t, s.SetProvider(provider))
 
-	me := domain.TestMe(t)
+	me := domain.TestMe(t, "https://user.example.net")
 	c := domain.TestClient(t)
 	config := domain.TestConfig(t)
 	store := new(sync.Map)
-	store.Store(path.Join(userrepo.DefaultPathPrefix, me.String()), domain.TestUser(t))
+	user := domain.TestUser(t)
+	store.Store(path.Join(userrepo.DefaultPathPrefix, me.String()), user)
 	store.Store(path.Join(clientrepo.DefaultPathPrefix, c.ID.String()), c)
+	store.Store(path.Join(profilerepo.DefaultPathPrefix, me.String()), user.Profile)
 
 	r := router.New()
 	delivery.NewRequestHandler(delivery.NewRequestHandlerOptions{
 		Clients: clientucase.NewClientUseCase(clientrepo.NewMemoryClientRepository(store)),
 		Config:  config,
 		Matcher: language.NewMatcher(message.DefaultCatalog.Languages()),
-		Auth:    ucase.NewAuthUseCase(sessionrepo.NewMemorySessionRepository(config, store), config),
+		Auth: ucase.NewAuthUseCase(
+			sessionrepo.NewMemorySessionRepository(config, store),
+			profilerepo.NewMemoryProfileRepository(store),
+			config,
+		),
 	}).Register(r)
 
 	client, _, cleanup := httptest.New(t, r.Handler)

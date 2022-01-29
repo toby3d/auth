@@ -2,7 +2,7 @@ package http
 
 import (
 	"crypto/subtle"
-	"fmt"
+	"errors"
 	"path"
 	"strings"
 
@@ -11,7 +11,6 @@ import (
 	http "github.com/valyala/fasthttp"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
-	"golang.org/x/xerrors"
 
 	"source.toby3d.me/toby3d/form"
 	"source.toby3d.me/toby3d/middleware"
@@ -68,6 +67,7 @@ type (
 		Authorize           string                     `form:"authorize"`
 		CodeChallenge       string                     `form:"code_challenge"`
 		State               string                     `form:"state"`
+		Provider            string                     `form:"provider"`
 	}
 
 	ExchangeRequest struct {
@@ -95,26 +95,29 @@ type (
 	}
 
 	NewRequestHandlerOptions struct {
-		Auth    auth.UseCase
-		Clients client.UseCase
-		Config  *domain.Config
-		Matcher language.Matcher
+		Auth      auth.UseCase
+		Clients   client.UseCase
+		Config    *domain.Config
+		Matcher   language.Matcher
+		Providers []*domain.Provider
 	}
 
 	RequestHandler struct {
-		clients client.UseCase
-		config  *domain.Config
-		matcher language.Matcher
-		useCase auth.UseCase
+		clients   client.UseCase
+		config    *domain.Config
+		matcher   language.Matcher
+		useCase   auth.UseCase
+		providers []*domain.Provider
 	}
 )
 
 func NewRequestHandler(opts NewRequestHandlerOptions) *RequestHandler {
 	return &RequestHandler{
-		clients: opts.Clients,
-		config:  opts.Config,
-		matcher: opts.Matcher,
-		useCase: opts.Auth,
+		clients:   opts.Clients,
+		config:    opts.Config,
+		matcher:   opts.Matcher,
+		useCase:   opts.Auth,
+		providers: opts.Providers,
 	}
 }
 
@@ -135,8 +138,10 @@ func (h *RequestHandler) Register(r *router.Router) {
 		middleware.BasicAuthWithConfig(middleware.BasicAuthConfig{
 			Skipper: func(ctx *http.RequestCtx) bool {
 				matched, _ := path.Match("/api/*", string(ctx.Path()))
+				provider := string(ctx.QueryArgs().Peek("provider"))
 
-				return !matched
+				return !ctx.IsPost() || !matched ||
+					(provider != "" && provider != domain.DefaultProviderDirect.UID)
 			},
 			Validator: func(ctx *http.RequestCtx, login, password string) (bool, error) {
 				// TODO(toby3d): change this
@@ -204,11 +209,7 @@ func (h *RequestHandler) handleVerify(ctx *http.RequestCtx) {
 	req := new(VerifyRequest)
 	if err := req.bind(ctx); err != nil {
 		ctx.SetStatusCode(http.StatusBadRequest)
-		encoder.Encode(domain.Error{
-			Code:        "invalid_request",
-			Description: err.Error(),
-			Frame:       xerrors.Caller(1),
-		})
+		encoder.Encode(err)
 
 		return
 	}
@@ -218,8 +219,8 @@ func (h *RequestHandler) handleVerify(ctx *http.RequestCtx) {
 	req.RedirectURI.CopyTo(u)
 
 	if strings.EqualFold(req.Authorize, "deny") {
-		u.QueryArgs().Set("error", "access_denied")
-		u.QueryArgs().Set("error_description", "user deny authorization request")
+		domain.NewError(domain.ErrorCodeAccessDenied, "user deny authorization request", "", req.State).
+			SetReirectURI(u)
 		ctx.Redirect(u.String(), http.StatusFound)
 
 		return
@@ -235,10 +236,7 @@ func (h *RequestHandler) handleVerify(ctx *http.RequestCtx) {
 	})
 	if err != nil {
 		ctx.SetStatusCode(http.StatusInternalServerError)
-		encoder.Encode(domain.Error{
-			Description: err.Error(),
-			Frame:       xerrors.Caller(1),
-		})
+		encoder.Encode(err)
 
 		return
 	}
@@ -286,16 +284,32 @@ func (h *RequestHandler) handleExchange(ctx *http.RequestCtx) {
 }
 
 func (r *AuthorizeRequest) bind(ctx *http.RequestCtx) error {
+	indieAuthError := new(domain.Error)
 	if err := form.Unmarshal(ctx.QueryArgs(), r); err != nil {
-		return domain.Error{
-			Code:        "invalid_request",
-			Description: err.Error(),
-			Frame:       xerrors.Caller(1),
+		if errors.As(err, indieAuthError) {
+			return indieAuthError
 		}
+
+		return domain.NewError(
+			domain.ErrorCodeInvalidRequest,
+			err.Error(),
+			"https://indieauth.net/source/#authorization-request",
+		)
 	}
 
 	r.Scope = make(domain.Scopes, 0)
-	parseScope(r.Scope, ctx.QueryArgs().Peek("scope"))
+
+	if err := parseScope(r.Scope, ctx.QueryArgs().Peek("scope")); err != nil {
+		if errors.As(err, indieAuthError) {
+			return indieAuthError
+		}
+
+		return domain.NewError(
+			domain.ErrorCodeInvalidScope,
+			err.Error(),
+			"https://indieweb.org/scope",
+		)
+	}
 
 	if r.ResponseType == domain.ResponseTypeID {
 		r.ResponseType = domain.ResponseTypeCode
@@ -305,12 +319,18 @@ func (r *AuthorizeRequest) bind(ctx *http.RequestCtx) error {
 }
 
 func (r *VerifyRequest) bind(ctx *http.RequestCtx) error {
+	indieAuthError := new(domain.Error)
+
 	if err := form.Unmarshal(ctx.PostArgs(), r); err != nil {
-		return domain.Error{
-			Code:        "invalid_request",
-			Description: err.Error(),
-			Frame:       xerrors.Caller(1),
+		if errors.As(err, indieAuthError) {
+			return indieAuthError
 		}
+
+		return domain.NewError(
+			domain.ErrorCodeInvalidRequest,
+			err.Error(),
+			"https://indieauth.net/source/#authorization-request",
+		)
 	}
 
 	r.Scope = make(domain.Scopes, 0)
@@ -320,24 +340,31 @@ func (r *VerifyRequest) bind(ctx *http.RequestCtx) error {
 		r.ResponseType = domain.ResponseTypeCode
 	}
 
+	r.Provider = strings.ToLower(r.Provider)
+
 	if !strings.EqualFold(r.Authorize, "allow") && !strings.EqualFold(r.Authorize, "deny") {
-		return domain.Error{
-			Code:        "invalid_request",
-			Description: "cannot validate verification request",
-			Frame:       xerrors.Caller(1),
-		}
+		return domain.NewError(
+			domain.ErrorCodeInvalidRequest,
+			"cannot validate verification request",
+			"https://indieauth.net/source/#authorization-request",
+		)
 	}
 
 	return nil
 }
 
 func (r *ExchangeRequest) bind(ctx *http.RequestCtx) error {
+	indieAuthError := new(domain.Error)
 	if err := form.Unmarshal(ctx.PostArgs(), r); err != nil {
-		return domain.Error{
-			Code:        "invalid_request",
-			Description: err.Error(),
-			Frame:       xerrors.Caller(1),
+		if errors.As(err, indieAuthError) {
+			return indieAuthError
 		}
+
+		return domain.NewError(
+			domain.ErrorCodeInvalidRequest,
+			"cannot validate verification request",
+			"https://indieauth.net/source/#redeeming-the-authorization-code",
+		)
 	}
 
 	return nil
@@ -358,11 +385,11 @@ func parseScope(dst domain.Scopes, src ...[]byte) error {
 	for _, rawScope := range scopes {
 		scope, err := domain.ParseScope(string(rawScope))
 		if err != nil {
-			return &domain.Error{
-				Code:        "invalid_request",
-				Description: fmt.Sprintf("cannot parse scope: %v", err),
-				Frame:       xerrors.Caller(1),
-			}
+			return domain.NewError(
+				domain.ErrorCodeInvalidScope,
+				err.Error(),
+				"https://indieweb.org/scope#IndieAuth_Scopes",
+			)
 		}
 
 		dst = append(dst, scope)

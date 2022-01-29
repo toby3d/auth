@@ -4,22 +4,24 @@ import (
 	"context"
 	"fmt"
 
-	"golang.org/x/xerrors"
-
 	"source.toby3d.me/website/indieauth/internal/auth"
 	"source.toby3d.me/website/indieauth/internal/domain"
+	"source.toby3d.me/website/indieauth/internal/profile"
 	"source.toby3d.me/website/indieauth/internal/random"
 	"source.toby3d.me/website/indieauth/internal/session"
 )
 
 type authUseCase struct {
 	config   *domain.Config
+	profiles profile.Repository
 	sessions session.Repository
 }
 
-func NewAuthUseCase(sessions session.Repository, config *domain.Config) auth.UseCase {
+// NewAuthUseCase creates a new authentication use case.
+func NewAuthUseCase(sessions session.Repository, profiles profile.Repository, config *domain.Config) auth.UseCase {
 	return &authUseCase{
 		config:   config,
+		profiles: profiles,
 		sessions: sessions,
 	}
 }
@@ -48,36 +50,33 @@ func (useCase *authUseCase) Generate(ctx context.Context, opts auth.GenerateOpti
 func (useCase *authUseCase) Exchange(ctx context.Context, opts auth.ExchangeOptions) (*domain.Me, error) {
 	session, err := useCase.sessions.GetAndDelete(ctx, opts.Code)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot find session in store: %w", err)
 	}
 
 	if opts.ClientID.String() != session.ClientID.String() {
-		return nil, domain.Error{
-			Code:        "invalid_request",
-			Description: "client's URL MUST match the client_id used in the authentication request",
-			URI:         "https://indieauth.net/source/#request",
-			Frame:       xerrors.Caller(1),
-		}
+		return nil, domain.NewError(
+			domain.ErrorCodeInvalidRequest,
+			"client's URL MUST match the client_id used in the authentication request",
+			"https://indieauth.net/source/#request",
+		)
 	}
 
 	if opts.RedirectURI.String() != session.RedirectURI.String() {
-		return nil, domain.Error{
-			Code:        "invalid_request",
-			Description: "client's redirect URL MUST match the initial authentication request",
-			URI:         "https://indieauth.net/source/#request",
-			Frame:       xerrors.Caller(1),
-		}
+		return nil, domain.NewError(
+			domain.ErrorCodeInvalidRequest,
+			"client's redirect URL MUST match the initial authentication request",
+			"https://indieauth.net/source/#request",
+		)
 	}
 
 	if session.CodeChallenge != "" &&
 		!session.CodeChallengeMethod.Validate(session.CodeChallenge, opts.CodeVerifier) {
-		return nil, domain.Error{
-			Code: "invalid_request",
-			Description: "code_verifier is not hashes to the same value as given in " +
-				"the code_challenge in the original authorization request",
-			URI:   "https://indieauth.net/source/#request",
-			Frame: xerrors.Caller(1),
-		}
+		return nil, domain.NewError(
+			domain.ErrorCodeInvalidRequest,
+			"code_verifier is not hashes to the same value as given in the code_challenge in the original "+
+				"authorization request",
+			"https://indieauth.net/source/#request",
+		)
 	}
 
 	return session.Me, nil
