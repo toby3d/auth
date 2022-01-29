@@ -16,7 +16,7 @@ import (
 func TestFetch(t *testing.T) {
 	t.Parallel()
 
-	me := domain.TestMe(t)
+	me := domain.TestMe(t, "https://user.example.net")
 	user := domain.TestUser(t)
 
 	store := new(sync.Map)

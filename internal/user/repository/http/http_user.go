@@ -15,22 +15,20 @@ type httpUserRepository struct {
 	client *http.Client
 }
 
-const DefaultMaxRedirectsCount int = 10
-
 const (
+	DefaultMaxRedirectsCount int = 10
+
+	hCard                    string = "h-card"
+	propertyEmail            string = "email"
+	propertyName             string = "name"
+	propertyPhoto            string = "photo"
+	propertyURL              string = "url"
 	relAuthorizationEndpoint string = "authorization_endpoint"
 	relIndieAuthMetadata     string = "indieauth-metadata"
 	relMicropub              string = "micropub"
 	relMicrosub              string = "microsub"
 	relTicketEndpoint        string = "ticket_endpoint"
 	relTokenEndpoint         string = "token_endpoint"
-
-	hCard string = "h-card"
-
-	propertyEmail string = "email"
-	propertyName  string = "name"
-	propertyPhoto string = "photo"
-	propertyURL   string = "url"
 )
 
 func NewHTTPUserRepository(client *http.Client) user.Repository {
