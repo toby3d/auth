@@ -23,77 +23,77 @@ func NewMe(raw string) (*Me, error) {
 	me := http.AcquireURI()
 	if err := me.Parse(nil, []byte(raw)); err != nil {
 		return nil, Error{
-			Code:        "invalid_request",
+			Code:        ErrorCodeInvalidRequest,
 			Description: err.Error(),
 			URI:         "https://indieauth.net/source/#user-profile-url",
-			Frame:       xerrors.Caller(1),
+			frame:       xerrors.Caller(1),
 		}
 	}
 
 	scheme := string(me.Scheme())
 	if scheme != "http" && scheme != "https" {
 		return nil, Error{
-			Code:        "invalid_request",
+			Code:        ErrorCodeInvalidRequest,
 			Description: "profile URL MUST have either an https or http scheme",
 			URI:         "https://indieauth.net/source/#user-profile-url",
-			Frame:       xerrors.Caller(1),
+			frame:       xerrors.Caller(1),
 		}
 	}
 
 	path := string(me.PathOriginal())
 	if path == "" || strings.Contains(path, "/.") || strings.Contains(path, "/..") {
 		return nil, Error{
-			Code: "invalid_request",
+			Code: ErrorCodeInvalidRequest,
 			Description: "profile URL MUST contain a path component (/ is a valid path), MUST NOT " +
 				"contain single-dot or double-dot path segments",
 			URI:   "https://indieauth.net/source/#user-profile-url",
-			Frame: xerrors.Caller(1),
+			frame: xerrors.Caller(1),
 		}
 	}
 
 	if me.Hash() != nil {
 		return nil, Error{
-			Code:        "invalid_request",
+			Code:        ErrorCodeInvalidRequest,
 			Description: "profile URL MUST NOT contain a fragment component",
 			URI:         "https://indieauth.net/source/#user-profile-url",
-			Frame:       xerrors.Caller(1),
+			frame:       xerrors.Caller(1),
 		}
 	}
 
 	if me.Username() != nil || me.Password() != nil {
 		return nil, Error{
-			Code:        "invalid_request",
+			Code:        ErrorCodeInvalidRequest,
 			Description: "profile URL MUST NOT contain a username or password component",
 			URI:         "https://indieauth.net/source/#user-profile-url",
-			Frame:       xerrors.Caller(1),
+			frame:       xerrors.Caller(1),
 		}
 	}
 
 	domain := string(me.Host())
 	if domain == "" {
 		return nil, Error{
-			Code:        "invalid_request",
+			Code:        ErrorCodeInvalidRequest,
 			Description: "profile host name MUST be a domain name",
 			URI:         "https://indieauth.net/source/#user-profile-url",
-			Frame:       xerrors.Caller(1),
+			frame:       xerrors.Caller(1),
 		}
 	}
 
 	if _, port, _ := net.SplitHostPort(domain); port != "" {
 		return nil, Error{
-			Code:        "invalid_request",
+			Code:        ErrorCodeInvalidRequest,
 			Description: "profile MUST NOT contain a port",
 			URI:         "https://indieauth.net/source/#user-profile-url",
-			Frame:       xerrors.Caller(1),
+			frame:       xerrors.Caller(1),
 		}
 	}
 
 	if net.ParseIP(domain) != nil {
 		return nil, Error{
-			Code:        "invalid_request",
+			Code:        ErrorCodeInvalidRequest,
 			Description: "profile MUST NOT be ipv4 or ipv6 addresses",
 			URI:         "https://indieauth.net/source/#user-profile-url",
-			Frame:       xerrors.Caller(1),
+			frame:       xerrors.Caller(1),
 		}
 	}
 

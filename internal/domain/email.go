@@ -11,8 +11,8 @@ type Email struct {
 }
 
 var ErrEmailInvalid error = Error{
-	Code:        "invalid_request",
-	Description: "cannot unmarshal email input",
+	Code:        ErrorCodeInvalidRequest,
+	Description: "cannot parse email",
 }
 
 func NewEmail(src string) (*Email, error) {

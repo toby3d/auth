@@ -30,59 +30,59 @@ func NewClientID(raw string) (*ClientID, error) {
 	clientID := http.AcquireURI()
 	if err := clientID.Parse(nil, []byte(raw)); err != nil {
 		return nil, Error{
-			Code:        "invalid_request",
+			Code:        ErrorCodeInvalidRequest,
 			Description: err.Error(),
 			URI:         "https://indieauth.net/source/#client-identifier",
-			Frame:       xerrors.Caller(1),
+			frame:       xerrors.Caller(1),
 		}
 	}
 
 	scheme := string(clientID.Scheme())
 	if scheme != "http" && scheme != "https" {
 		return nil, Error{
-			Code:        "invalid_request",
+			Code:        ErrorCodeInvalidRequest,
 			Description: "client identifier URL MUST have either an https or http scheme",
 			URI:         "https://indieauth.net/source/#client-identifier",
-			Frame:       xerrors.Caller(1),
+			frame:       xerrors.Caller(1),
 		}
 	}
 
 	path := string(clientID.PathOriginal())
 	if path == "" || strings.Contains(path, "/.") || strings.Contains(path, "/..") {
 		return nil, Error{
-			Code: "invalid_request",
+			Code: ErrorCodeInvalidRequest,
 			Description: "client identifier URL MUST contain a path component and MUST NOT contain " +
 				"single-dot or double-dot path segments",
 			URI:   "https://indieauth.net/source/#client-identifier",
-			Frame: xerrors.Caller(1),
+			frame: xerrors.Caller(1),
 		}
 	}
 
 	if clientID.Hash() != nil {
 		return nil, Error{
-			Code:        "invalid_request",
+			Code:        ErrorCodeInvalidRequest,
 			Description: "client identifier URL MUST NOT contain a fragment component",
 			URI:         "https://indieauth.net/source/#client-identifier",
-			Frame:       xerrors.Caller(1),
+			frame:       xerrors.Caller(1),
 		}
 	}
 
 	if clientID.Username() != nil || clientID.Password() != nil {
 		return nil, Error{
-			Code:        "invalid_request",
+			Code:        ErrorCodeInvalidRequest,
 			Description: "client identifier URL MUST NOT contain a username or password component",
 			URI:         "https://indieauth.net/source/#client-identifier",
-			Frame:       xerrors.Caller(1),
+			frame:       xerrors.Caller(1),
 		}
 	}
 
 	domain := string(clientID.Host())
 	if domain == "" {
 		return nil, Error{
-			Code:        "invalid_request",
+			Code:        ErrorCodeInvalidRequest,
 			Description: "client host name MUST be domain name or a loopback interface",
 			URI:         "https://indieauth.net/source/#client-identifier",
-			Frame:       xerrors.Caller(1),
+			frame:       xerrors.Caller(1),
 		}
 	}
 
@@ -98,11 +98,11 @@ func NewClientID(raw string) (*ClientID, error) {
 
 	if !ip.IsLoopback() && ip.Compare(localhostIPv4) != 0 && ip.Compare(localhostIPv6) != 0 {
 		return nil, Error{
-			Code: "invalid_request",
+			Code: ErrorCodeInvalidRequest,
 			Description: "client identifier URL MUST NOT be IPv4 or IPv6 addresses except for IPv4 " +
 				"127.0.0.1 or IPv6 [::1]",
 			URI:   "https://indieauth.net/source/#client-identifier",
-			Frame: xerrors.Caller(1),
+			frame: xerrors.Caller(1),
 		}
 	}
 
