@@ -53,7 +53,7 @@ func (repo *httpUserRepository) Get(ctx context.Context, me *domain.Me) (*domain
 	}
 
 	// TODO(toby3d): handle error here?
-	resolvedMe, _ := domain.NewMe(string(resp.Header.Peek(http.HeaderLocation)))
+	resolvedMe, _ := domain.ParseMe(string(resp.Header.Peek(http.HeaderLocation)))
 	u := &domain.User{
 		Me: resolvedMe,
 		Profile: &domain.Profile{

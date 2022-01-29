@@ -19,7 +19,7 @@ type Me struct {
 }
 
 //nolint: funlen
-func NewMe(raw string) (*Me, error) {
+func ParseMe(raw string) (*Me, error) {
 	me := http.AcquireURI()
 	if err := me.Parse(nil, []byte(raw)); err != nil {
 		return nil, Error{
@@ -104,7 +104,7 @@ func NewMe(raw string) (*Me, error) {
 func TestMe(tb testing.TB, src string) *Me {
 	tb.Helper()
 
-	me, err := NewMe(src)
+	me, err := ParseMe(src)
 	require.NoError(tb, err)
 
 	return me
@@ -112,7 +112,7 @@ func TestMe(tb testing.TB, src string) *Me {
 
 // UnmarshalForm parses the value of the form key into the Me domain.
 func (m *Me) UnmarshalForm(v []byte) error {
-	me, err := NewMe(string(v))
+	me, err := ParseMe(string(v))
 	if err != nil {
 		return fmt.Errorf("UnmarshalForm: %w", err)
 	}
@@ -128,7 +128,7 @@ func (m *Me) UnmarshalJSON(v []byte) error {
 		return err
 	}
 
-	me, err := NewMe(src)
+	me, err := ParseMe(src)
 	if err != nil {
 		return fmt.Errorf("UnmarshalForm: %w", err)
 	}

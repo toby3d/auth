@@ -10,7 +10,7 @@ import (
 )
 
 //nolint: funlen
-func TestNewMe(t *testing.T) {
+func TestParseMe(t *testing.T) {
 	t.Parallel()
 
 	for _, testCase := range []struct {
@@ -63,7 +63,7 @@ func TestNewMe(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			result, err := domain.NewMe(testCase.input)
+			result, err := domain.ParseMe(testCase.input)
 			if testCase.isValid {
 				require.NoError(t, err)
 				assert.Equal(t, testCase.input, result.String())

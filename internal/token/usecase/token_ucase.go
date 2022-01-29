@@ -107,7 +107,7 @@ func (useCase *tokenUseCase) Verify(ctx context.Context, accessToken string) (*d
 		AccessToken: accessToken,
 	}
 	result.ClientID, _ = domain.ParseClientID(t.Issuer())
-	result.Me, _ = domain.NewMe(t.Subject())
+	result.Me, _ = domain.ParseMe(t.Subject())
 
 	if scope, ok := t.Get("scope"); ok {
 		result.Scope, _ = scope.(domain.Scopes)

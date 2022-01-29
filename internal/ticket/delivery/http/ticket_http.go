@@ -23,7 +23,7 @@ import (
 type (
 	GenerateRequest struct {
 		// The access token should be used when acting on behalf of this URL.
-		Subject *domain.URL `form:"subject"`
+		Subject *domain.Me `form:"subject"`
 
 		// The access token will work at this URL.
 		Resource *domain.URL `form:"resource"`
@@ -34,7 +34,7 @@ type (
 		Ticket string `form:"ticket"`
 
 		// The access token should be used when acting on behalf of this URL.
-		Subject *domain.URL `form:"subject"`
+		Subject *domain.Me `form:"subject"`
 
 		// The access token will work at this URL.
 		Resource *domain.URL `form:"resource"`

@@ -91,7 +91,7 @@ func NewToken(src *domain.Token) *Token {
 func (t *Token) Populate(dst *domain.Token) {
 	dst.AccessToken = t.AccessToken
 	dst.ClientID, _ = domain.ParseClientID(t.ClientID)
-	dst.Me, _ = domain.NewMe(t.Me)
+	dst.Me, _ = domain.ParseMe(t.Me)
 	dst.Scope = make(domain.Scopes, 0)
 
 	for _, scope := range strings.Fields(t.Scope) {

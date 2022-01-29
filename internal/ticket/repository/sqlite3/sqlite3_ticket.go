@@ -114,6 +114,6 @@ func NewTicket(src *domain.Ticket) *Ticket {
 
 func (t *Ticket) Populate(dst *domain.Ticket) {
 	dst.Ticket = t.Ticket
-	dst.Subject, _ = domain.NewURL(t.Subject)
+	dst.Subject, _ = domain.ParseMe(t.Subject)
 	dst.Resource, _ = domain.NewURL(t.Resource)
 }
