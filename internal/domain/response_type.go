@@ -10,42 +10,44 @@ import (
 // NOTE(toby3d): Encapsulate enums in structs for extra compile-time safety:
 // https://threedots.tech/post/safer-enums-in-go/#struct-based-enums
 type ResponseType struct {
-	slug string
+	uid string
 }
 
 //nolint: gochecknoglobals // NOTE(toby3d): structs cannot be constants
 var (
-	ResponseTypeUndefined ResponseType = ResponseType{slug: ""}
+	ResponseTypeUndefined ResponseType = ResponseType{uid: ""}
 
 	// Deprecated(toby3d): Only accept response_type=code requests, and for
 	// backwards-compatible support, treat response_type=id requests as
 	// response_type=code requests:
 	// https://aaronparecki.com/2020/12/03/1/indieauth-2020#response-type
-	ResponseTypeID ResponseType = ResponseType{slug: "id"}
+	ResponseTypeID ResponseType = ResponseType{uid: "id"}
 
 	// Indicates to the authorization server that an authorization code
 	// should be returned as the response:
 	// https://indieauth.net/source/#authorization-request-li-1
-	ResponseTypeCode ResponseType = ResponseType{slug: "code"}
+	ResponseTypeCode ResponseType = ResponseType{uid: "code"}
 )
 
-var ErrResponseTypeUnknown = errors.New("unknown grant type")
+var ErrResponseTypeUnknown error = errors.New("unknown grant type")
 
-func ParseResponseType(slug string) (ResponseType, error) {
-	switch strings.ToLower(slug) {
-	case ResponseTypeCode.slug:
+// ParseResponseType parse string as response type struct enum.
+func ParseResponseType(uid string) (ResponseType, error) {
+	switch strings.ToLower(uid) {
+	case ResponseTypeCode.uid:
 		return ResponseTypeCode, nil
-	case ResponseTypeID.slug:
+	case ResponseTypeID.uid:
 		return ResponseTypeID, nil
 	}
 
-	return ResponseTypeUndefined, fmt.Errorf("%w: %s", ErrResponseTypeUnknown, slug)
+	return ResponseTypeUndefined, fmt.Errorf("%w: %s", ErrResponseTypeUnknown, uid)
 }
 
+// UnmarshalForm implements custom unmarshler for form values.
 func (rt *ResponseType) UnmarshalForm(src []byte) error {
 	responseType, err := ParseResponseType(string(src))
 	if err != nil {
-		return fmt.Errorf("response_type: %w", err)
+		return fmt.Errorf("UnmarshalForm: %w", err)
 	}
 
 	*rt = responseType
@@ -53,15 +55,16 @@ func (rt *ResponseType) UnmarshalForm(src []byte) error {
 	return nil
 }
 
+// UnmarshalJSON implements custom unmarshler for JSON.
 func (rt *ResponseType) UnmarshalJSON(v []byte) error {
-	src, err := strconv.Unquote(string(v))
+	uid, err := strconv.Unquote(string(v))
 	if err != nil {
-		return err
+		return fmt.Errorf("UnmarshalJSON: %w", err)
 	}
 
-	responseType, err := ParseResponseType(string(src))
+	responseType, err := ParseResponseType(string(uid))
 	if err != nil {
-		return fmt.Errorf("response_type: %w", err)
+		return fmt.Errorf("UnmarshalJSON: %w", err)
 	}
 
 	*rt = responseType
@@ -69,6 +72,7 @@ func (rt *ResponseType) UnmarshalJSON(v []byte) error {
 	return nil
 }
 
+// String returns string representation of response type.
 func (rt ResponseType) String() string {
-	return rt.slug
+	return rt.uid
 }

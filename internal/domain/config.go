@@ -62,9 +62,20 @@ type (
 		Expiry time.Duration `yaml:"expiry"` // 1m
 		Length int           `yaml:"length"` // 24
 	}
+
+	ConfigRelMeAuth struct {
+		Enabled   bool                      `yaml:"enabled"` // true
+		Providers []ConfigRelMeAuthProvider `yaml:"providers"`
+	}
+
+	ConfigRelMeAuthProvider struct {
+		Type   string `yaml:"type"`
+		ID     string `yaml:"id"`
+		Secret string `yaml:"secret"`
+	}
 )
 
-// TestConfig returns a valid *viper.Viper with the generated test data filled in.
+// TestConfig returns a valid config for tests.
 func TestConfig(tb testing.TB) *Config {
 	tb.Helper()
 
@@ -112,7 +123,7 @@ func (cs ConfigServer) GetAddress() string {
 	return net.JoinHostPort(cs.Host, cs.Port)
 }
 
-// GetRootURL returns generated from template RootURL.
+// GetRootURL returns generated root URL from template RootURL.
 func (cs ConfigServer) GetRootURL() string {
 	return fasttemplate.ExecuteString(cs.RootURL, `{{`, `}}`, map[string]interface{}{
 		"domain":          cs.Domain,

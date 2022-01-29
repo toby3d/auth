@@ -10,31 +10,33 @@ import (
 // NOTE(toby3d): Encapsulate enums in structs for extra compile-time safety:
 // https://threedots.tech/post/safer-enums-in-go/#struct-based-enums
 type GrantType struct {
-	slug string
+	uid string
 }
 
 //nolint: gochecknoglobals // NOTE(toby3d): structs cannot be constants
 var (
-	GrantTypeUndefined         = GrantType{slug: ""}
-	GrantTypeAuthorizationCode = GrantType{slug: "authorization_code"}
+	GrantTypeUndefined         = GrantType{uid: ""}
+	GrantTypeAuthorizationCode = GrantType{uid: "authorization_code"}
 
 	// TicketAuth extension.
-	GrantTypeTicket = GrantType{slug: "ticket"}
+	GrantTypeTicket = GrantType{uid: "ticket"}
 )
 
-var ErrGrantTypeUnknown = errors.New("unknown grant type")
+var ErrGrantTypeUnknown error = errors.New("unknown grant type")
 
-func ParseGrantType(slug string) (GrantType, error) {
-	switch strings.ToLower(slug) {
-	case GrantTypeAuthorizationCode.slug:
+// ParseGrantType parse grant_type value as GrantType struct enum.
+func ParseGrantType(uid string) (GrantType, error) {
+	switch strings.ToLower(uid) {
+	case GrantTypeAuthorizationCode.uid:
 		return GrantTypeAuthorizationCode, nil
-	case GrantTypeTicket.slug:
+	case GrantTypeTicket.uid:
 		return GrantTypeTicket, nil
 	}
 
-	return GrantTypeUndefined, fmt.Errorf("%w: %s", ErrGrantTypeUnknown, slug)
+	return GrantTypeUndefined, fmt.Errorf("%w: %s", ErrGrantTypeUnknown, uid)
 }
 
+// UnmarshalForm implements custom unmarshler for form values.
 func (gt *GrantType) UnmarshalForm(src []byte) error {
 	responseType, err := ParseGrantType(string(src))
 	if err != nil {
@@ -46,6 +48,7 @@ func (gt *GrantType) UnmarshalForm(src []byte) error {
 	return nil
 }
 
+// UnmarshalJSON implements custom unmarshler for JSON.
 func (gt *GrantType) UnmarshalJSON(v []byte) error {
 	src, err := strconv.Unquote(string(v))
 	if err != nil {
@@ -62,6 +65,7 @@ func (gt *GrantType) UnmarshalJSON(v []byte) error {
 	return nil
 }
 
+// String returns string representation of grant type.
 func (gt GrantType) String() string {
-	return gt.slug
+	return gt.uid
 }

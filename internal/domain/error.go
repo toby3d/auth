@@ -140,6 +140,10 @@ func (e Error) FormatError(p xerrors.Printer) error {
 		p.Print(": ", e.Description)
 	}
 
+	if !p.Detail() {
+		return nil
+	}
+
 	e.frame.Format(p)
 
 	return nil

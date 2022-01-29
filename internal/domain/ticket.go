@@ -15,6 +15,7 @@ type Ticket struct {
 	Subject *Me
 }
 
+// TestTicket returns valid random generated ticket for tests.
 func TestTicket(tb testing.TB) *Ticket {
 	tb.Helper()
 

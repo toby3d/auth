@@ -16,28 +16,31 @@ import (
 type (
 	// Token describes the data of the token used by the clients.
 	Token struct {
-		AccessToken string
+		Scope       Scopes
 		ClientID    *ClientID
 		Me          *Me
-		Scope       Scopes
+		AccessToken string
 	}
 
+	// NewTokenOptions contains options for NewToken function.
 	NewTokenOptions struct {
-		Algorithm   string
 		Expiration  time.Duration
-		Issuer      *ClientID
-		NonceLength int
 		Scope       Scopes
-		Secret      []byte
+		Issuer      *ClientID
 		Subject     *Me
+		Secret      []byte
+		Algorithm   string
+		NonceLength int
 	}
 )
 
+//nolint: gochecknoglobals
 var DefaultNewTokenOptions = NewTokenOptions{
 	Algorithm:   "HS256",
 	NonceLength: 32,
 }
 
+// NewToken create a new token by provided options.
 func NewToken(opts NewTokenOptions) (*Token, error) {
 	if opts.NonceLength == 0 {
 		opts.NonceLength = DefaultNewTokenOptions.NonceLength
@@ -55,12 +58,15 @@ func NewToken(opts NewTokenOptions) (*Token, error) {
 	}
 
 	t := jwt.New()
-	t.Set(jwt.IssuerKey, opts.Issuer.String())
 	t.Set(jwt.SubjectKey, opts.Subject.String())
 	t.Set(jwt.NotBeforeKey, now)
 	t.Set(jwt.IssuedAtKey, now)
 	t.Set("scope", opts.Scope)
 	t.Set("nonce", nonce)
+
+	if opts.Issuer != nil {
+		t.Set(jwt.IssuerKey, opts.Issuer.String())
+	}
 
 	if opts.Expiration != 0 {
 		t.Set(jwt.ExpirationKey, now.Add(opts.Expiration))
@@ -79,7 +85,7 @@ func NewToken(opts NewTokenOptions) (*Token, error) {
 	}, err
 }
 
-// TestToken returns a valid Token with the generated test data filled in.
+// TestToken returns valid random generated token for tests.
 func TestToken(tb testing.TB) *Token {
 	tb.Helper()
 
@@ -129,6 +135,7 @@ func (t Token) SetAuthHeader(r *http.Request) {
 	r.Header.Set(http.HeaderAuthorization, t.String())
 }
 
+// String returns string representation of token.
 func (t Token) String() string {
 	if t.AccessToken == "" {
 		return ""

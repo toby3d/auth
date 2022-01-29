@@ -3,23 +3,17 @@ package domain
 import (
 	"strings"
 	"testing"
-
-	"golang.org/x/xerrors"
 )
 
+// Email represent email identifier.
 type Email struct {
 	user string
 	host string
 }
 
-var ErrEmailInvalid error = Error{
-	Code:        ErrorCodeInvalidRequest,
-	Description: "cannot parse email",
-	URI:         "",
-	State:       "",
-	frame:       xerrors.Caller(1),
-}
+var ErrEmailInvalid error = NewError(ErrorCodeInvalidRequest, "cannot parse email")
 
+// ParseEmail parse strings to email identifier.
 func ParseEmail(src string) (*Email, error) {
 	parts := strings.Split(strings.TrimPrefix(src, "mailto:"), "@")
 	if len(parts) != 2 { //nolint: gomnd
@@ -32,6 +26,7 @@ func ParseEmail(src string) (*Email, error) {
 	}, nil
 }
 
+// TestEmail returns valid random generated email identifier.
 func TestEmail(tb testing.TB) *Email {
 	tb.Helper()
 
@@ -41,6 +36,7 @@ func TestEmail(tb testing.TB) *Email {
 	}
 }
 
+// String returns string representation of email identifier.
 func (e Email) String() string {
 	return e.user + "@" + e.host
 }

@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"errors"
 	"fmt"
 	"sort"
 	"strconv"
@@ -9,40 +8,43 @@ import (
 )
 
 type (
-	// NOTE(toby3d): https://threedots.tech/post/safer-enums-in-go/#struct-based-enums
+	// Scope represent single token scope supported by IndieAuth.
+	//
+	// NOTE(toby3d): Encapsulate enums in structs for extra compile-time safety:
+	// https://threedots.tech/post/safer-enums-in-go/#struct-based-enums
 	Scope struct {
-		slug string
+		uid string
 	}
 
 	// Scopes represent set of Scope domains.
 	Scopes []Scope
 )
 
-var ErrScopeUnknown = errors.New("unknown scope")
+var ErrScopeUnknown error = NewError(ErrorCodeInvalidRequest, "unknown scope")
 
 //nolint: gochecknoglobals // NOTE(toby3d): structs cannot be constants
 var (
-	ScopeUndefined = Scope{slug: ""}
+	ScopeUndefined = Scope{uid: ""}
 
 	// https://indieweb.org/scope#Micropub_Scopes
-	ScopeCreate = Scope{slug: "create"}
-	ScopeDelete = Scope{slug: "delete"}
-	ScopeDraft  = Scope{slug: "draft"}
-	ScopeMedia  = Scope{slug: "media"}
-	ScopeUpdate = Scope{slug: "update"}
+	ScopeCreate = Scope{uid: "create"}
+	ScopeDelete = Scope{uid: "delete"}
+	ScopeDraft  = Scope{uid: "draft"}
+	ScopeMedia  = Scope{uid: "media"}
+	ScopeUpdate = Scope{uid: "update"}
 
 	// https://indieweb.org/scope#Microsub_Scopes
-	ScopeBlock    = Scope{slug: "block"}
-	ScopeChannels = Scope{slug: "channels"}
-	ScopeFollow   = Scope{slug: "follow"}
-	ScopeMute     = Scope{slug: "mute"}
-	ScopeRead     = Scope{slug: "read"}
+	ScopeBlock    = Scope{uid: "block"}
+	ScopeChannels = Scope{uid: "channels"}
+	ScopeFollow   = Scope{uid: "follow"}
+	ScopeMute     = Scope{uid: "mute"}
+	ScopeRead     = Scope{uid: "read"}
 
 	// This scope requests access to the user's default profile information
 	// which include the following properties: name, `photo, url.
 	//
 	// NOTE(toby3d): https://indieauth.net/source/#profile-information
-	ScopeProfile = Scope{slug: "profile"}
+	ScopeProfile = Scope{uid: "profile"}
 
 	// This scope requests access to the user's email address in the
 	// following property: email.
@@ -52,45 +54,49 @@ var (
 	// and must be requested along with the profile scope if desired.
 	//
 	// NOTE(toby3d): https://indieauth.net/source/#profile-information
-	ScopeEmail = Scope{slug: "email"}
+	ScopeEmail = Scope{uid: "email"}
 )
 
 //nolint: gochecknoglobals // NOTE(toby3d): maps cannot be constants
-var slugsScopes = map[string]Scope{
-	ScopeBlock.slug:    ScopeBlock,
-	ScopeChannels.slug: ScopeChannels,
-	ScopeCreate.slug:   ScopeCreate,
-	ScopeDelete.slug:   ScopeDelete,
-	ScopeDraft.slug:    ScopeDraft,
-	ScopeEmail.slug:    ScopeEmail,
-	ScopeFollow.slug:   ScopeFollow,
-	ScopeMedia.slug:    ScopeMedia,
-	ScopeMute.slug:     ScopeMute,
-	ScopeProfile.slug:  ScopeProfile,
-	ScopeRead.slug:     ScopeRead,
-	ScopeUpdate.slug:   ScopeUpdate,
+var uidsScopes = map[string]Scope{
+	ScopeBlock.uid:    ScopeBlock,
+	ScopeChannels.uid: ScopeChannels,
+	ScopeCreate.uid:   ScopeCreate,
+	ScopeDelete.uid:   ScopeDelete,
+	ScopeDraft.uid:    ScopeDraft,
+	ScopeEmail.uid:    ScopeEmail,
+	ScopeFollow.uid:   ScopeFollow,
+	ScopeMedia.uid:    ScopeMedia,
+	ScopeMute.uid:     ScopeMute,
+	ScopeProfile.uid:  ScopeProfile,
+	ScopeRead.uid:     ScopeRead,
+	ScopeUpdate.uid:   ScopeUpdate,
 }
 
 // ParseScope parses scope slug into Scope domain.
-func ParseScope(slug string) (Scope, error) {
-	if scope, ok := slugsScopes[strings.ToLower(slug)]; ok {
+func ParseScope(uid string) (Scope, error) {
+	if scope, ok := uidsScopes[strings.ToLower(uid)]; ok {
 		return scope, nil
 	}
 
-	return ScopeUndefined, fmt.Errorf("%w: %s", ErrScopeUnknown, slug)
+	return ScopeUndefined, fmt.Errorf("%w: %s", ErrScopeUnknown, uid)
 }
 
-// UnmarshalForm parses the value of the form key into the Scope domain.
+// UnmarshalForm implements custom unmarshler for form values.
 func (s *Scopes) UnmarshalForm(v []byte) error {
 	scopes := make(Scopes, 0)
 
 	for _, rawScope := range strings.Fields(string(v)) {
 		scope, err := ParseScope(rawScope)
 		if err != nil {
-			return fmt.Errorf("scopes: %w", err)
+			return fmt.Errorf("UnmarshalForm: %w", err)
 		}
 
-		*s = append(scopes, scope)
+		if scopes.Has(scope) {
+			continue
+		}
+
+		scopes = append(scopes, scope)
 	}
 
 	*s = scopes
@@ -98,18 +104,23 @@ func (s *Scopes) UnmarshalForm(v []byte) error {
 	return nil
 }
 
+// UnmarshalJSON implements custom unmarshler for JSON.
 func (s *Scopes) UnmarshalJSON(v []byte) error {
 	src, err := strconv.Unquote(string(v))
 	if err != nil {
-		return err
+		return fmt.Errorf("UnmarshalJSON: %w", err)
 	}
 
-	result := make([]Scope, 0)
+	result := make(Scopes, 0)
 
 	for _, scope := range strings.Fields(src) {
 		s, err := ParseScope(scope)
 		if err != nil {
-			return fmt.Errorf("scope: %w", err)
+			return fmt.Errorf("UnmarshalJSON: %w", err)
+		}
+
+		if result.Has(s) {
+			continue
 		}
 
 		result = append(result, s)
@@ -120,6 +131,7 @@ func (s *Scopes) UnmarshalJSON(v []byte) error {
 	return nil
 }
 
+// UnmarshalJSON implements custom marshler for JSON.
 func (s Scopes) MarshalJSON() ([]byte, error) {
 	scopes := make([]string, len(s))
 
@@ -132,11 +144,12 @@ func (s Scopes) MarshalJSON() ([]byte, error) {
 	return []byte(strconv.Quote(strings.Join(scopes, " "))), nil
 }
 
-// String returns scope slug as string.
+// String returns string representation of scope.
 func (s Scope) String() string {
-	return s.slug
+	return s.uid
 }
 
+// String returns string representation of scopes.
 func (s Scopes) String() string {
 	scopes := make([]string, len(s))
 
@@ -145,4 +158,30 @@ func (s Scopes) String() string {
 	}
 
 	return strings.Join(scopes, " ")
+}
+
+// IsEmpty returns true if the set does not contain valid scope.
+func (s Scopes) IsEmpty() bool {
+	for i := range s {
+		if s[i] == ScopeUndefined {
+			continue
+		}
+
+		return false
+	}
+
+	return true
+}
+
+// Has check what input scope contains in current scopes collection.
+func (s Scopes) Has(scope Scope) bool {
+	for i := range s {
+		if s[i] != scope {
+			continue
+		}
+
+		return true
+	}
+
+	return false
 }

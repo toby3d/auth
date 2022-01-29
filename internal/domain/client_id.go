@@ -25,63 +25,70 @@ var (
 	localhostIPv6 = netaddr.MustParseIP("::1")
 )
 
+// ParseClientID parse string as client ID URL identifier.
 //nolint: funlen
-func ParseClientID(raw string) (*ClientID, error) {
-	clientID := http.AcquireURI()
-	if err := clientID.Parse(nil, []byte(raw)); err != nil {
+func ParseClientID(src string) (*ClientID, error) {
+	cid := http.AcquireURI()
+	if err := cid.Parse(nil, []byte(src)); err != nil {
 		return nil, Error{
 			Code:        ErrorCodeInvalidRequest,
 			Description: err.Error(),
 			URI:         "https://indieauth.net/source/#client-identifier",
+			State:       "",
 			frame:       xerrors.Caller(1),
 		}
 	}
 
-	scheme := string(clientID.Scheme())
+	scheme := string(cid.Scheme())
 	if scheme != "http" && scheme != "https" {
 		return nil, Error{
 			Code:        ErrorCodeInvalidRequest,
 			Description: "client identifier URL MUST have either an https or http scheme",
 			URI:         "https://indieauth.net/source/#client-identifier",
+			State:       "",
 			frame:       xerrors.Caller(1),
 		}
 	}
 
-	path := string(clientID.PathOriginal())
+	path := string(cid.PathOriginal())
 	if path == "" || strings.Contains(path, "/.") || strings.Contains(path, "/..") {
 		return nil, Error{
 			Code: ErrorCodeInvalidRequest,
 			Description: "client identifier URL MUST contain a path component and MUST NOT contain " +
 				"single-dot or double-dot path segments",
 			URI:   "https://indieauth.net/source/#client-identifier",
+			State: "",
 			frame: xerrors.Caller(1),
 		}
 	}
 
-	if clientID.Hash() != nil {
+	if cid.Hash() != nil {
 		return nil, Error{
 			Code:        ErrorCodeInvalidRequest,
 			Description: "client identifier URL MUST NOT contain a fragment component",
 			URI:         "https://indieauth.net/source/#client-identifier",
+			State:       "",
 			frame:       xerrors.Caller(1),
 		}
 	}
 
-	if clientID.Username() != nil || clientID.Password() != nil {
+	if cid.Username() != nil || cid.Password() != nil {
 		return nil, Error{
 			Code:        ErrorCodeInvalidRequest,
 			Description: "client identifier URL MUST NOT contain a username or password component",
 			URI:         "https://indieauth.net/source/#client-identifier",
+			State:       "",
 			frame:       xerrors.Caller(1),
 		}
 	}
 
-	domain := string(clientID.Host())
+	domain := string(cid.Host())
 	if domain == "" {
 		return nil, Error{
 			Code:        ErrorCodeInvalidRequest,
 			Description: "client host name MUST be domain name or a loopback interface",
 			URI:         "https://indieauth.net/source/#client-identifier",
+			State:       "",
 			frame:       xerrors.Caller(1),
 		}
 	}
@@ -90,7 +97,9 @@ func ParseClientID(raw string) (*ClientID, error) {
 	if err != nil {
 		ipPort, err := netaddr.ParseIPPort(domain)
 		if err != nil {
-			return &ClientID{clientID: clientID}, nil
+			return &ClientID{
+				clientID: cid,
+			}, nil
 		}
 
 		ip = ipPort.IP()
@@ -102,14 +111,17 @@ func ParseClientID(raw string) (*ClientID, error) {
 			Description: "client identifier URL MUST NOT be IPv4 or IPv6 addresses except for IPv4 " +
 				"127.0.0.1 or IPv6 [::1]",
 			URI:   "https://indieauth.net/source/#client-identifier",
+			State: "",
 			frame: xerrors.Caller(1),
 		}
 	}
 
-	return &ClientID{clientID: clientID}, nil
+	return &ClientID{
+		clientID: cid,
+	}, nil
 }
 
-// TestClientID returns a valid random generated ClientID for tests.
+// TestClientID returns valid random generated ClientID for tests.
 func TestClientID(tb testing.TB) *ClientID {
 	tb.Helper()
 
@@ -119,7 +131,7 @@ func TestClientID(tb testing.TB) *ClientID {
 	return clientID
 }
 
-// UnmarshalForm implements a custom form.Unmarshaler.
+// UnmarshalForm implements custom unmarshler for form values.
 func (cid *ClientID) UnmarshalForm(v []byte) error {
 	clientID, err := ParseClientID(string(v))
 	if err != nil {
@@ -131,10 +143,11 @@ func (cid *ClientID) UnmarshalForm(v []byte) error {
 	return nil
 }
 
+// UnmarshalJSON implements custom unmarshler for JSON.
 func (cid *ClientID) UnmarshalJSON(v []byte) error {
 	src, err := strconv.Unquote(string(v))
 	if err != nil {
-		return err
+		return fmt.Errorf("UnmarshalJSON: %w", err)
 	}
 
 	clientID, err := ParseClientID(src)
@@ -147,6 +160,7 @@ func (cid *ClientID) UnmarshalJSON(v []byte) error {
 	return nil
 }
 
+// MarshalForm implements custom marshler for JSON.
 func (cid ClientID) MarshalJSON() ([]byte, error) {
 	return []byte(strconv.Quote(cid.String())), nil
 }
@@ -160,6 +174,7 @@ func (cid ClientID) URI() *http.URI {
 	return u
 }
 
+// URL returns url.URL representation of client ID.
 func (cid ClientID) URL() *url.URL {
 	return &url.URL{
 		Scheme:   string(cid.clientID.Scheme()),

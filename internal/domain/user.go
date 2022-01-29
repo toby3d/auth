@@ -15,6 +15,7 @@ type User struct {
 	*Profile
 }
 
+// TestUser returns valid random generated user for tests.
 func TestUser(tb testing.TB) *User {
 	tb.Helper()
 

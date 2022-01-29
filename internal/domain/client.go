@@ -16,7 +16,18 @@ type Client struct {
 	Name        []string
 }
 
-// TestClient returns a valid Client with the generated test data filled in.
+// NewClient creates a new empty Client with provided ClientID, if any.
+func NewClient(cid *ClientID) *Client {
+	return &Client{
+		ID:          cid,
+		Logo:        make([]*URL, 0),
+		RedirectURI: make([]*URL, 0),
+		URL:         make([]*URL, 0),
+		Name:        make([]string, 0),
+	}
+}
+
+// TestClient returns valid random generated client for tests.
 func TestClient(tb testing.TB) *Client {
 	tb.Helper()
 
@@ -76,6 +87,7 @@ func (c *Client) ValidateRedirectURI(redirectURI *URL) bool {
 	return false
 }
 
+// GetName safe returns first name, if any.
 func (c Client) GetName() string {
 	if len(c.Name) < 1 {
 		return ""
@@ -84,6 +96,7 @@ func (c Client) GetName() string {
 	return c.Name[0]
 }
 
+// GetURL safe returns first uRL, if any.
 func (c Client) GetURL() *URL {
 	if len(c.URL) < 1 {
 		return nil
@@ -92,6 +105,7 @@ func (c Client) GetURL() *URL {
 	return c.URL[0]
 }
 
+// GetLogo safe returns first logo, if any.
 func (c Client) GetLogo() *URL {
 	if len(c.Logo) < 1 {
 		return nil
