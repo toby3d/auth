@@ -133,7 +133,7 @@ func extractProfile(dst *domain.Profile, src *http.Response) {
 			continue
 		}
 
-		e, err := domain.NewEmail(email)
+		e, err := domain.ParseEmail(email)
 		if err != nil {
 			continue
 		}

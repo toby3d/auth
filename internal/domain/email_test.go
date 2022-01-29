@@ -8,7 +8,7 @@ import (
 	"source.toby3d.me/website/indieauth/internal/domain"
 )
 
-func TestNewEmail(t *testing.T) {
+func TestParseEmail(t *testing.T) {
 	t.Parallel()
 
 	for _, testCase := range []struct {
@@ -37,7 +37,7 @@ func TestNewEmail(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
 
-			result, err := domain.NewEmail(testCase.input)
+			result, err := domain.ParseEmail(testCase.input)
 			if testCase.expError {
 				assert.Error(t, err)
 				assert.Nil(t, result)
