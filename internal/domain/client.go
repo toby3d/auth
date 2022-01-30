@@ -33,8 +33,8 @@ func TestClient(tb testing.TB) *Client {
 
 	redirects := make([]*URL, 0)
 	for _, redirect := range []string{
-		"https://app.example.net/redirect",
 		"https://app.example.com/redirect",
+		"https://app.example.net/redirect",
 	} {
 		redirects = append(redirects, TestURL(tb, redirect))
 	}
@@ -89,7 +89,7 @@ func (c *Client) ValidateRedirectURI(redirectURI *URL) bool {
 
 // GetName safe returns first name, if any.
 func (c Client) GetName() string {
-	if len(c.Name) < 1 {
+	if len(c.Name) == 0 {
 		return ""
 	}
 
@@ -98,7 +98,7 @@ func (c Client) GetName() string {
 
 // GetURL safe returns first uRL, if any.
 func (c Client) GetURL() *URL {
-	if len(c.URL) < 1 {
+	if len(c.URL) == 0 {
 		return nil
 	}
 
@@ -107,7 +107,7 @@ func (c Client) GetURL() *URL {
 
 // GetLogo safe returns first logo, if any.
 func (c Client) GetLogo() *URL {
-	if len(c.Logo) < 1 {
+	if len(c.Logo) == 0 {
 		return nil
 	}
 

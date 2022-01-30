@@ -23,7 +23,7 @@ type Provider struct {
 
 //nolint: gochecknoglobals
 var (
-	DefaultProviderDirect = Provider{
+	ProviderDirect = Provider{
 		AuthURL:     "/authorize",
 		Name:        "IndieAuth",
 		Photo:       path.Join("static", "icon.svg"),
@@ -34,7 +34,7 @@ var (
 		URL:         "/",
 	}
 
-	DefaultProviderTwitter = Provider{
+	ProviderTwitter = Provider{
 		AuthURL:     "https://twitter.com/i/oauth2/authorize",
 		Name:        "Twitter",
 		Photo:       path.Join("static", "providers", "twitter.svg"),
@@ -48,7 +48,7 @@ var (
 		URL:      "https://twitter.com/",
 	}
 
-	DefaultProviderGitHub = Provider{
+	ProviderGitHub = Provider{
 		AuthURL:     "https://github.com/login/oauth/authorize",
 		Name:        "GitHub",
 		Photo:       path.Join("static", "providers", "github.svg"),
@@ -62,7 +62,7 @@ var (
 		URL:      "https://github.com/",
 	}
 
-	DefaultProviderGitLab = Provider{
+	ProviderGitLab = Provider{
 		AuthURL:     "https://gitlab.com/oauth/authorize",
 		Name:        "GitLab",
 		Photo:       path.Join("static", "providers", "gitlab.svg"),
@@ -75,7 +75,7 @@ var (
 		URL:      "https://gitlab.com/",
 	}
 
-	DefaultProviderMastodon = Provider{
+	ProviderMastodon = Provider{
 		AuthURL:     "https://mstdn.io/oauth/authorize",
 		Name:        "Mastodon",
 		Photo:       path.Join("static", "providers", "mastodon.svg"),
@@ -90,8 +90,9 @@ var (
 )
 
 // AuthCodeURL returns URL for authorize user in RelMeAuth client.
-func (p Provider) AuthCodeURL(state string) *URL {
+func (p Provider) AuthCodeURL(state string) string {
 	u := http.AcquireURI()
+	defer http.ReleaseURI(u)
 	u.Update(p.AuthURL)
 
 	for k, v := range map[string]string{
@@ -104,5 +105,5 @@ func (p Provider) AuthCodeURL(state string) *URL {
 		u.QueryArgs().Set(k, v)
 	}
 
-	return &URL{URI: u}
+	return u.String()
 }

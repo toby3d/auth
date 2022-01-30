@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/require"
 	http "github.com/valyala/fasthttp"
 	"golang.org/x/xerrors"
 )
@@ -114,7 +113,9 @@ func TestMe(tb testing.TB, src string) *Me {
 	tb.Helper()
 
 	me, err := ParseMe(src)
-	require.NoError(tb, err)
+	if err != nil {
+		tb.Fatalf("%+v", err)
+	}
 
 	return me
 }

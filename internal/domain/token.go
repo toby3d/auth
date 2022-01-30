@@ -7,7 +7,6 @@ import (
 
 	"github.com/lestrrat-go/jwx/jwa"
 	"github.com/lestrrat-go/jwx/jwt"
-	"github.com/stretchr/testify/require"
 	http "github.com/valyala/fasthttp"
 
 	"source.toby3d.me/website/indieauth/internal/random"
@@ -90,7 +89,9 @@ func TestToken(tb testing.TB) *Token {
 	tb.Helper()
 
 	nonce, err := random.String(22)
-	require.NoError(tb, err)
+	if err != nil {
+		tb.Fatalf("%+v", err)
+	}
 
 	t := jwt.New()
 	cid := TestClientID(tb)
@@ -116,7 +117,9 @@ func TestToken(tb testing.TB) *Token {
 	t.Set("nonce", nonce)
 
 	accessToken, err := jwt.Sign(t, jwa.HS256, []byte("hackme"))
-	require.NoError(tb, err)
+	if err != nil {
+		tb.Fatalf("%+v", err)
+	}
 
 	return &Token{
 		ClientID:    cid,

@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/require"
 	http "github.com/valyala/fasthttp"
 	"golang.org/x/xerrors"
 	"inet.af/netaddr"
@@ -126,7 +125,9 @@ func TestClientID(tb testing.TB) *ClientID {
 	tb.Helper()
 
 	clientID, err := ParseClientID("https://app.example.com/")
-	require.NoError(tb, err)
+	if err != nil {
+		tb.Fatalf("%+v", err)
+	}
 
 	return clientID
 }

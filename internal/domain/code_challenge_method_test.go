@@ -10,8 +10,6 @@ import (
 	"testing"
 
 	"github.com/brianvoe/gofakeit/v6"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"source.toby3d.me/website/indieauth/internal/domain"
 	"source.toby3d.me/website/indieauth/internal/random"
@@ -20,49 +18,124 @@ import (
 func TestParseCodeChallengeMethod(t *testing.T) {
 	t.Parallel()
 
-	for _, testCase := range []struct {
-		output   domain.CodeChallengeMethod
+	for _, tc := range []struct {
 		name     string
-		input    string
+		in       string
+		out      domain.CodeChallengeMethod
 		expError bool
 	}{{
 		expError: true,
 		name:     "invalid",
-		input:    "und",
-		output:   domain.CodeChallengeMethodUndefined,
+		in:       "und",
+		out:      domain.CodeChallengeMethodUndefined,
 	}, {
-		name:   "PLAIN",
-		input:  "plain",
-		output: domain.CodeChallengeMethodPLAIN,
+		name: "PLAIN",
+		in:   "plain",
+		out:  domain.CodeChallengeMethodPLAIN,
 	}, {
-		name:   "MD5",
-		input:  "Md5",
-		output: domain.CodeChallengeMethodMD5,
+		name: "MD5",
+		in:   "Md5",
+		out:  domain.CodeChallengeMethodMD5,
 	}, {
-		name:   "S1",
-		input:  "S1",
-		output: domain.CodeChallengeMethodS1,
+		name: "S1",
+		in:   "S1",
+		out:  domain.CodeChallengeMethodS1,
 	}, {
-		name:   "S256",
-		input:  "S256",
-		output: domain.CodeChallengeMethodS256,
+		name: "S256",
+		in:   "S256",
+		out:  domain.CodeChallengeMethodS256,
 	}, {
-		name:   "S512",
-		input:  "S512",
-		output: domain.CodeChallengeMethodS512,
+		name: "S512",
+		in:   "S512",
+		out:  domain.CodeChallengeMethodS512,
 	}} {
-		testCase := testCase
+		tc := tc
 
-		t.Run(testCase.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			result, err := domain.ParseCodeChallengeMethod(testCase.input)
-			if testCase.expError {
-				assert.Error(t, err)
-				assert.Equal(t, domain.CodeChallengeMethodUndefined, result)
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, testCase.output, result)
+			result, err := domain.ParseCodeChallengeMethod(tc.in)
+
+			switch {
+			case err != nil && !tc.expError:
+				t.Errorf("ParseCodeChallengeMethod(%s) = %+v, want nil", tc.in, err)
+			case err == nil && tc.expError:
+				t.Errorf("ParseCodeChallengeMethod(%s) = %+v, want error", tc.in, err)
+			}
+
+			if result != tc.out {
+				t.Errorf("ParseCodeChallengeMethod(%s) = %v, want %v", tc.in, result, tc.out)
+			}
+		})
+	}
+}
+
+func TestCodeChallengeMethod_UnmarshalForm(t *testing.T) {
+	t.Parallel()
+
+	input := []byte("S256")
+	result := domain.CodeChallengeMethodUndefined
+
+	if err := result.UnmarshalForm(input); err != nil {
+		t.Fatalf("%+v", err)
+	}
+
+	if result != domain.CodeChallengeMethodS256 {
+		t.Errorf("UnmarshalForm(%s) = %v, want %v", input, result, domain.CodeChallengeMethodS256)
+	}
+}
+
+func TestCodeChallengeMethod_UnmarshalJSON(t *testing.T) {
+	t.Parallel()
+
+	input := []byte(`"S256"`)
+	result := domain.CodeChallengeMethodUndefined
+
+	if err := result.UnmarshalJSON(input); err != nil {
+		t.Fatalf("%+v", err)
+	}
+
+	if result != domain.CodeChallengeMethodS256 {
+		t.Errorf("UnmarshalJSON(%s) = %v, want %v", input, result, domain.CodeChallengeMethodS256)
+	}
+}
+
+func TestCodeChallengeMethod_String(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name string
+		in   domain.CodeChallengeMethod
+		out  string
+	}{{
+		name: "plain",
+		in:   domain.CodeChallengeMethodPLAIN,
+		out:  "PLAIN",
+	}, {
+		name: "md5",
+		in:   domain.CodeChallengeMethodMD5,
+		out:  "MD5",
+	}, {
+		name: "s1",
+		in:   domain.CodeChallengeMethodS1,
+		out:  "S1",
+	}, {
+		name: "s256",
+		in:   domain.CodeChallengeMethodS256,
+		out:  "S256",
+	}, {
+		name: "s512",
+		in:   domain.CodeChallengeMethodS512,
+		out:  "S512",
+	}} {
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			result := tc.in.String()
+			if result != tc.out {
+				t.Errorf("String() = %v, want %v", result, tc.out)
 			}
 		})
 	}
@@ -73,63 +146,68 @@ func TestCodeChallengeMethod_Validate(t *testing.T) {
 	t.Parallel()
 
 	verifier, err := random.String(gofakeit.Number(43, 128))
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
 
-	for _, testCase := range []struct {
-		hash    hash.Hash
-		name    string
-		method  domain.CodeChallengeMethod
-		isValid bool
+	for _, tc := range []struct {
+		hash     hash.Hash
+		in       domain.CodeChallengeMethod
+		name     string
+		expError bool
 	}{{
-		name:    "invalid",
-		method:  domain.CodeChallengeMethodS256,
-		hash:    md5.New(),
-		isValid: false,
+		name:     "invalid",
+		in:       domain.CodeChallengeMethodS256,
+		hash:     md5.New(),
+		expError: true,
 	}, {
-		name:    "MD5",
-		method:  domain.CodeChallengeMethodMD5,
-		hash:    md5.New(),
-		isValid: true,
+		name:     "MD5",
+		in:       domain.CodeChallengeMethodMD5,
+		hash:     md5.New(),
+		expError: false,
 	}, {
-		name:    "plain",
-		method:  domain.CodeChallengeMethodPLAIN,
-		hash:    nil,
-		isValid: true,
+		name:     "plain",
+		in:       domain.CodeChallengeMethodPLAIN,
+		hash:     nil,
+		expError: false,
 	}, {
-		name:    "S1",
-		method:  domain.CodeChallengeMethodS1,
-		hash:    sha1.New(),
-		isValid: true,
+		name:     "S1",
+		in:       domain.CodeChallengeMethodS1,
+		hash:     sha1.New(),
+		expError: false,
 	}, {
-		name:    "S256",
-		method:  domain.CodeChallengeMethodS256,
-		hash:    sha256.New(),
-		isValid: true,
+		name:     "S256",
+		in:       domain.CodeChallengeMethodS256,
+		hash:     sha256.New(),
+		expError: false,
 	}, {
-		name:    "S512",
-		method:  domain.CodeChallengeMethodS512,
-		hash:    sha512.New(),
-		isValid: true,
+		name:     "S512",
+		in:       domain.CodeChallengeMethodS512,
+		hash:     sha512.New(),
+		expError: false,
 	}, {
-		name:    "undefined",
-		method:  domain.CodeChallengeMethodUndefined,
-		hash:    nil,
-		isValid: false,
+		name:     "undefined",
+		in:       domain.CodeChallengeMethodUndefined,
+		hash:     nil,
+		expError: true,
 	}} {
-		testCase := testCase
+		tc := tc
 
-		t.Run(testCase.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if testCase.method == domain.CodeChallengeMethodPLAIN ||
-				testCase.method == domain.CodeChallengeMethodUndefined {
-				assert.Equal(t, testCase.isValid, testCase.method.Validate(verifier, verifier))
+			var codeChallenge string
 
-				return
+			switch tc.in {
+			case domain.CodeChallengeMethodUndefined, domain.CodeChallengeMethodPLAIN:
+				codeChallenge = verifier
+			default:
+				codeChallenge = base64.RawURLEncoding.EncodeToString(tc.hash.Sum([]byte(verifier)))
 			}
 
-			assert.Equal(t, testCase.isValid, testCase.method.Validate(base64.RawURLEncoding.EncodeToString(
-				testCase.hash.Sum([]byte(verifier))), verifier))
+			if result := tc.in.Validate(codeChallenge, verifier); result != !tc.expError {
+				t.Errorf("Validate(%s, %s) = %t, want %t", codeChallenge, verifier, result, tc.expError)
+			}
 		})
 	}
 }

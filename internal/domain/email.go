@@ -7,8 +7,9 @@ import (
 
 // Email represent email identifier.
 type Email struct {
-	user string
-	host string
+	user       string
+	host       string
+	subAddress string
 }
 
 var ErrEmailInvalid error = NewError(ErrorCodeInvalidRequest, "cannot parse email", "")
@@ -20,10 +21,18 @@ func ParseEmail(src string) (*Email, error) {
 		return nil, ErrEmailInvalid
 	}
 
-	return &Email{
-		user: parts[0],
-		host: parts[1],
-	}, nil
+	result := &Email{
+		user:       parts[0],
+		host:       parts[1],
+		subAddress: "",
+	}
+
+	if userParts := strings.SplitN(parts[0], `+`, 2); len(userParts) > 1 {
+		result.user = userParts[0]
+		result.subAddress = userParts[1]
+	}
+
+	return result, nil
 }
 
 // TestEmail returns valid random generated email identifier.
@@ -31,12 +40,17 @@ func TestEmail(tb testing.TB) *Email {
 	tb.Helper()
 
 	return &Email{
-		user: "user",
-		host: "example.com",
+		user:       "user",
+		subAddress: "",
+		host:       "example.com",
 	}
 }
 
 // String returns string representation of email identifier.
 func (e Email) String() string {
-	return e.user + "@" + e.host
+	if e.subAddress == "" {
+		return e.user + "@" + e.host
+	}
+
+	return e.user + "+" + e.subAddress + "@" + e.host
 }

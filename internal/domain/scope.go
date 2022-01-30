@@ -2,7 +2,6 @@ package domain
 
 import (
 	"fmt"
-	"sort"
 	"strconv"
 	"strings"
 )
@@ -138,8 +137,6 @@ func (s Scopes) MarshalJSON() ([]byte, error) {
 	for i := range s {
 		scopes[i] = s[i].String()
 	}
-
-	sort.Strings(scopes)
 
 	return []byte(strconv.Quote(strings.Join(scopes, " "))), nil
 }

@@ -3,8 +3,6 @@ package domain
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"source.toby3d.me/website/indieauth/internal/random"
 )
 
@@ -24,7 +22,9 @@ func TestSession(tb testing.TB) *Session {
 	tb.Helper()
 
 	code, err := random.String(24)
-	require.NoError(tb, err)
+	if err != nil {
+		tb.Fatalf("%+v", err)
+	}
 
 	return &Session{
 		ClientID:            TestClientID(tb),

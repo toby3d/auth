@@ -1,10 +1,8 @@
 package domain_test
 
 import (
+	"fmt"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
-	http "github.com/valyala/fasthttp"
 
 	"source.toby3d.me/website/indieauth/internal/domain"
 )
@@ -14,35 +12,51 @@ func TestClient_ValidateRedirectURI(t *testing.T) {
 
 	client := domain.TestClient(t)
 
-	for _, testCase := range []struct {
-		name      string
-		input     func() *domain.URL
-		expResult bool
+	for _, tc := range []struct {
+		name string
+		in   *domain.URL
 	}{{
 		name: "client_id prefix",
-		input: func() *domain.URL {
-			u := &domain.URL{
-				URI: http.AcquireURI(),
-			}
-			client.ID.URI().CopyTo(u.URI)
-			u.SetPath("/callback")
-
-			return u
-		},
-		expResult: true,
+		in:   domain.TestURL(t, fmt.Sprint(client.ID, "/callback")),
 	}, {
 		name: "registered redirect_uri",
-		input: func() *domain.URL {
-			return client.RedirectURI[len(client.RedirectURI)-1]
-		},
-		expResult: true,
+		in:   client.RedirectURI[len(client.RedirectURI)-1],
 	}} {
-		testCase := testCase
+		tc := tc
 
-		t.Run(testCase.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			assert.Equal(t, testCase.expResult, client.ValidateRedirectURI(testCase.input()))
+			if result := client.ValidateRedirectURI(tc.in); !result {
+				t.Errorf("ValidateRedirectURI(%v) = %t, want %t", tc.in, result, true)
+			}
 		})
+	}
+}
+
+func TestClient_GetName(t *testing.T) {
+	t.Parallel()
+
+	client := domain.TestClient(t)
+	if result := client.GetName(); result != client.Name[0] {
+		t.Errorf("GetName() = %v, want %v", result, client.Name[0])
+	}
+}
+
+func TestClient_GetURL(t *testing.T) {
+	t.Parallel()
+
+	client := domain.TestClient(t)
+	if result := client.GetURL(); result != client.URL[0] {
+		t.Errorf("GetURL() = %v, want %v", result, client.URL[0])
+	}
+}
+
+func TestClient_GetLogo(t *testing.T) {
+	t.Parallel()
+
+	client := domain.TestClient(t)
+	if result := client.GetLogo(); result != client.Logo[0] {
+		t.Errorf("GetLogo() = %v, want %v", result, client.Logo[0])
 	}
 }

@@ -1,10 +1,8 @@
 package domain_test
 
 import (
+	"fmt"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"source.toby3d.me/website/indieauth/internal/domain"
 )
@@ -13,67 +11,128 @@ import (
 func TestParseClientID(t *testing.T) {
 	t.Parallel()
 
-	for _, testCase := range []struct {
-		name    string
-		input   string
-		isValid bool
+	for _, tc := range []struct {
+		name     string
+		in       string
+		expError bool
 	}{{
-		name:    "valid",
-		input:   "https://example.com/",
-		isValid: true,
+		name:     "valid",
+		in:       "https://example.com/",
+		expError: false,
 	}, {
-		name:    "valid with path",
-		input:   "https://example.com/username",
-		isValid: true,
+		name:     "valid path",
+		in:       "https://example.com/username",
+		expError: false,
 	}, {
-		name:    "valid with query",
-		input:   "https://example.com/users?id=100",
-		isValid: true,
+		name:     "valid query",
+		in:       "https://example.com/users?id=100",
+		expError: false,
 	}, {
-		name:    "valid with port",
-		input:   "https://example.com:8443/",
-		isValid: true,
+		name:     "valid port",
+		in:       "https://example.com:8443/",
+		expError: false,
 	}, {
-		name:    "valid loopback",
-		input:   "https://127.0.0.1:8443/",
-		isValid: true,
+		name:     "valid loopback",
+		in:       "https://127.0.0.1:8443/",
+		expError: false,
 	}, {
-		name:    "missing scheme",
-		input:   "example.com",
-		isValid: false,
+		name:     "missing scheme",
+		in:       "example.com",
+		expError: true,
 	}, {
-		name:    "invalid scheme",
-		input:   "mailto:user@example.com",
-		isValid: false,
+		name:     "invalid scheme",
+		in:       "mailto:user@example.com",
+		expError: true,
 	}, {
-		name:    "contains a double-dot path segment",
-		input:   "https://example.com/foo/../bar",
-		isValid: false,
+		name:     "invalid double-dot path",
+		in:       "https://example.com/foo/../bar",
+		expError: true,
 	}, {
-		name:    "contains a fragment",
-		input:   "https://example.com/#me",
-		isValid: false,
+		name:     "invalid fragment",
+		in:       "https://example.com/#me",
+		expError: true,
 	}, {
-		name:    "contains a username and password",
-		input:   "https://user:pass@example.com/",
-		isValid: false,
+		name:     "invalid user",
+		in:       "https://user:pass@example.com/",
+		expError: true,
 	}, {
-		name:    "host is an IP address",
-		input:   "https://172.28.92.51/",
-		isValid: false,
+		name:     "host is an IP address",
+		in:       "https://172.28.92.51/",
+		expError: true,
 	}} {
-		testCase := testCase
+		tc := tc
 
-		t.Run(testCase.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			result, err := domain.ParseClientID(testCase.input)
-			if testCase.isValid {
-				require.NoError(t, err)
-				assert.Equal(t, testCase.input, result.String())
-			} else {
-				assert.Error(t, err)
+			_, err := domain.ParseClientID(tc.in)
+
+			switch {
+			case err != nil && !tc.expError:
+				t.Errorf("ParseClientID(%s) = %+v, want nil", tc.in, err)
+			case err == nil && tc.expError:
+				t.Errorf("ParseClientID(%s) = %+v, want error", tc.in, err)
 			}
 		})
+	}
+}
+
+func TestClientID_UnmarshalForm(t *testing.T) {
+	t.Parallel()
+
+	cid := domain.TestClientID(t)
+	input := []byte(fmt.Sprint(cid))
+	result := new(domain.ClientID)
+
+	if err := result.UnmarshalForm(input); err != nil {
+		t.Fatalf("%+v", err)
+	}
+
+	if fmt.Sprint(result) != fmt.Sprint(cid) {
+		t.Errorf("UnmarshalForm(%s) = %v, want %v", input, result, cid)
+	}
+}
+
+func TestClientID_UnmarshalJSON(t *testing.T) {
+	t.Parallel()
+
+	cid := domain.TestClientID(t)
+	input := []byte(fmt.Sprintf(`"%s"`, cid))
+	result := new(domain.ClientID)
+
+	if err := result.UnmarshalJSON(input); err != nil {
+		t.Fatalf("%+v", err)
+	}
+
+	if fmt.Sprint(result) != fmt.Sprint(cid) {
+		t.Errorf("UnmarshalJSON(%s) = %v, want %v", input, result, cid)
+	}
+}
+
+func TestClientID_MarshalJSON(t *testing.T) {
+	t.Parallel()
+
+	cid := domain.TestClientID(t)
+
+	result, err := cid.MarshalJSON()
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+
+	if string(result) != fmt.Sprintf(`"%s"`, cid) {
+		t.Errorf("MarshalJSON() = %s, want %s", result, fmt.Sprintf(`"%s"`, cid))
+	}
+}
+
+// TODO(toby3d): TestClientID_URI
+
+// TODO(toby3d): TestClientID_URL
+
+func TestClientID_String(t *testing.T) {
+	t.Parallel()
+
+	cid := domain.TestClientID(t)
+	if result := cid.String(); result != fmt.Sprint(cid) {
+		t.Errorf("Strig() = %s, want %s", result, fmt.Sprint(cid))
 	}
 }
