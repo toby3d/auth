@@ -2,66 +2,126 @@ package sqlite3_test
 
 import (
 	"context"
+	"regexp"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/DATA-DOG/go-sqlmock"
 
 	"source.toby3d.me/website/indieauth/internal/domain"
 	repository "source.toby3d.me/website/indieauth/internal/session/repository/sqlite3"
 	"source.toby3d.me/website/indieauth/internal/testing/sqltest"
 )
 
+//nolint: gochecknoglobals
+var tableColumns = []string{
+	"created_at", "client_id", "me", "redirect_uri", "code_challenge_method", "scope", "code",
+	"code_challenge",
+}
+
 func TestCreate(t *testing.T) {
 	t.Parallel()
 
-	db, cleanup := sqltest.Open(t)
+	session := domain.TestSession(t)
+	model := repository.NewSession(session)
+	db, mock, cleanup := sqltest.Open(t)
 	t.Cleanup(cleanup)
 
-	session := domain.TestSession(t)
-	require.NoError(t, repository.NewSQLite3SessionRepository(domain.TestConfig(t), db).
-		Create(context.Background(), session))
+	createTable(t, mock)
+	mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO sessions`)).
+		WithArgs(
+			sqltest.Time{},
+			model.ClientID,
+			model.Me,
+			model.RedirectURI,
+			model.CodeChallengeMethod,
+			model.Scope,
+			model.Code,
+			model.CodeChallenge,
+		).
+		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	results := make([]*repository.Session, 0)
-	require.NoError(t, db.Select(&results, "SELECT * FROM sessions"))
-	require.Len(t, results, 1)
-
-	result := new(domain.Session)
-	results[0].Populate(result)
-
-	assert.Equal(t, session.Code, result.Code)
+	if err := repository.NewSQLite3SessionRepository(domain.TestConfig(t), db).
+		Create(context.TODO(), session); err != nil {
+		t.Error(err)
+	}
 }
 
 func TestGet(t *testing.T) {
 	t.Parallel()
 
-	db, cleanup := sqltest.Open(t)
+	session := domain.TestSession(t)
+	model := repository.NewSession(session)
+	db, mock, cleanup := sqltest.Open(t)
 	t.Cleanup(cleanup)
 
-	session := domain.TestSession(t)
-	_, err := db.NamedExec(repository.QueryTable+repository.QueryCreate, repository.NewSession(session))
-	require.NoError(t, err)
+	createTable(t, mock)
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM sessions`)).
+		WithArgs(session.Code).
+		WillReturnRows(sqlmock.NewRows(tableColumns).
+			AddRow(
+				model.CreatedAt.Time,
+				model.ClientID,
+				model.Me,
+				model.RedirectURI,
+				model.CodeChallengeMethod,
+				model.Scope,
+				model.Code,
+				model.CodeChallenge,
+			))
 
 	result, err := repository.NewSQLite3SessionRepository(domain.TestConfig(t), db).
-		Get(context.Background(), session.Code)
-	require.NoError(t, err)
-	assert.Equal(t, session.Code, result.Code)
+		Get(context.TODO(), session.Code)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if result.Code != session.Code {
+		t.Errorf("Get(%s) = %+v, want %+v", session.Code, result, session)
+	}
 }
 
 func TestGetAndDelete(t *testing.T) {
 	t.Parallel()
 
-	db, cleanup := sqltest.Open(t)
+	session := domain.TestSession(t)
+	model := repository.NewSession(session)
+	db, mock, cleanup := sqltest.Open(t)
 	t.Cleanup(cleanup)
 
-	session := domain.TestSession(t)
-	_, err := db.NamedExec(repository.QueryTable+repository.QueryCreate, repository.NewSession(session))
-	require.NoError(t, err)
+	createTable(t, mock)
+	mock.ExpectBegin()
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM sessions`)).
+		WithArgs(session.Code).
+		WillReturnRows(sqlmock.NewRows(tableColumns).
+			AddRow(
+				model.CreatedAt.Time,
+				model.ClientID,
+				model.Me,
+				model.RedirectURI,
+				model.CodeChallengeMethod,
+				model.Scope,
+				model.Code,
+				model.CodeChallenge,
+			))
+	mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM sessions`)).
+		WithArgs(model.Code).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectCommit()
 
 	result, err := repository.NewSQLite3SessionRepository(domain.TestConfig(t), db).
-		GetAndDelete(context.Background(), session.Code)
-	require.NoError(t, err)
-	assert.Equal(t, session.Code, result.Code)
+		GetAndDelete(context.TODO(), session.Code)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	assert.Error(t, db.Get(result, repository.QueryGet, session.Code), "session MUST be destroyed after successful"+" query")
+	if result.Code != session.Code {
+		t.Errorf("GetAndDelete(%s) = %+v, want %+v", session.Code, result, session)
+	}
+}
+
+func createTable(tb testing.TB, mock sqlmock.Sqlmock) {
+	tb.Helper()
+
+	mock.ExpectExec(regexp.QuoteMeta(repository.QueryTable)).
+		WillReturnResult(sqlmock.NewResult(1, 1))
 }

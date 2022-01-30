@@ -1,28 +1,40 @@
 package sqltest
 
 import (
+	"database/sql/driver"
 	"testing"
+	"time"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/jmoiron/sqlx"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	_ "modernc.org/sqlite"
 )
 
+type Time struct{}
+
+func (Time) Match(v driver.Value) bool {
+	_, ok := v.(time.Time)
+
+	return ok
+}
+
 // Open creates a new InMemory sqlite3 database for testing.
-func Open(tb testing.TB) (*sqlx.DB, func()) {
+func Open(tb testing.TB) (*sqlx.DB, sqlmock.Sqlmock, func()) {
 	tb.Helper()
 
-	db, err := sqlx.Open("sqlite", ":memory:")
-	require.NoError(tb, err)
-
-	if !assert.NoError(tb, db.Ping()) {
-		_ = db.Close() //nolint: errcheck
-
-		tb.FailNow()
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		tb.Fatalf("%+v", err)
 	}
 
-	return db, func() {
+	xdb := sqlx.NewDb(db, "sqlite")
+	if err = xdb.Ping(); err != nil {
+		_ = db.Close()
+
+		tb.Fatalf("%+v", err)
+	}
+
+	return xdb, mock, func() {
 		_ = db.Close() //nolint: errcheck
 	}
 }

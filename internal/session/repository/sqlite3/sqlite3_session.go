@@ -58,13 +58,15 @@ const (
 )
 
 func NewSQLite3SessionRepository(config *domain.Config, db *sqlx.DB) session.Repository {
+	db.MustExec(QueryTable)
+
 	return &sqlite3SessionRepository{
 		db: db,
 	}
 }
 
 func (repo *sqlite3SessionRepository) Create(ctx context.Context, session *domain.Session) error {
-	if _, err := repo.db.NamedExecContext(ctx, QueryTable+QueryCreate, NewSession(session)); err != nil {
+	if _, err := repo.db.NamedExecContext(ctx, QueryCreate, NewSession(session)); err != nil {
 		return fmt.Errorf("cannot create session record in db: %w", err)
 	}
 
@@ -73,7 +75,7 @@ func (repo *sqlite3SessionRepository) Create(ctx context.Context, session *domai
 
 func (repo *sqlite3SessionRepository) Get(ctx context.Context, code string) (*domain.Session, error) {
 	s := new(Session)
-	if err := repo.db.GetContext(ctx, s, QueryTable+QueryGet, code); err != nil {
+	if err := repo.db.GetContext(ctx, s, QueryGet, code); err != nil {
 		return nil, fmt.Errorf("cannot find session in db: %w", err)
 	}
 
@@ -93,7 +95,7 @@ func (repo *sqlite3SessionRepository) GetAndDelete(ctx context.Context, code str
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
 
-	if err = tx.GetContext(ctx, s, QueryTable+QueryGet, code); err != nil {
+	if err = tx.GetContext(ctx, s, QueryGet, code); err != nil {
 		defer tx.Rollback()
 
 		if errors.Is(err, sql.ErrNoRows) {
