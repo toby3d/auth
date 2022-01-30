@@ -141,7 +141,7 @@ func (h *RequestHandler) Register(r *router.Router) {
 				provider := string(ctx.QueryArgs().Peek("provider"))
 
 				return !ctx.IsPost() || !matched ||
-					(provider != "" && provider != domain.DefaultProviderDirect.UID)
+					(provider != "" && provider != domain.ProviderDirect.UID)
 			},
 			Validator: func(ctx *http.RequestCtx, login, password string) (bool, error) {
 				// TODO(toby3d): change this

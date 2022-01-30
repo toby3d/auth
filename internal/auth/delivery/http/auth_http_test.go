@@ -50,7 +50,6 @@ func TestRender(t *testing.T) {
 		Matcher: language.NewMatcher(message.DefaultCatalog.Languages()),
 		Auth: ucase.NewAuthUseCase(
 			sessionrepo.NewMemorySessionRepository(config, store),
-			profilerepo.NewMemoryProfileRepository(store),
 			config,
 		),
 	}).Register(r)

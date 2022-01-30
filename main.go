@@ -167,14 +167,14 @@ func main() {
 		WriteTimeout:       10 * time.Second,
 		MaxConnWaitTimeout: 10 * time.Second,
 	}
-	ticketService := ticketucase.NewTicketUseCase(tickets, httpClient)
+	ticketService := ticketucase.NewTicketUseCase(tickets, httpClient, config)
 	tokenService := tokenucase.NewTokenUseCase(tokens, sessions, config)
 
 	r := router.New()
 	tickethttpdelivery.NewRequestHandler(ticketService, matcher, config).Register(r)
 	healthhttpdelivery.NewRequestHandler().Register(r)
 	metadatahttpdelivery.NewRequestHandler(config).Register(r)
-	tokenhttpdelivery.NewRequestHandler(tokenService).Register(r)
+	tokenhttpdelivery.NewRequestHandler(tokenService, ticketService).Register(r)
 	clienthttpdelivery.NewRequestHandler(clienthttpdelivery.NewRequestHandlerOptions{
 		Client:  client,
 		Config:  config,

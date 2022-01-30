@@ -6,22 +6,19 @@ import (
 
 	"source.toby3d.me/website/indieauth/internal/auth"
 	"source.toby3d.me/website/indieauth/internal/domain"
-	"source.toby3d.me/website/indieauth/internal/profile"
 	"source.toby3d.me/website/indieauth/internal/random"
 	"source.toby3d.me/website/indieauth/internal/session"
 )
 
 type authUseCase struct {
 	config   *domain.Config
-	profiles profile.Repository
 	sessions session.Repository
 }
 
 // NewAuthUseCase creates a new authentication use case.
-func NewAuthUseCase(sessions session.Repository, profiles profile.Repository, config *domain.Config) auth.UseCase {
+func NewAuthUseCase(sessions session.Repository, config *domain.Config) auth.UseCase {
 	return &authUseCase{
 		config:   config,
-		profiles: profiles,
 		sessions: sessions,
 	}
 }
