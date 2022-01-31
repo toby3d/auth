@@ -46,13 +46,15 @@ const (
 )
 
 func NewSQLite3TokenRepository(db *sqlx.DB) token.Repository {
+	db.MustExec(QueryTable)
+
 	return &sqlite3TokenRepository{
 		db: db,
 	}
 }
 
 func (repo *sqlite3TokenRepository) Create(ctx context.Context, accessToken *domain.Token) error {
-	if _, err := repo.db.NamedExecContext(ctx, QueryTable+QueryCreate, NewToken(accessToken)); err != nil {
+	if _, err := repo.db.NamedExecContext(ctx, QueryCreate, NewToken(accessToken)); err != nil {
 		return fmt.Errorf("cannot create token record in db: %w", err)
 	}
 
@@ -61,7 +63,7 @@ func (repo *sqlite3TokenRepository) Create(ctx context.Context, accessToken *dom
 
 func (repo *sqlite3TokenRepository) Get(ctx context.Context, accessToken string) (*domain.Token, error) {
 	t := new(Token)
-	if err := repo.db.GetContext(ctx, t, QueryTable+QueryGet, accessToken); err != nil {
+	if err := repo.db.GetContext(ctx, t, QueryGet, accessToken); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, token.ErrNotExist
 		}
