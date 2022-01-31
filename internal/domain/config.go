@@ -55,7 +55,9 @@ type (
 	}
 
 	ConfigIndieAuth struct {
-		Enabled bool `yaml:"enabled"` // true
+		Enabled  bool   `yaml:"enabled"` // true
+		Username string `yaml:"username"`
+		Password string `yaml:"password"`
 	}
 
 	ConfigTicketAuth struct {
@@ -109,7 +111,9 @@ func TestConfig(tb testing.TB) *Config {
 			Algorithm:   "HS256",
 		},
 		IndieAuth: ConfigIndieAuth{
-			Enabled: true,
+			Enabled:  true,
+			Username: "user",
+			Password: "password",
 		},
 		TicketAuth: ConfigTicketAuth{
 			Expiry: time.Minute,

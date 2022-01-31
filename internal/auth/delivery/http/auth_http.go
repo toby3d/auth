@@ -140,14 +140,19 @@ func (h *RequestHandler) Register(r *router.Router) {
 			Skipper: func(ctx *http.RequestCtx) bool {
 				matched, _ := path.Match("/api/*", string(ctx.Path()))
 				provider := string(ctx.QueryArgs().Peek("provider"))
+				providerMatched := provider != "" && provider != domain.ProviderDirect.UID
 
-				return !ctx.IsPost() || !matched ||
-					(provider != "" && provider != domain.ProviderDirect.UID)
+				return !ctx.IsPost() || !matched || providerMatched
 			},
 			Validator: func(ctx *http.RequestCtx, login, password string) (bool, error) {
-				// TODO(toby3d): change this
-				return subtle.ConstantTimeCompare([]byte(login), []byte("admin")) == 1 &&
-					subtle.ConstantTimeCompare([]byte(password), []byte("hackme")) == 1, nil
+				userMatch := subtle.ConstantTimeCompare(
+					[]byte(login), []byte(h.config.IndieAuth.Username),
+				)
+				passMatch := subtle.ConstantTimeCompare(
+					[]byte(password), []byte(h.config.IndieAuth.Password),
+				)
+
+				return userMatch == 1 && passMatch == 1, nil
 			},
 		}),
 		middleware.LogFmt(),

@@ -1,23 +1,32 @@
 ---
-name: IndieAuth
+name: "IndieAuth"
 runMode: "dev"
 server:
-  protocol: http
-  domain: localhost
-  rootUrl: "{{protocol}}://{{domain}}:{{port}}/"
-  staticUrlPrefix: "/static"
-  host: "0.0.0.0"
-  port: 3000
   certFile: "https/cert.pem"
-  keyFile: "https/key.pem"
-  staticRootPath: "/"
+  domain: "localhost"
   enablePprof: false
+  host: "0.0.0.0"
+  keyFile: "https/key.pem"
+  port: 3000
+  protocol: "http"
+  rootUrl: "{{protocol}}://{{domain}}:{{port}}/"
+  staticRootPath: "assets/"
+  staticUrlPrefix: "/static"
 database:
-  type: bolt
-  path: data/indieauth.db
-indieauth:
+  type: "memory"
+  # path: "data/development.db"
+code:
+  expiry: "10m"
+  length: 32
+jwt:
+  algorithm: "RS256"
+  expiry: "1h"
+  nonceLength: 24
+  secret: "hackme"
+indieAuth:
   enabled: true
-  accessTokenExpirationTime: 3600
-  jwtSigningAlgorithm: "RS256"
-  jwtSecret: ""
-  jwtSigningPrivateKeyFile: "jwt/private.pem"
+  username: user
+  password: hackme
+ticketAuth:
+  expiry: "1m"
+  length: 24
