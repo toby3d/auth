@@ -3,10 +3,12 @@ module source.toby3d.me/website/indieauth
 go 1.16
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/brianvoe/gofakeit/v6 v6.9.0
-	github.com/fasthttp/router v1.4.5
-	github.com/fasthttp/session/v2 v2.4.5
+	github.com/fasthttp/router v1.4.6
+	github.com/fasthttp/session/v2 v2.4.6
 	github.com/goccy/go-json v0.9.4
+	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/google/go-github/v41 v41.0.0
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.0 // indirect
