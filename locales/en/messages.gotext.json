@@ -47,10 +47,52 @@
             "fuzzy": true
         },
         {
+            "id": "Error",
+            "message": "Error",
+            "translation": "Error",
+            "translatorComment": "Copied from source.",
+            "fuzzy": true
+        },
+        {
+            "id": "How do I fix it?",
+            "message": "How do I fix it?",
+            "translation": "How do I fix it?",
+            "translatorComment": "Copied from source.",
+            "fuzzy": true
+        },
+        {
             "id": "Sign In",
             "message": "Sign In",
             "translation": "Sign In",
             "translatorComment": "The name of the button in the site address entry form to start the login process",
+            "fuzzy": true
+        },
+        {
+            "id": "TicketAuth",
+            "message": "TicketAuth",
+            "translation": "TicketAuth",
+            "translatorComment": "Copied from source.",
+            "fuzzy": true
+        },
+        {
+            "id": "Recipient",
+            "message": "Recipient",
+            "translation": "Recipient",
+            "translatorComment": "Copied from source.",
+            "fuzzy": true
+        },
+        {
+            "id": "Resource",
+            "message": "Resource",
+            "translation": "Resource",
+            "translatorComment": "Copied from source.",
+            "fuzzy": true
+        },
+        {
+            "id": "Send",
+            "message": "Send",
+            "translation": "Send",
+            "translatorComment": "Copied from source.",
             "fuzzy": true
         }
     ]

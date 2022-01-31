@@ -40,6 +40,16 @@
             "translatorComment": "Название кнопки продолжения процесса авторизациии приложения"
         },
         {
+            "id": "Error",
+            "message": "Error",
+            "translation": ""
+        },
+        {
+            "id": "How do I fix it?",
+            "message": "How do I fix it?",
+            "translation": ""
+        },
+        {
             "id": "Sign In",
             "message": "Sign In",
             "translation": "Войти",

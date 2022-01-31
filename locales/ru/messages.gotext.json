@@ -40,10 +40,40 @@
             "translatorComment": "Название кнопки продолжения процесса авторизациии приложения"
         },
         {
+            "id": "Error",
+            "message": "Error",
+            "translation": "Ошибка"
+        },
+        {
+            "id": "How do I fix it?",
+            "message": "How do I fix it?",
+            "translation": "Как исправить это?"
+        },
+        {
             "id": "Sign In",
             "message": "Sign In",
             "translation": "Войти",
             "translatorComment": "Название кнопки в форме ввода адреса сайта для начала процесса входа"
+        },
+        {
+            "id": "TicketAuth",
+            "message": "TicketAuth",
+            "translation": "TicketAuth"
+        },
+        {
+            "id": "Recipient",
+            "message": "Recipient",
+            "translation": "Получатель"
+        },
+        {
+            "id": "Resource",
+            "message": "Resource",
+            "translation": "Ресурс"
+        },
+        {
+            "id": "Send",
+            "message": "Send",
+            "translation": "Отправить"
         }
     ]
 }

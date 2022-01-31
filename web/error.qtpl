@@ -1,0 +1,42 @@
+{% import (
+  "errors"
+
+  "source.toby3d.me/website/indieauth/internal/domain"
+) %}
+
+{% code type ErrorPage struct {
+  BaseOf
+  Error error
+} %}
+
+{% collapsespace %}
+{% func (p *ErrorPage) Title() %}
+  {%s p.T("Error") %}
+{% endfunc %}
+
+{% func (p *ErrorPage) Body() %}
+  <main>
+    {% code err := new(domain.Error) %}
+    {% if errors.As(p.Error, err) %}
+      <h1>{%s err.Code.String() %}</h1>
+
+      {% if err.Description != "" %}
+        <p>{%s err.Description %}</p>
+      {% endif %}
+
+      {% if err.URI != "" %}
+        <a
+          rel="noreferrer noopener"
+          href="{%s err.URI %}"
+          target="_blank">
+
+          {%s p.T("How do I fix it?") %}
+        </a>
+      {% endif %}
+    {% else %}
+      <h1>{%s p.T("Error") %}</h1>
+      <p>{%s p.Error.Error() %}</p>
+    {% endif %}
+  </main>
+{% endfunc %}
+{% endcollapsespace %}

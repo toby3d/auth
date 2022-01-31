@@ -1,6 +1,7 @@
 package http
 
 import (
+	"bytes"
 	"crypto/subtle"
 	"errors"
 	"path"
@@ -159,36 +160,54 @@ func (h *RequestHandler) Register(r *router.Router) {
 
 func (h *RequestHandler) handleRender(ctx *http.RequestCtx) {
 	req := new(AuthorizeRequest)
+	ctx.SetContentType(common.MIMETextHTMLCharsetUTF8)
+
+	tags, _, _ := language.ParseAcceptLanguage(string(ctx.Request.Header.Peek(http.HeaderAcceptLanguage)))
+	tag, _, _ := h.matcher.Match(tags...)
+	baseOf := web.BaseOf{
+		Config:   h.config,
+		Language: tag,
+		Printer:  message.NewPrinter(tag),
+	}
+
 	if err := req.bind(ctx); err != nil {
-		ctx.Error(err.Error(), http.StatusBadRequest)
+		ctx.SetStatusCode(http.StatusBadRequest)
+		web.WriteTemplate(ctx, &web.ErrorPage{
+			BaseOf: baseOf,
+			Error:  err,
+		})
 
 		return
 	}
 
 	client, err := h.clients.Discovery(ctx, req.ClientID)
 	if err != nil {
-		ctx.Error(err.Error(), http.StatusBadRequest)
+		ctx.SetStatusCode(http.StatusBadRequest)
+		web.WriteTemplate(ctx, &web.ErrorPage{
+			BaseOf: baseOf,
+			Error:  err,
+		})
 
 		return
 	}
 
 	if !client.ValidateRedirectURI(req.RedirectURI) {
-		ctx.Error("requested redirect_uri is not registered on client_id side", http.StatusBadRequest)
+		ctx.SetStatusCode(http.StatusBadRequest)
+		web.WriteTemplate(ctx, &web.ErrorPage{
+			BaseOf: baseOf,
+			Error: domain.NewError(
+				domain.ErrorCodeInvalidClient,
+				"requested redirect_uri is not registered on client_id side",
+				"",
+			),
+		})
 
 		return
 	}
 
 	csrf, _ := ctx.UserValue(middleware.DefaultCSRFConfig.ContextKey).([]byte)
-	tags, _, _ := language.ParseAcceptLanguage(string(ctx.Request.Header.Peek(http.HeaderAcceptLanguage)))
-	tag, _, _ := h.matcher.Match(tags...)
-
-	ctx.SetContentType(common.MIMETextHTMLCharsetUTF8)
 	web.WriteTemplate(ctx, &web.AuthorizePage{
-		BaseOf: web.BaseOf{
-			Config:   h.config,
-			Language: tag,
-			Printer:  message.NewPrinter(tag),
-		},
+		BaseOf:              baseOf,
 		Client:              client,
 		CodeChallenge:       req.CodeChallenge,
 		CodeChallengeMethod: req.CodeChallengeMethod,
@@ -298,8 +317,7 @@ func (r *AuthorizeRequest) bind(ctx *http.RequestCtx) error {
 	}
 
 	r.Scope = make(domain.Scopes, 0)
-
-	if err := parseScope(r.Scope, ctx.QueryArgs().Peek("scope")); err != nil {
+	if err := r.Scope.UnmarshalForm(ctx.QueryArgs().Peek("scope")); err != nil {
 		if errors.As(err, indieAuthError) {
 			return indieAuthError
 		}
@@ -334,7 +352,17 @@ func (r *VerifyRequest) bind(ctx *http.RequestCtx) error {
 	}
 
 	r.Scope = make(domain.Scopes, 0)
-	parseScope(r.Scope, ctx.PostArgs().PeekMulti("scope[]")...)
+	if err := r.Scope.UnmarshalForm(bytes.Join(ctx.PostArgs().PeekMulti("scope[]"), []byte(" "))); err != nil {
+		if errors.As(err, indieAuthError) {
+			return indieAuthError
+		}
+
+		return domain.NewError(
+			domain.ErrorCodeInvalidScope,
+			err.Error(),
+			"https://indieweb.org/scope",
+		)
+	}
 
 	if r.ResponseType == domain.ResponseTypeID {
 		r.ResponseType = domain.ResponseTypeCode
@@ -365,34 +393,6 @@ func (r *ExchangeRequest) bind(ctx *http.RequestCtx) error {
 			"cannot validate verification request",
 			"https://indieauth.net/source/#redeeming-the-authorization-code",
 		)
-	}
-
-	return nil
-}
-
-// TODO(toby3d): fix this in form pkg.
-func parseScope(dst domain.Scopes, src ...[]byte) error {
-	if len(src) == 0 {
-		return nil
-	}
-
-	var scopes []string
-
-	if len(src) == 1 {
-		scopes = strings.Fields(string(src[0]))
-	}
-
-	for _, rawScope := range scopes {
-		scope, err := domain.ParseScope(string(rawScope))
-		if err != nil {
-			return domain.NewError(
-				domain.ErrorCodeInvalidScope,
-				err.Error(),
-				"https://indieweb.org/scope#IndieAuth_Scopes",
-			)
-		}
-
-		dst = append(dst, scope)
 	}
 
 	return nil

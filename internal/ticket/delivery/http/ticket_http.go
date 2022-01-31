@@ -83,17 +83,16 @@ func (h *RequestHandler) handleRender(ctx *http.RequestCtx) {
 
 	tags, _, _ := language.ParseAcceptLanguage(string(ctx.Request.Header.Peek(http.HeaderAcceptLanguage)))
 	tag, _, _ := h.matcher.Match(tags...)
+	baseOf := web.BaseOf{
+		Config:   h.config,
+		Language: tag,
+		Printer:  message.NewPrinter(tag),
+	}
 
 	csrf, _ := ctx.UserValue("csrf").([]byte)
-
-	ctx.SetContentType(common.MIMETextHTMLCharsetUTF8)
 	web.WriteTemplate(ctx, &web.TicketPage{
-		BaseOf: web.BaseOf{
-			Config:   h.config,
-			Language: tag,
-			Printer:  message.NewPrinter(tag),
-		},
-		CSRF: csrf,
+		BaseOf: baseOf,
+		CSRF:   csrf,
 	})
 }
 

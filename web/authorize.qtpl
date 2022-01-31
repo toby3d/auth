@@ -2,13 +2,14 @@
 
 {% code type AuthorizePage struct {
   BaseOf
+  CSRF                []byte
+  Providers           []*domain.Provider
+  Scope               domain.Scopes
   Client              *domain.Client
-  RedirectURI         *domain.URL
   Me                  *domain.Me
+  RedirectURI         *domain.URL
   CodeChallengeMethod domain.CodeChallengeMethod
   ResponseType        domain.ResponseType
-  Scope               domain.Scopes
-  CSRF                []byte
   CodeChallenge       string
   State               string
 } %}
@@ -117,6 +118,25 @@
           type="hidden"
           name="me"
           value="{%s p.Me.String() %}">
+      {% endif %}
+
+      {% if len(p.Providers) > 0 %}
+        <select
+          name="provider"
+          autocomplete
+          required>
+
+          {% for _, provider := range p.Providers %}
+            <option
+              value="{%s provider.UID %}"
+              {% if provider.UID == "mastodon" %}selected{% endif %}>
+
+              {%s provider.Name %}
+            </option>
+          {% endfor %}
+        </select>
+      {% else %}
+        <input type="hidden" name="provider" value="direct">
       {% endif %}
 
       <button

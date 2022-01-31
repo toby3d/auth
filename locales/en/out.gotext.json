@@ -47,6 +47,20 @@
             "fuzzy": true
         },
         {
+            "id": "Error",
+            "message": "Error",
+            "translation": "Error",
+            "translatorComment": "Copied from source.",
+            "fuzzy": true
+        },
+        {
+            "id": "How do I fix it?",
+            "message": "How do I fix it?",
+            "translation": "How do I fix it?",
+            "translatorComment": "Copied from source.",
+            "fuzzy": true
+        },
+        {
             "id": "Sign In",
             "message": "Sign In",
             "translation": "Sign In",
