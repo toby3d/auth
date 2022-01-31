@@ -47,6 +47,8 @@ const (
 )
 
 func NewSQLite3TicketRepository(db *sqlx.DB, config *domain.Config) ticket.Repository {
+	db.MustExec(QueryTable)
+
 	return &sqlite3TicketRepository{
 		config: config,
 		db:     db,
@@ -54,7 +56,7 @@ func NewSQLite3TicketRepository(db *sqlx.DB, config *domain.Config) ticket.Repos
 }
 
 func (repo *sqlite3TicketRepository) Create(ctx context.Context, t *domain.Ticket) error {
-	if _, err := repo.db.NamedExecContext(ctx, QueryTable+QueryCreate, NewTicket(t)); err != nil {
+	if _, err := repo.db.NamedExecContext(ctx, QueryCreate, NewTicket(t)); err != nil {
 		return fmt.Errorf("cannot create token record in db: %w", err)
 	}
 
@@ -70,7 +72,7 @@ func (repo *sqlite3TicketRepository) GetAndDelete(ctx context.Context, t string)
 	}
 
 	tkt := new(Ticket)
-	if err = tx.GetContext(ctx, tkt, QueryTable+QueryGet, t); err != nil {
+	if err = tx.GetContext(ctx, tkt, QueryGet, t); err != nil {
 		defer tx.Rollback()
 
 		if errors.Is(err, sql.ErrNoRows) {
