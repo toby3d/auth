@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"source.toby3d.me/website/indieauth/internal/domain"
 	"source.toby3d.me/website/indieauth/internal/token"
@@ -21,7 +20,9 @@ func TestCreate(t *testing.T) {
 	accessToken := domain.TestToken(t)
 
 	repo := repository.NewMemoryTokenRepository(store)
-	require.NoError(t, repo.Create(context.TODO(), accessToken))
+	if err := repo.Create(context.TODO(), accessToken); err != nil {
+		t.Fatal(err)
+	}
 
 	result, ok := store.Load(path.Join(repository.DefaultPathPrefix, accessToken.AccessToken))
 	assert.True(t, ok)

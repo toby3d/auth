@@ -8,7 +8,6 @@ import (
 
 	"github.com/fasthttp/router"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	http "github.com/valyala/fasthttp"
 
 	"source.toby3d.me/website/indieauth/internal/common"
@@ -45,7 +44,9 @@ func TestGet(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	result, err := repository.NewHTTPUserRepository(client).Get(context.TODO(), user.Me)
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// NOTE(toby3d): endpoints
 	assert.Equal(t, user.AuthorizationEndpoint.String(), result.AuthorizationEndpoint.String())

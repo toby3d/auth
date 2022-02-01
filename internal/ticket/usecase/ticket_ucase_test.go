@@ -7,7 +7,6 @@ import (
 
 	"github.com/fasthttp/router"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	http "github.com/valyala/fasthttp"
 
 	"source.toby3d.me/website/indieauth/internal/common"
@@ -41,7 +40,10 @@ func TestRedeem(t *testing.T) {
 
 	result, err := ucase.NewTicketUseCase(nil, client, domain.TestConfig(t)).
 		Redeem(context.TODO(), ticket)
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	assert.Equal(t, token.AccessToken, result.AccessToken)
 	assert.Equal(t, token.Me.String(), result.Me.String())
 	assert.Equal(t, token.Scope, result.Scope)

@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	http "github.com/valyala/fasthttp"
 
 	repository "source.toby3d.me/website/indieauth/internal/client/repository/http"
@@ -41,7 +40,9 @@ func TestGet(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	result, err := repository.NewHTTPClientRepository(httpClient).Get(context.TODO(), client.ID)
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	assert.Equal(t, client.Name, result.Name)
 	assert.Equal(t, client.ID.String(), result.ID.String())

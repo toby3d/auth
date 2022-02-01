@@ -9,7 +9,6 @@ import (
 	"github.com/fasthttp/router"
 	json "github.com/goccy/go-json"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	http "github.com/valyala/fasthttp"
 
 	"source.toby3d.me/website/indieauth/internal/common"
@@ -62,11 +61,17 @@ func TestVerification(t *testing.T) {
 	resp := http.AcquireResponse()
 	defer http.ReleaseResponse(resp)
 
-	require.NoError(t, client.Do(req, resp))
+	if err := client.Do(req, resp); err != nil {
+		t.Fatal(err)
+	}
+
 	assert.Equal(t, http.StatusOK, resp.StatusCode())
 
 	result := new(delivery.TokenVerificationResponse)
-	require.NoError(t, json.Unmarshal(resp.Body(), result))
+	if err := json.Unmarshal(resp.Body(), result); err != nil {
+		t.Fatal(err)
+	}
+
 	assert.Equal(t, token.ClientID.String(), result.ClientID.String())
 	assert.Equal(t, token.Me.String(), result.Me.String())
 	assert.Equal(t, token.Scope.String(), result.Scope.String())
@@ -107,12 +112,17 @@ func TestRevocation(t *testing.T) {
 	resp := http.AcquireResponse()
 	defer http.ReleaseResponse(resp)
 
-	require.NoError(t, client.Do(req, resp))
+	if err := client.Do(req, resp); err != nil {
+		t.Fatal(err)
+	}
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode())
 	assert.Equal(t, `{}`, strings.TrimSpace(string(resp.Body())))
 
 	result, err := tokens.Get(context.TODO(), accessToken.AccessToken)
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	assert.Equal(t, accessToken.AccessToken, result.AccessToken)
 }

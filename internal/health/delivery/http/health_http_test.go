@@ -5,7 +5,6 @@ import (
 
 	"github.com/fasthttp/router"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	http "github.com/valyala/fasthttp"
 
 	delivery "source.toby3d.me/website/indieauth/internal/health/delivery/http"
@@ -27,7 +26,10 @@ func TestRequestHandler(t *testing.T) {
 	resp := http.AcquireResponse()
 	defer http.ReleaseResponse(resp)
 
-	require.NoError(t, client.Do(req, resp))
+	if err := client.Do(req, resp); err != nil {
+		t.Fatal(err)
+	}
+
 	assert.Equal(t, http.StatusOK, resp.StatusCode())
 	assert.Equal(t, `{"ok": true}`, string(resp.Body()))
 }
