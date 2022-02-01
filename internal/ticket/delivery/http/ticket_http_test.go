@@ -6,7 +6,6 @@ import (
 
 	"github.com/fasthttp/router"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	http "github.com/valyala/fasthttp"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
@@ -29,7 +28,8 @@ func TestUpdate(t *testing.T) {
 	userRouter := router.New()
 	// NOTE(toby3d): private resource
 	userRouter.GET(ticket.Resource.URL().EscapedPath(), func(ctx *http.RequestCtx) {
-		ctx.SuccessString(common.MIMETextHTMLCharsetUTF8,
+		ctx.SuccessString(
+			common.MIMETextHTMLCharsetUTF8,
 			`<link rel="token_endpoint" href="https://auth.example.org/token">`,
 		)
 	})
@@ -46,30 +46,38 @@ func TestUpdate(t *testing.T) {
 	userClient, _, userCleanup := httptest.New(t, userRouter.Handler)
 	t.Cleanup(userCleanup)
 
-	router := router.New()
+	r := router.New()
 	delivery.NewRequestHandler(
 		ucase.NewTicketUseCase(ticketrepo.NewMemoryTicketRepository(new(sync.Map), config), userClient, config),
 		language.NewMatcher(message.DefaultCatalog.Languages()), config,
-	).Register(router)
+	).Register(r)
 
-	client, _, cleanup := httptest.New(t, router.Handler)
+	client, _, cleanup := httptest.New(t, r.Handler)
 	t.Cleanup(cleanup)
 
-	req := httptest.NewRequest(http.MethodPost, "https://example.com/ticket", []byte(
+	const requestURI string = "https://example.com/ticket"
+
+	req := httptest.NewRequest(http.MethodPost, requestURI, []byte(
 		`ticket=`+ticket.Ticket+
 			`&resource=`+ticket.Resource.String()+
 			`&subject=`+ticket.Subject.String(),
 	))
 	defer http.ReleaseRequest(req)
 	req.Header.SetContentType(common.MIMEApplicationForm)
+	domain.TestToken(t).SetAuthHeader(req)
 
 	resp := http.AcquireResponse()
 	defer http.ReleaseResponse(resp)
 
-	require.NoError(t, client.Do(req, resp))
-	assert.Condition(t, func() bool {
-		return resp.StatusCode() == http.StatusOK || resp.StatusCode() == http.StatusAccepted
-	}, "the ticket endpoint MUST return an HTTP 200 OK code or HTTP 202 Accepted")
+	if err := client.Do(req, resp); err != nil {
+		t.Fatal(err)
+	}
+
+	if resp.StatusCode() != http.StatusOK && resp.StatusCode() != http.StatusAccepted {
+		t.Errorf("POST %s = %d, want %d or %d", requestURI, resp.StatusCode(), http.StatusOK,
+			http.StatusAccepted)
+	}
+
 	// TODO(toby3d): print the result as part of the debugging. Instead, you
 	// need to send or save the token to the recipient for later use.
 	assert.NotNil(t, resp.Body())
