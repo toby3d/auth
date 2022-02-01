@@ -1,12 +1,11 @@
 package http_test
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/fasthttp/router"
 	"github.com/goccy/go-json"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	http "github.com/valyala/fasthttp"
 
 	"source.toby3d.me/website/indieauth/internal/domain"
@@ -24,35 +23,28 @@ func TestMetadata(t *testing.T) {
 	client, _, cleanup := httptest.New(t, r.Handler)
 	t.Cleanup(cleanup)
 
-	status, body, err := client.Get(nil, "https://example.com/.well-known/oauth-authorization-server")
-	require.NoError(t, err)
-	assert.Equal(t, http.StatusOK, status)
+	const requestURL string = "https://example.com/.well-known/oauth-authorization-server"
+
+	status, body, err := client.Get(nil, requestURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if status != http.StatusOK {
+		t.Errorf("GET %s = %d, want %d", requestURL, status, http.StatusOK)
+	}
 
 	result := new(delivery.MetadataResponse)
-	require.NoError(t, json.Unmarshal(body, result))
-	assert.Equal(t, &delivery.MetadataResponse{
-		AuthorizationEndpoint: cfg.Server.GetRootURL() + "authorize",
-		Issuer:                cfg.Server.GetRootURL(),
-		ServiceDocumentation:  "https://indieauth.net/source/",
-		TokenEndpoint:         cfg.Server.GetRootURL() + "token",
-		AuthorizationResponseIssParameterSupported: true,
-		GrantTypesSupported: []string{
-			domain.GrantTypeAuthorizationCode.String(),
-		},
-		ResponseTypesSupported: []string{
-			domain.ResponseTypeCode.String(),
-			domain.ResponseTypeID.String(),
-		},
-		CodeChallengeMethodsSupported: []string{
-			domain.CodeChallengeMethodMD5.String(),
-			domain.CodeChallengeMethodPLAIN.String(),
-			domain.CodeChallengeMethodS1.String(),
-			domain.CodeChallengeMethodS256.String(),
-			domain.CodeChallengeMethodS512.String(),
-		},
-		ScopesSupported: []string{
-			domain.ScopeEmail.String(),
-			domain.ScopeProfile.String(),
-		},
-	}, result)
+	if err = json.Unmarshal(body, result); err != nil {
+		t.Fatal(err)
+	}
+
+	expResult := delivery.DefaultMetadataResponse
+	expResult.Issuer = cfg.Server.GetRootURL()
+	expResult.AuthorizationEndpoint = expResult.Issuer + "authorize"
+	expResult.TokenEndpoint = expResult.Issuer + "token"
+
+	if !reflect.DeepEqual(*result, expResult) {
+		t.Errorf("Unmarshal(%s) = %+v, want %+v", body, result, expResult)
+	}
 }
