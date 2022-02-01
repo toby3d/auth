@@ -47,10 +47,10 @@ func TestVerification(t *testing.T) {
 
 	deps := NewDependencies(t)
 
-	router := router.New()
-	delivery.NewRequestHandler(deps.tokenService, deps.ticketService).Register(router)
+	r := router.New()
+	delivery.NewRequestHandler(deps.tokenService, deps.ticketService).Register(r)
 
-	client, _, cleanup := httptest.New(t, router.Handler)
+	client, _, cleanup := httptest.New(t, r.Handler)
 	t.Cleanup(cleanup)
 
 	const requestURL = "https://app.example.com/token"
@@ -138,7 +138,7 @@ func NewDependencies(tb testing.TB) Dependencies {
 	config := domain.TestConfig(tb)
 	store := new(sync.Map)
 	token := domain.TestToken(tb)
-	sessions := sessionrepo.NewMemorySessionRepository(config, store)
+	sessions := sessionrepo.NewMemorySessionRepository(store, config)
 	tickets := ticketrepo.NewMemoryTicketRepository(store, config)
 	tokens := tokenrepo.NewMemoryTokenRepository(store)
 	ticketService := ticketucase.NewTicketUseCase(tickets, client, config)
