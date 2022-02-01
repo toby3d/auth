@@ -30,10 +30,11 @@ import (
 	"golang.org/x/text/message"
 	_ "modernc.org/sqlite"
 
+	"source.toby3d.me/website/indieauth/internal/auth"
 	authhttpdelivery "source.toby3d.me/website/indieauth/internal/auth/delivery/http"
 	authucase "source.toby3d.me/website/indieauth/internal/auth/usecase"
+	"source.toby3d.me/website/indieauth/internal/client"
 	clienthttpdelivery "source.toby3d.me/website/indieauth/internal/client/delivery/http"
-	clientrepo "source.toby3d.me/website/indieauth/internal/client/repository/http"
 	clientucase "source.toby3d.me/website/indieauth/internal/client/usecase"
 	"source.toby3d.me/website/indieauth/internal/domain"
 	healthhttpdelivery "source.toby3d.me/website/indieauth/internal/health/delivery/http"
@@ -41,6 +42,7 @@ import (
 	"source.toby3d.me/website/indieauth/internal/session"
 	sessionmemoryrepo "source.toby3d.me/website/indieauth/internal/session/repository/memory"
 	sessionsqlite3repo "source.toby3d.me/website/indieauth/internal/session/repository/sqlite3"
+	sessionucase "source.toby3d.me/website/indieauth/internal/session/usecase"
 	"source.toby3d.me/website/indieauth/internal/ticket"
 	tickethttpdelivery "source.toby3d.me/website/indieauth/internal/ticket/delivery/http"
 	ticketmemoryrepo "source.toby3d.me/website/indieauth/internal/ticket/repository/memory"
@@ -53,6 +55,25 @@ import (
 	tokenucase "source.toby3d.me/website/indieauth/internal/token/usecase"
 )
 
+type (
+	App struct {
+		auth     auth.UseCase
+		clients  client.UseCase
+		matcher  language.Matcher
+		sessions session.UseCase
+		tickets  ticket.UseCase
+		tokens   token.UseCase
+	}
+
+	NewAppOptions struct {
+		Client   *http.Client
+		Clients  client.Repository
+		Sessions session.Repository
+		Tickets  ticket.Repository
+		Tokens   token.Repository
+	}
+)
+
 const (
 	DefaultCacheDuration time.Duration = 8760 * time.Hour // NOTE(toby3d): year
 	DefaultReadTimeout   time.Duration = 5 * time.Second
@@ -62,9 +83,9 @@ const (
 //nolint: gochecknoglobals
 var (
 	// NOTE(toby3d): write logs in stdout, see: https://12factor.net/logs
-	logger = log.New(os.Stdout, "IndieAuth\t", log.Lmsgprefix|log.LstdFlags|log.LUTC)
-	client = new(domain.Client)
-	config = new(domain.Config)
+	logger          = log.New(os.Stdout, "IndieAuth\t", log.Lmsgprefix|log.LstdFlags|log.LUTC)
+	config          = new(domain.Config)
+	indieAuthClient = new(domain.Client)
 
 	configPath     string
 	cpuProfilePath string
@@ -101,9 +122,9 @@ func init() {
 
 	// NOTE(toby3d): The server instance itself can be as a client.
 	rootURL := config.Server.GetRootURL()
-	client.Name = []string{config.Name}
+	indieAuthClient.Name = []string{config.Name}
 
-	if client.ID, err = domain.ParseClientID(rootURL); err != nil {
+	if indieAuthClient.ID, err = domain.ParseClientID(rootURL); err != nil {
 		logger.Fatalln("fail to read config:", err)
 	}
 
@@ -122,18 +143,14 @@ func init() {
 		logger.Fatalln("cannot parse root URL as client URL:", err)
 	}
 
-	client.URL = []*domain.URL{url}
-	client.Logo = []*domain.URL{logo}
-	client.RedirectURI = []*domain.URL{redirectURI}
+	indieAuthClient.URL = []*domain.URL{url}
+	indieAuthClient.Logo = []*domain.URL{logo}
+	indieAuthClient.RedirectURI = []*domain.URL{redirectURI}
 }
 
 //nolint: funlen, cyclop // "god object" and the entry point of all modules
 func main() {
-	var (
-		tokens   token.Repository
-		sessions session.Repository
-		tickets  ticket.Repository
-	)
+	var opts NewAppOptions
 
 	switch strings.ToLower(config.Database.Type) {
 	case "sqlite3":
@@ -146,47 +163,29 @@ func main() {
 			logger.Fatalf("cannot ping %s database: %v", config.Database.Type, err)
 		}
 
-		tokens = tokensqlite3repo.NewSQLite3TokenRepository(store)
-		sessions = sessionsqlite3repo.NewSQLite3SessionRepository(store)
-		tickets = ticketsqlite3repo.NewSQLite3TicketRepository(store, config)
+		opts.Tokens = tokensqlite3repo.NewSQLite3TokenRepository(store)
+		opts.Sessions = sessionsqlite3repo.NewSQLite3SessionRepository(store)
+		opts.Tickets = ticketsqlite3repo.NewSQLite3TicketRepository(store, config)
 	case "memory":
 		store := new(sync.Map)
-		tokens = tokenmemoryrepo.NewMemoryTokenRepository(store)
-		sessions = sessionmemoryrepo.NewMemorySessionRepository(config, store)
-		tickets = ticketmemoryrepo.NewMemoryTicketRepository(store, config)
+		opts.Tokens = tokenmemoryrepo.NewMemoryTokenRepository(store)
+		opts.Sessions = sessionmemoryrepo.NewMemorySessionRepository(store, config)
+		opts.Tickets = ticketmemoryrepo.NewMemoryTicketRepository(store, config)
 	default:
 		log.Fatalln("unsupported database type, use 'memory' or 'sqlite3'")
 	}
 
-	go sessions.GC()
+	go opts.Sessions.GC()
 
-	matcher := language.NewMatcher(message.DefaultCatalog.Languages())
 	//nolint: exhaustivestruct // too many options
-	httpClient := &http.Client{
+	opts.Client = &http.Client{
 		Name:         fmt.Sprintf("%s/0.1 (+%s)", config.Name, config.Server.GetAddress()),
 		ReadTimeout:  DefaultReadTimeout,
 		WriteTimeout: DefaultWriteTimeout,
 	}
-	ticketService := ticketucase.NewTicketUseCase(tickets, httpClient, config)
-	tokenService := tokenucase.NewTokenUseCase(tokens, sessions, config)
 
-	r := router.New()
-	tickethttpdelivery.NewRequestHandler(ticketService, matcher, config).Register(r)
-	healthhttpdelivery.NewRequestHandler().Register(r)
-	metadatahttpdelivery.NewRequestHandler(config).Register(r)
-	tokenhttpdelivery.NewRequestHandler(tokenService, ticketService).Register(r)
-	clienthttpdelivery.NewRequestHandler(clienthttpdelivery.NewRequestHandlerOptions{
-		Client:  client,
-		Config:  config,
-		Matcher: matcher,
-		Tokens:  tokenService,
-	}).Register(r)
-	authhttpdelivery.NewRequestHandler(authhttpdelivery.NewRequestHandlerOptions{
-		Clients: clientucase.NewClientUseCase(clientrepo.NewHTTPClientRepository(httpClient)),
-		Auth:    authucase.NewAuthUseCase(sessions, config),
-		Matcher: matcher,
-		Config:  config,
-	}).Register(r)
+	r := router.New() //nolint: varnamelen
+	NewApp(opts).Register(r)
 	//nolint: exhaustivestruct// too many options
 	r.ServeFilesCustom(path.Join(config.Server.StaticURLPrefix, "{filepath:*}"), &http.FS{
 		Root:               config.Server.StaticRootPath,
@@ -260,4 +259,34 @@ func main() {
 	if err = pprof.WriteHeapProfile(memProfile); err != nil {
 		logger.Fatalln("could not write memory profile:", err)
 	}
+}
+
+func NewApp(opts NewAppOptions) *App {
+	return &App{
+		auth:     authucase.NewAuthUseCase(opts.Sessions, config),
+		clients:  clientucase.NewClientUseCase(opts.Clients),
+		matcher:  language.NewMatcher(message.DefaultCatalog.Languages()),
+		sessions: sessionucase.NewSessionUseCase(opts.Sessions),
+		tickets:  ticketucase.NewTicketUseCase(opts.Tickets, opts.Client, config),
+		tokens:   tokenucase.NewTokenUseCase(opts.Tokens, opts.Sessions, config),
+	}
+}
+
+func (app *App) Register(r *router.Router) {
+	tickethttpdelivery.NewRequestHandler(app.tickets, app.matcher, config).Register(r)
+	healthhttpdelivery.NewRequestHandler().Register(r)
+	metadatahttpdelivery.NewRequestHandler(config).Register(r)
+	tokenhttpdelivery.NewRequestHandler(app.tokens, app.tickets).Register(r)
+	clienthttpdelivery.NewRequestHandler(clienthttpdelivery.NewRequestHandlerOptions{
+		Client:  indieAuthClient,
+		Config:  config,
+		Matcher: app.matcher,
+		Tokens:  app.tokens,
+	}).Register(r)
+	authhttpdelivery.NewRequestHandler(authhttpdelivery.NewRequestHandlerOptions{
+		Auth:    app.auth,
+		Clients: app.clients,
+		Config:  config,
+		Matcher: app.matcher,
+	}).Register(r)
 }
