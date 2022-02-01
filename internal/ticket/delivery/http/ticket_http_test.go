@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/fasthttp/router"
-	"github.com/stretchr/testify/assert"
 	http "github.com/valyala/fasthttp"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
@@ -80,5 +79,7 @@ func TestUpdate(t *testing.T) {
 
 	// TODO(toby3d): print the result as part of the debugging. Instead, you
 	// need to send or save the token to the recipient for later use.
-	assert.NotNil(t, resp.Body())
+	if resp.Body() == nil {
+		t.Errorf("POST %s = nil, want something", requestURI)
+	}
 }

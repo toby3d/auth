@@ -78,5 +78,7 @@ func TestRevoke(t *testing.T) {
 		t.Error(err)
 	}
 
-	assert.Equal(t, accessToken.AccessToken, result.AccessToken)
+	if result.AccessToken != accessToken.AccessToken {
+		t.Errorf("Get(%s) = %s, want %s", accessToken.AccessToken, result.AccessToken, accessToken.AccessToken)
+	}
 }

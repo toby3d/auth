@@ -1,14 +1,13 @@
 package http_test
 
 import (
+	"bytes"
 	"context"
-	"strings"
 	"sync"
 	"testing"
 
 	"github.com/fasthttp/router"
 	json "github.com/goccy/go-json"
-	"github.com/stretchr/testify/assert"
 	http "github.com/valyala/fasthttp"
 
 	"source.toby3d.me/website/indieauth/internal/common"
@@ -53,7 +52,9 @@ func TestVerification(t *testing.T) {
 	client, _, cleanup := httptest.New(t, router.Handler)
 	t.Cleanup(cleanup)
 
-	req := httptest.NewRequest(http.MethodGet, "https://app.example.com/token", nil)
+	const requestURL = "https://app.example.com/token"
+
+	req := httptest.NewRequest(http.MethodGet, requestURL, nil)
 	defer http.ReleaseRequest(req)
 	req.Header.Set(http.HeaderAccept, common.MIMEApplicationJSON)
 	token.SetAuthHeader(req)
@@ -65,16 +66,22 @@ func TestVerification(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, http.StatusOK, resp.StatusCode())
+	if result := resp.StatusCode(); result != http.StatusOK {
+		t.Errorf("GET %s = %d, want %d", requestURL, result, http.StatusOK)
+	}
 
 	result := new(delivery.TokenVerificationResponse)
 	if err := json.Unmarshal(resp.Body(), result); err != nil {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, token.ClientID.String(), result.ClientID.String())
-	assert.Equal(t, token.Me.String(), result.Me.String())
-	assert.Equal(t, token.Scope.String(), result.Scope.String())
+	token.AccessToken = ""
+
+	if result.ClientID.String() != token.ClientID.String() ||
+		result.Me.String() != token.Me.String() ||
+		result.Scope.String() != token.Scope.String() {
+		t.Errorf("GET %s = %+v, want %+v", requestURL, result, token)
+	}
 }
 
 func TestRevocation(t *testing.T) {
@@ -102,7 +109,9 @@ func TestRevocation(t *testing.T) {
 	client, _, cleanup := httptest.New(t, router.Handler)
 	t.Cleanup(cleanup)
 
-	req := httptest.NewRequest(http.MethodPost, "https://app.example.com/token", nil)
+	const requestURL = "https://app.example.com/token"
+
+	req := httptest.NewRequest(http.MethodPost, requestURL, nil)
 	defer http.ReleaseRequest(req)
 	req.Header.Set(http.HeaderAccept, common.MIMEApplicationJSON)
 	req.Header.SetContentType(common.MIMEApplicationForm)
@@ -116,13 +125,21 @@ func TestRevocation(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, http.StatusOK, resp.StatusCode())
-	assert.Equal(t, `{}`, strings.TrimSpace(string(resp.Body())))
+	if result := resp.StatusCode(); result != http.StatusOK {
+		t.Errorf("POST %s = %d, want %d", requestURL, result, http.StatusOK)
+	}
+
+	expBody := []byte("{}") //nolint: ifshort
+	if result := bytes.TrimSpace(resp.Body()); !bytes.Equal(result, expBody) {
+		t.Errorf("POST %s = %s, want %s", requestURL, result, expBody)
+	}
 
 	result, err := tokens.Get(context.TODO(), accessToken.AccessToken)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, accessToken.AccessToken, result.AccessToken)
+	if result.String() != accessToken.String() {
+		t.Errorf("Get(%+v) = %s, want %s", accessToken.AccessToken, result, accessToken)
+	}
 }

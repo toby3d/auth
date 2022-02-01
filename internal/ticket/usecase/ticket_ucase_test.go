@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/fasthttp/router"
-	"github.com/stretchr/testify/assert"
 	http "github.com/valyala/fasthttp"
 
 	"source.toby3d.me/website/indieauth/internal/common"
@@ -44,7 +43,7 @@ func TestRedeem(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, token.AccessToken, result.AccessToken)
-	assert.Equal(t, token.Me.String(), result.Me.String())
-	assert.Equal(t, token.Scope, result.Scope)
+	if result.String() != token.String() {
+		t.Errorf("Redeem(%+v) = %s, want %s", ticket, result, token)
+	}
 }
