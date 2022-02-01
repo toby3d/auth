@@ -17,12 +17,11 @@ before_script:
 stages:
   - test
   - build
-  - deploy
 
 test:
   stage: test
   before_script:
-    - go get gotest.tools/gotestsum
+    - go install gotest.tools/gotestsum@latest
   script:
     - gotestsum --junitfile report.xml --format testname
   artifacts:
@@ -33,7 +32,7 @@ test:
 cover:
   stage: test
   before_script:
-    - go get github.com/t-yuki/gocover-cobertura
+    - go install github.com/t-yuki/gocover-cobertura@latest
   script:
     - go test -coverprofile=coverage.txt -covermode count $REPO_NAME/...
     - gocover-cobertura < coverage.txt > coverage.xml
@@ -44,18 +43,7 @@ cover:
 build:
   stage: build
   script:
-    - go build -ldflags "-extldflags '-static'" -o $CI_PROJECT_DIR/indieauth $REPO_NAME/cmd/indieauth
+    - make build
   artifacts:
     paths:
       - indieauth
-
-pages:
-  image: alpine:latest
-  stage: deploy
-  script:
-    - mv website public
-  artifacts:
-    paths:
-      - public
-  only:
-    - master

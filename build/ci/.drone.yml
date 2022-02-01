@@ -8,15 +8,15 @@ steps:
     volumes:
       - name: deps
         path: /go
-    commands: 
-      - go test -v -cover -race ./...
+    commands:
+      - make test
   - name: build
     image: golang
     volumes:
       - name: deps
         path: /go
     commands:
-      - go build -ldflags "-extldflags '-static'" -o ./indieauth ./cmd/indieauth
+      - make build
     depends_on:
       - test
 volumes:
