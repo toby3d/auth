@@ -2,14 +2,13 @@ package http_test
 
 import (
 	"path"
+	"strings"
 	"sync"
 	"testing"
 
 	"github.com/fasthttp/router"
 	"github.com/fasthttp/session/v2"
 	"github.com/fasthttp/session/v2/providers/memory"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	http "github.com/valyala/fasthttp"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
@@ -25,14 +24,19 @@ import (
 	userrepo "source.toby3d.me/website/indieauth/internal/user/repository/memory"
 )
 
+//nolint: funlen
 func TestRender(t *testing.T) {
 	t.Parallel()
 
 	provider, err := memory.New(memory.Config{})
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	s := session.New(session.NewDefaultConfig())
-	require.NoError(t, s.SetProvider(provider))
+	if err = s.SetProvider(provider); err != nil {
+		t.Fatal(err)
+	}
 
 	me := domain.TestMe(t, "https://user.example.net")
 	client := domain.TestClient(t)
@@ -80,8 +84,16 @@ func TestRender(t *testing.T) {
 	resp := http.AcquireResponse()
 	defer http.ReleaseResponse(resp)
 
-	require.NoError(t, httpClient.Do(req, resp))
+	if err := httpClient.Do(req, resp); err != nil {
+		t.Fatal(err)
+	}
 
-	assert.Equal(t, http.StatusOK, resp.StatusCode())
-	assert.Contains(t, string(resp.Body()), `Authorize application`)
+	if resp.StatusCode() != http.StatusOK {
+		t.Errorf("GET %s = %d, want %d", uri.String(), resp.StatusCode(), http.StatusOK)
+	}
+
+	const expResult = `Authorize application`
+	if result := string(resp.Body()); !strings.Contains(result, expResult) {
+		t.Errorf("GET %s = %s, want %s", uri.String(), result, expResult)
+	}
 }

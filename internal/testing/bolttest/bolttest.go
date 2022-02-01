@@ -4,8 +4,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -15,16 +13,23 @@ func New(tb testing.TB) (*bolt.DB, func()) {
 	tb.Helper()
 
 	f, err := os.CreateTemp(os.TempDir(), "bbolt_*.db")
-	require.NoError(tb, err)
+	if err != nil {
+		tb.Fatal(err)
+	}
 
 	filePath := f.Name()
-	assert.NoError(tb, f.Close())
+
+	if err := f.Close(); err != nil {
+		tb.Fatal(err)
+	}
 
 	db, err := bolt.Open(filePath, os.ModePerm, nil)
-	require.NoError(tb, err)
+	if err != nil {
+		tb.Fatal(err)
+	}
 
 	return db, func() {
-		db.Close()
-		os.Remove(filePath)
+		_ = db.Close()
+		_ = os.Remove(filePath)
 	}
 }

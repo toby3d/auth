@@ -5,8 +5,6 @@ import (
 	"testing"
 
 	"github.com/fasthttp/router"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	http "github.com/valyala/fasthttp"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
@@ -37,12 +35,19 @@ func TestRead(t *testing.T) {
 	client, _, cleanup := httptest.New(t, router.Handler)
 	t.Cleanup(cleanup)
 
-	req := httptest.NewRequest(http.MethodGet, "https://app.example.com/", nil)
+	const requestURI string = "https://app.example.com/"
+
+	req := httptest.NewRequest(http.MethodGet, requestURI, nil)
 	defer http.ReleaseRequest(req)
 
 	resp := http.AcquireResponse()
 	defer http.ReleaseResponse(resp)
 
-	require.NoError(t, client.Do(req, resp))
-	assert.Equal(t, http.StatusOK, resp.StatusCode())
+	if err := client.Do(req, resp); err != nil {
+		t.Error(err)
+	}
+
+	if resp.StatusCode() != http.StatusOK {
+		t.Errorf("GET %s = %d, want %d", requestURI, resp.StatusCode(), http.StatusOK)
+	}
 }

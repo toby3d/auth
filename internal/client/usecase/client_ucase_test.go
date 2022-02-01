@@ -3,11 +3,9 @@ package usecase_test
 import (
 	"context"
 	"path"
+	"reflect"
 	"sync"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	repository "source.toby3d.me/website/indieauth/internal/client/repository/memory"
 	"source.toby3d.me/website/indieauth/internal/client/usecase"
@@ -24,6 +22,11 @@ func TestDiscovery(t *testing.T) {
 
 	result, err := usecase.NewClientUseCase(repository.NewMemoryClientRepository(store)).
 		Discovery(context.TODO(), client.ID)
-	require.NoError(t, err)
-	assert.Equal(t, client, result)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(result, client) {
+		t.Errorf("Discovery(%s) = %+v, want %+v", client.ID, result, client)
+	}
 }

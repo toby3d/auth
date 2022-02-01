@@ -3,11 +3,9 @@ package memory_test
 import (
 	"context"
 	"path"
+	"reflect"
 	"sync"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"source.toby3d.me/website/indieauth/internal/domain"
 	repository "source.toby3d.me/website/indieauth/internal/user/repository/memory"
@@ -22,6 +20,11 @@ func TestGet(t *testing.T) {
 	store.Store(path.Join(repository.DefaultPathPrefix, user.Me.String()), user)
 
 	result, err := repository.NewMemoryUserRepository(store).Get(context.TODO(), user.Me)
-	require.NoError(t, err)
-	assert.Equal(t, user, result)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if !reflect.DeepEqual(result, user) {
+		t.Errorf("Get(%s) = %+v, want %+v", user.Me, result, user)
+	}
 }

@@ -3,10 +3,9 @@ package usecase_test
 import (
 	"context"
 	"path"
+	"reflect"
 	"sync"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 
 	"source.toby3d.me/website/indieauth/internal/domain"
 	repository "source.toby3d.me/website/indieauth/internal/user/repository/memory"
@@ -24,6 +23,11 @@ func TestFetch(t *testing.T) {
 
 	result, err := ucase.NewUserUseCase(repository.NewMemoryUserRepository(store)).
 		Fetch(context.TODO(), me)
-	assert.NoError(t, err)
-	assert.Equal(t, user, result)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if !reflect.DeepEqual(result, user) {
+		t.Errorf("Fetch(%s) = %+v, want %+v", me, result, user)
+	}
 }
