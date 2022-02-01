@@ -67,13 +67,14 @@ const enData string = "" + // Size: 134 bytes
 
 var ruIndex = []uint32{ // 13 elements
 	0x00000000, 0x0000001f, 0x0000004d, 0x0000008e,
-	0x0000009f, 0x000000b2, 0x000000b2, 0x000000b2,
-	0x000000bd, 0x000000bd, 0x000000bd, 0x000000bd,
-	0x000000bd,
+	0x0000009f, 0x000000b2, 0x000000bf, 0x000000e1,
+	0x000000ec, 0x000000f7, 0x0000010c, 0x00000119,
+	0x0000012c,
 } // Size: 76 bytes
 
-const ruData string = "" + // Size: 189 bytes
+const ruData string = "" + // Size: 300 bytes
 	"\x02Авторизовать %[1]s\x02Авторизовать приложение\x02Выбери предоставляе" +
-	"мые разрешения\x02Отказать\x02Разрешить\x02Войти"
+	"мые разрешения\x02Отказать\x02Разрешить\x02Ошибка\x02Как исправить это?" +
+	"\x02Войти\x02TicketAuth\x02Получатель\x02Ресурс\x02Отправить"
 
-	// Total table size 475 bytes (0KiB); checksum: F5D99818
+	// Total table size 586 bytes (0KiB); checksum: D0ACA2B7

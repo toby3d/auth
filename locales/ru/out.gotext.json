@@ -5,6 +5,7 @@
             "id": "Authorize {Name}",
             "message": "Authorize {Name}",
             "translation": "Авторизовать {Name}",
+            "translatorComment": "Заголовок страницы авторизации приложения с известным именем",
             "placeholders": [
                 {
                     "id": "Name",
@@ -42,12 +43,14 @@
         {
             "id": "Error",
             "message": "Error",
-            "translation": ""
+            "translation": "Ошибка",
+            "translatorComment": "Заголовок страницы с ошибкой"
         },
         {
             "id": "How do I fix it?",
             "message": "How do I fix it?",
-            "translation": ""
+            "translation": "Как исправить это?",
+            "translatorComment": "Ссылка на документацию на странице ошибки"
         },
         {
             "id": "Sign In",
@@ -58,22 +61,26 @@
         {
             "id": "TicketAuth",
             "message": "TicketAuth",
-            "translation": ""
+            "translation": "TicketAuth",
+            "translatorComment": "Название страницы отправки билетов"
         },
         {
             "id": "Recipient",
             "message": "Recipient",
-            "translation": ""
+            "translation": "Получатель",
+            "translatorComment": "Название поля формы Subject отправки билета"
         },
         {
             "id": "Resource",
             "message": "Resource",
-            "translation": ""
+            "translation": "Ресурс",
+            "translatorComment": "Название поля формы Resource отправки билета"
         },
         {
             "id": "Send",
             "message": "Send",
-            "translation": ""
+            "translation": "Отправить",
+            "translatorComment": "Название кнопки формы отправки билета"
         }
     ]
 }
