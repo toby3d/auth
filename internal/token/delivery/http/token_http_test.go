@@ -12,14 +12,29 @@ import (
 
 	"source.toby3d.me/website/indieauth/internal/common"
 	"source.toby3d.me/website/indieauth/internal/domain"
+	"source.toby3d.me/website/indieauth/internal/session"
 	sessionrepo "source.toby3d.me/website/indieauth/internal/session/repository/memory"
 	"source.toby3d.me/website/indieauth/internal/testing/httptest"
+	"source.toby3d.me/website/indieauth/internal/ticket"
 	ticketrepo "source.toby3d.me/website/indieauth/internal/ticket/repository/memory"
 	ticketucase "source.toby3d.me/website/indieauth/internal/ticket/usecase"
+	"source.toby3d.me/website/indieauth/internal/token"
 	delivery "source.toby3d.me/website/indieauth/internal/token/delivery/http"
 	tokenrepo "source.toby3d.me/website/indieauth/internal/token/repository/memory"
 	tokenucase "source.toby3d.me/website/indieauth/internal/token/usecase"
 )
+
+type dependencies struct {
+	client        *http.Client
+	config        *domain.Config
+	sessions      session.Repository
+	store         *sync.Map
+	tickets       ticket.Repository
+	ticketService ticket.UseCase
+	token         *domain.Token
+	tokens        token.Repository
+	tokenService  token.UseCase
+}
 
 /* TODO(toby3d)
 func TestExchange(t *testing.T) {
@@ -30,24 +45,10 @@ func TestExchange(t *testing.T) {
 func TestVerification(t *testing.T) {
 	t.Parallel()
 
-	store := new(sync.Map)
-	config := domain.TestConfig(t)
-	token := domain.TestToken(t)
+	deps := NewDependencies(t)
 
 	router := router.New()
-	// TODO(toby3d): provide tickets
-	delivery.NewRequestHandler(
-		tokenucase.NewTokenUseCase(
-			tokenrepo.NewMemoryTokenRepository(store),
-			sessionrepo.NewMemorySessionRepository(config, store),
-			config,
-		),
-		ticketucase.NewTicketUseCase(
-			ticketrepo.NewMemoryTicketRepository(store, config),
-			new(http.Client),
-			config,
-		),
-	).Register(router)
+	delivery.NewRequestHandler(deps.tokenService, deps.ticketService).Register(router)
 
 	client, _, cleanup := httptest.New(t, router.Handler)
 	t.Cleanup(cleanup)
@@ -57,7 +58,7 @@ func TestVerification(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, requestURL, nil)
 	defer http.ReleaseRequest(req)
 	req.Header.Set(http.HeaderAccept, common.MIMEApplicationJSON)
-	token.SetAuthHeader(req)
+	deps.token.SetAuthHeader(req)
 
 	resp := http.AcquireResponse()
 	defer http.ReleaseResponse(resp)
@@ -75,38 +76,24 @@ func TestVerification(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	token.AccessToken = ""
+	deps.token.AccessToken = ""
 
-	if result.ClientID.String() != token.ClientID.String() ||
-		result.Me.String() != token.Me.String() ||
-		result.Scope.String() != token.Scope.String() {
-		t.Errorf("GET %s = %+v, want %+v", requestURL, result, token)
+	if result.ClientID.String() != deps.token.ClientID.String() ||
+		result.Me.String() != deps.token.Me.String() ||
+		result.Scope.String() != deps.token.Scope.String() {
+		t.Errorf("GET %s = %+v, want %+v", requestURL, result, deps.token)
 	}
 }
 
 func TestRevocation(t *testing.T) {
 	t.Parallel()
 
-	config := domain.TestConfig(t)
-	store := new(sync.Map)
-	tokens := tokenrepo.NewMemoryTokenRepository(store)
-	accessToken := domain.TestToken(t)
+	deps := NewDependencies(t)
 
-	router := router.New()
-	delivery.NewRequestHandler(
-		tokenucase.NewTokenUseCase(
-			tokens,
-			sessionrepo.NewMemorySessionRepository(config, store),
-			config,
-		),
-		ticketucase.NewTicketUseCase(
-			ticketrepo.NewMemoryTicketRepository(store, config),
-			new(http.Client),
-			config,
-		),
-	).Register(router)
+	r := router.New()
+	delivery.NewRequestHandler(deps.tokenService, deps.ticketService).Register(r)
 
-	client, _, cleanup := httptest.New(t, router.Handler)
+	client, _, cleanup := httptest.New(t, r.Handler)
 	t.Cleanup(cleanup)
 
 	const requestURL = "https://app.example.com/token"
@@ -116,7 +103,7 @@ func TestRevocation(t *testing.T) {
 	req.Header.Set(http.HeaderAccept, common.MIMEApplicationJSON)
 	req.Header.SetContentType(common.MIMEApplicationForm)
 	req.PostArgs().Set("action", domain.ActionRevoke.String())
-	req.PostArgs().Set("token", accessToken.AccessToken)
+	req.PostArgs().Set("token", deps.token.AccessToken)
 
 	resp := http.AcquireResponse()
 	defer http.ReleaseResponse(resp)
@@ -134,12 +121,38 @@ func TestRevocation(t *testing.T) {
 		t.Errorf("POST %s = %s, want %s", requestURL, result, expBody)
 	}
 
-	result, err := tokens.Get(context.TODO(), accessToken.AccessToken)
+	result, err := deps.tokens.Get(context.TODO(), deps.token.AccessToken)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if result.String() != accessToken.String() {
-		t.Errorf("Get(%+v) = %s, want %s", accessToken.AccessToken, result, accessToken)
+	if result.String() != deps.token.String() {
+		t.Errorf("Get(%+v) = %s, want %s", deps.token.AccessToken, result, deps.token)
+	}
+}
+
+func NewDependencies(tb testing.TB) dependencies {
+	tb.Helper()
+
+	client := new(http.Client)
+	config := domain.TestConfig(tb)
+	store := new(sync.Map)
+	token := domain.TestToken(tb)
+	sessions := sessionrepo.NewMemorySessionRepository(config, store)
+	tickets := ticketrepo.NewMemoryTicketRepository(store, config)
+	tokens := tokenrepo.NewMemoryTokenRepository(store)
+	ticketService := ticketucase.NewTicketUseCase(tickets, client, config)
+	tokenService := tokenucase.NewTokenUseCase(tokens, sessions, config)
+
+	return dependencies{
+		client:        client,
+		config:        config,
+		sessions:      sessions,
+		store:         store,
+		tickets:       tickets,
+		ticketService: ticketService,
+		token:         token,
+		tokens:        tokens,
+		tokenService:  tokenService,
 	}
 }

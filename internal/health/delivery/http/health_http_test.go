@@ -20,12 +20,12 @@ func TestRequestHandler(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	const requestURL = "https://app.example.com/health"
+	req, resp := httptest.NewRequest(http.MethodGet, requestURL, nil), http.AcquireResponse()
 
-	req := httptest.NewRequest(http.MethodGet, requestURL, nil)
-	defer http.ReleaseRequest(req)
-
-	resp := http.AcquireResponse()
-	defer http.ReleaseResponse(resp)
+	t.Cleanup(func() {
+		http.ReleaseRequest(req)
+		http.ReleaseResponse(resp)
+	})
 
 	if err := client.Do(req, resp); err != nil {
 		t.Fatal(err)

@@ -12,44 +12,30 @@ import (
 	"source.toby3d.me/website/indieauth/internal/common"
 	"source.toby3d.me/website/indieauth/internal/domain"
 	"source.toby3d.me/website/indieauth/internal/testing/httptest"
+	"source.toby3d.me/website/indieauth/internal/ticket"
 	delivery "source.toby3d.me/website/indieauth/internal/ticket/delivery/http"
 	ticketrepo "source.toby3d.me/website/indieauth/internal/ticket/repository/memory"
 	ucase "source.toby3d.me/website/indieauth/internal/ticket/usecase"
 )
 
+type dependencies struct {
+	client        *http.Client
+	config        *domain.Config
+	matcher       language.Matcher
+	store         *sync.Map
+	ticket        *domain.Ticket
+	tickets       ticket.Repository
+	ticketService ticket.UseCase
+	token         *domain.Token
+}
+
 func TestUpdate(t *testing.T) {
 	t.Parallel()
 
-	config := domain.TestConfig(t)
-	ticket := domain.TestTicket(t)
-	token := domain.TestToken(t)
-
-	userRouter := router.New()
-	// NOTE(toby3d): private resource
-	userRouter.GET(ticket.Resource.URL().EscapedPath(), func(ctx *http.RequestCtx) {
-		ctx.SuccessString(
-			common.MIMETextHTMLCharsetUTF8,
-			`<link rel="token_endpoint" href="https://auth.example.org/token">`,
-		)
-	})
-	// NOTE(toby3d): token endpoint
-	userRouter.POST("/token", func(ctx *http.RequestCtx) {
-		ctx.SuccessString(common.MIMEApplicationJSONCharsetUTF8, `{
-			"access_token": "`+token.AccessToken+`",
-			"me": "`+token.Me.String()+`",
-			"scope": "`+token.Scope.String()+`",
-			"token_type": "Bearer"
-		}`)
-	})
-
-	userClient, _, userCleanup := httptest.New(t, userRouter.Handler)
-	t.Cleanup(userCleanup)
+	deps := NewDependencies(t)
 
 	r := router.New()
-	delivery.NewRequestHandler(
-		ucase.NewTicketUseCase(ticketrepo.NewMemoryTicketRepository(new(sync.Map), config), userClient, config),
-		language.NewMatcher(message.DefaultCatalog.Languages()), config,
-	).Register(r)
+	delivery.NewRequestHandler(deps.ticketService, deps.matcher, deps.config).Register(r)
 
 	client, _, cleanup := httptest.New(t, r.Handler)
 	t.Cleanup(cleanup)
@@ -57,9 +43,9 @@ func TestUpdate(t *testing.T) {
 	const requestURI string = "https://example.com/ticket"
 
 	req := httptest.NewRequest(http.MethodPost, requestURI, []byte(
-		`ticket=`+ticket.Ticket+
-			`&resource=`+ticket.Resource.String()+
-			`&subject=`+ticket.Subject.String(),
+		`ticket=`+deps.ticket.Ticket+
+			`&resource=`+deps.ticket.Resource.String()+
+			`&subject=`+deps.ticket.Subject.String(),
 	))
 	defer http.ReleaseRequest(req)
 	req.Header.SetContentType(common.MIMEApplicationForm)
@@ -81,5 +67,48 @@ func TestUpdate(t *testing.T) {
 	// need to send or save the token to the recipient for later use.
 	if resp.Body() == nil {
 		t.Errorf("POST %s = nil, want something", requestURI)
+	}
+}
+
+func NewDependencies(tb testing.TB) dependencies {
+	tb.Helper()
+
+	config := domain.TestConfig(tb)
+	matcher := language.NewMatcher(message.DefaultCatalog.Languages())
+	store := new(sync.Map)
+	ticket := domain.TestTicket(tb)
+	token := domain.TestToken(tb)
+
+	r := router.New()
+	// NOTE(toby3d): private resource
+	r.GET(ticket.Resource.URL().EscapedPath(), func(ctx *http.RequestCtx) {
+		ctx.SuccessString(common.MIMETextHTMLCharsetUTF8,
+			`<link rel="token_endpoint" href="https://auth.example.org/token">`)
+	})
+	// NOTE(toby3d): token endpoint
+	r.POST("/token", func(ctx *http.RequestCtx) {
+		ctx.SuccessString(common.MIMEApplicationJSONCharsetUTF8, `{
+			"access_token": "`+token.AccessToken+`",
+			"me": "`+token.Me.String()+`",
+			"scope": "`+token.Scope.String()+`",
+			"token_type": "Bearer"
+		}`)
+	})
+
+	client, _, cleanup := httptest.New(tb, r.Handler)
+	tb.Cleanup(cleanup)
+
+	tickets := ticketrepo.NewMemoryTicketRepository(store, config)
+	ticketService := ucase.NewTicketUseCase(tickets, client, config)
+
+	return dependencies{
+		client:        client,
+		config:        config,
+		matcher:       matcher,
+		store:         store,
+		ticket:        ticket,
+		tickets:       tickets,
+		ticketService: ticketService,
+		token:         token,
 	}
 }

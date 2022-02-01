@@ -7,58 +7,55 @@ import (
 	"testing"
 
 	"github.com/fasthttp/router"
-	"github.com/fasthttp/session/v2"
-	"github.com/fasthttp/session/v2/providers/memory"
 	http "github.com/valyala/fasthttp"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 
+	"source.toby3d.me/website/indieauth/internal/auth"
 	delivery "source.toby3d.me/website/indieauth/internal/auth/delivery/http"
 	ucase "source.toby3d.me/website/indieauth/internal/auth/usecase"
+	"source.toby3d.me/website/indieauth/internal/client"
 	clientrepo "source.toby3d.me/website/indieauth/internal/client/repository/memory"
 	clientucase "source.toby3d.me/website/indieauth/internal/client/usecase"
 	"source.toby3d.me/website/indieauth/internal/domain"
 	profilerepo "source.toby3d.me/website/indieauth/internal/profile/repository/memory"
+	"source.toby3d.me/website/indieauth/internal/session"
 	sessionrepo "source.toby3d.me/website/indieauth/internal/session/repository/memory"
 	"source.toby3d.me/website/indieauth/internal/testing/httptest"
 	userrepo "source.toby3d.me/website/indieauth/internal/user/repository/memory"
 )
 
-//nolint: funlen
+type dependencies struct {
+	authService   auth.UseCase
+	clients       client.Repository
+	clientService client.UseCase
+	config        *domain.Config
+	matcher       language.Matcher
+	sessions      session.Repository
+	store         *sync.Map
+}
+
 func TestRender(t *testing.T) {
 	t.Parallel()
 
-	provider, err := memory.New(memory.Config{})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	s := session.New(session.NewDefaultConfig())
-	if err = s.SetProvider(provider); err != nil {
-		t.Fatal(err)
-	}
-
+	deps := NewDependencies(t)
 	me := domain.TestMe(t, "https://user.example.net")
-	client := domain.TestClient(t)
-	config := domain.TestConfig(t)
-	store := new(sync.Map)
 	user := domain.TestUser(t)
-	store.Store(path.Join(userrepo.DefaultPathPrefix, me.String()), user)
-	store.Store(path.Join(clientrepo.DefaultPathPrefix, client.ID.String()), client)
-	store.Store(path.Join(profilerepo.DefaultPathPrefix, me.String()), user.Profile)
+	client := domain.TestClient(t)
 
-	router := router.New()
+	deps.store.Store(path.Join(clientrepo.DefaultPathPrefix, client.ID.String()), client)
+	deps.store.Store(path.Join(profilerepo.DefaultPathPrefix, me.String()), user.Profile)
+	deps.store.Store(path.Join(userrepo.DefaultPathPrefix, me.String()), user)
+
+	r := router.New()
 	delivery.NewRequestHandler(delivery.NewRequestHandlerOptions{
-		Clients: clientucase.NewClientUseCase(clientrepo.NewMemoryClientRepository(store)),
-		Config:  config,
-		Matcher: language.NewMatcher(message.DefaultCatalog.Languages()),
-		Auth: ucase.NewAuthUseCase(
-			sessionrepo.NewMemorySessionRepository(config, store),
-			config,
-		),
-	}).Register(router)
+		Auth:    deps.authService,
+		Clients: deps.clientService,
+		Config:  deps.config,
+		Matcher: deps.matcher,
+	}).Register(r)
 
-	httpClient, _, cleanup := httptest.New(t, router.Handler)
+	httpClient, _, cleanup := httptest.New(t, r.Handler)
 	t.Cleanup(cleanup)
 
 	uri := http.AcquireURI()
@@ -95,5 +92,27 @@ func TestRender(t *testing.T) {
 	const expResult = `Authorize application`
 	if result := string(resp.Body()); !strings.Contains(result, expResult) {
 		t.Errorf("GET %s = %s, want %s", uri.String(), result, expResult)
+	}
+}
+
+func NewDependencies(tb testing.TB) dependencies {
+	tb.Helper()
+
+	config := domain.TestConfig(tb)
+	matcher := language.NewMatcher(message.DefaultCatalog.Languages())
+	store := new(sync.Map)
+	clients := clientrepo.NewMemoryClientRepository(store)
+	sessions := sessionrepo.NewMemorySessionRepository(config, store)
+	authService := ucase.NewAuthUseCase(sessions, config)
+	clientService := clientucase.NewClientUseCase(clients)
+
+	return dependencies{
+		authService:   authService,
+		clients:       clients,
+		clientService: clientService,
+		config:        config,
+		matcher:       matcher,
+		sessions:      sessions,
+		store:         store,
 	}
 }
