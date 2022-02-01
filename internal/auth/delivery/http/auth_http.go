@@ -23,7 +23,7 @@ import (
 )
 
 type (
-	AuthorizeRequest struct {
+	AuthAuthorizeRequest struct {
 		// Indicates to the authorization server that an authorization
 		// code should be returned as the response.
 		ResponseType domain.ResponseType `form:"response_type"` // code
@@ -58,7 +58,7 @@ type (
 		Me *domain.Me `form:"me"`
 	}
 
-	VerifyRequest struct {
+	AuthVerifyRequest struct {
 		ClientID            *domain.ClientID           `form:"client_id"`
 		Me                  *domain.Me                 `form:"me"`
 		RedirectURI         *domain.URL                `form:"redirect_uri"`
@@ -71,7 +71,7 @@ type (
 		Provider            string                     `form:"provider"`
 	}
 
-	ExchangeRequest struct {
+	AuthExchangeRequest struct {
 		GrantType domain.GrantType `form:"grant_type"` // authorization_code
 
 		// The authorization code received from the authorization
@@ -91,50 +91,52 @@ type (
 		CodeVerifier string `form:"code_verifier"`
 	}
 
-	ExchangeResponse struct {
+	AuthExchangeResponse struct {
 		Me *domain.Me `json:"me"`
 	}
 
 	NewRequestHandlerOptions struct {
-		Auth      auth.UseCase
-		Clients   client.UseCase
-		Config    *domain.Config
-		Matcher   language.Matcher
-		Providers []*domain.Provider
+		Auth    auth.UseCase
+		Clients client.UseCase
+		Config  *domain.Config
+		Matcher language.Matcher
 	}
 
 	RequestHandler struct {
-		clients   client.UseCase
-		config    *domain.Config
-		matcher   language.Matcher
-		useCase   auth.UseCase
-		providers []*domain.Provider
+		clients client.UseCase
+		config  *domain.Config
+		matcher language.Matcher
+		useCase auth.UseCase
 	}
 )
 
 func NewRequestHandler(opts NewRequestHandlerOptions) *RequestHandler {
 	return &RequestHandler{
-		clients:   opts.Clients,
-		config:    opts.Config,
-		matcher:   opts.Matcher,
-		useCase:   opts.Auth,
-		providers: opts.Providers,
+		clients: opts.Clients,
+		config:  opts.Config,
+		matcher: opts.Matcher,
+		useCase: opts.Auth,
 	}
 }
 
 func (h *RequestHandler) Register(r *router.Router) {
 	chain := middleware.Chain{
 		middleware.CSRFWithConfig(middleware.CSRFConfig{
-			CookieSameSite: http.CookieSameSiteStrictMode,
-			CookieName:     "_csrf",
-			TokenLookup:    "form:_csrf",
-			CookieSecure:   true,
-			CookieHTTPOnly: true,
 			Skipper: func(ctx *http.RequestCtx) bool {
 				matched, _ := path.Match("/api/*", string(ctx.Path()))
 
 				return ctx.IsPost() && matched
 			},
+			CookieMaxAge:   0,
+			CookieSameSite: http.CookieSameSiteStrictMode,
+			ContextKey:     "",
+			CookieDomain:   "",
+			CookieName:     "_csrf",
+			CookiePath:     "",
+			TokenLookup:    "form:_csrf",
+			TokenLength:    0,
+			CookieSecure:   true,
+			CookieHTTPOnly: true,
 		}),
 		middleware.BasicAuthWithConfig(middleware.BasicAuthConfig{
 			Skipper: func(ctx *http.RequestCtx) bool {
@@ -145,15 +147,14 @@ func (h *RequestHandler) Register(r *router.Router) {
 				return !ctx.IsPost() || !matched || providerMatched
 			},
 			Validator: func(ctx *http.RequestCtx, login, password string) (bool, error) {
-				userMatch := subtle.ConstantTimeCompare(
-					[]byte(login), []byte(h.config.IndieAuth.Username),
-				)
-				passMatch := subtle.ConstantTimeCompare(
-					[]byte(password), []byte(h.config.IndieAuth.Password),
-				)
+				userMatch := subtle.ConstantTimeCompare([]byte(login),
+					[]byte(h.config.IndieAuth.Username))
+				passMatch := subtle.ConstantTimeCompare([]byte(password),
+					[]byte(h.config.IndieAuth.Password))
 
 				return userMatch == 1 && passMatch == 1, nil
 			},
+			Realm: "",
 		}),
 		middleware.LogFmt(),
 	}
@@ -164,7 +165,6 @@ func (h *RequestHandler) Register(r *router.Router) {
 }
 
 func (h *RequestHandler) handleRender(ctx *http.RequestCtx) {
-	req := new(AuthorizeRequest)
 	ctx.SetContentType(common.MIMETextHTMLCharsetUTF8)
 
 	tags, _, _ := language.ParseAcceptLanguage(string(ctx.Request.Header.Peek(http.HeaderAcceptLanguage)))
@@ -175,6 +175,7 @@ func (h *RequestHandler) handleRender(ctx *http.RequestCtx) {
 		Printer:  message.NewPrinter(tag),
 	}
 
+	req := new(AuthAuthorizeRequest)
 	if err := req.bind(ctx); err != nil {
 		ctx.SetStatusCode(http.StatusBadRequest)
 		web.WriteTemplate(ctx, &web.ErrorPage{
@@ -213,15 +214,16 @@ func (h *RequestHandler) handleRender(ctx *http.RequestCtx) {
 	csrf, _ := ctx.UserValue(middleware.DefaultCSRFConfig.ContextKey).([]byte)
 	web.WriteTemplate(ctx, &web.AuthorizePage{
 		BaseOf:              baseOf,
-		Client:              client,
-		CodeChallenge:       req.CodeChallenge,
-		CodeChallengeMethod: req.CodeChallengeMethod,
 		CSRF:                csrf,
+		Scope:               req.Scope,
+		Client:              client,
 		Me:                  req.Me,
 		RedirectURI:         req.RedirectURI,
+		CodeChallengeMethod: req.CodeChallengeMethod,
 		ResponseType:        req.ResponseType,
-		Scope:               req.Scope,
+		CodeChallenge:       req.CodeChallenge,
 		State:               req.State,
+		Providers:           make([]*domain.Provider, 0), // TODO(toby3d)
 	})
 }
 
@@ -230,22 +232,23 @@ func (h *RequestHandler) handleVerify(ctx *http.RequestCtx) {
 
 	encoder := json.NewEncoder(ctx)
 
-	req := new(VerifyRequest)
+	req := new(AuthVerifyRequest)
 	if err := req.bind(ctx); err != nil {
 		ctx.SetStatusCode(http.StatusBadRequest)
-		encoder.Encode(err)
+
+		_ = encoder.Encode(err)
 
 		return
 	}
 
-	u := http.AcquireURI()
-	defer http.ReleaseURI(u)
-	req.RedirectURI.CopyTo(u)
+	redirectURL := http.AcquireURI()
+	defer http.ReleaseURI(redirectURL)
+	req.RedirectURI.CopyTo(redirectURL)
 
 	if strings.EqualFold(req.Authorize, "deny") {
 		domain.NewError(domain.ErrorCodeAccessDenied, "user deny authorization request", "", req.State).
-			SetReirectURI(u)
-		ctx.Redirect(u.String(), http.StatusFound)
+			SetReirectURI(redirectURL)
+		ctx.Redirect(redirectURL.String(), http.StatusFound)
 
 		return
 	}
@@ -260,7 +263,8 @@ func (h *RequestHandler) handleVerify(ctx *http.RequestCtx) {
 	})
 	if err != nil {
 		ctx.SetStatusCode(http.StatusInternalServerError)
-		encoder.Encode(err)
+
+		_ = encoder.Encode(err)
 
 		return
 	}
@@ -270,10 +274,10 @@ func (h *RequestHandler) handleVerify(ctx *http.RequestCtx) {
 		"iss":   h.config.Server.GetRootURL(),
 		"state": req.State,
 	} {
-		u.QueryArgs().Set(key, val)
+		redirectURL.QueryArgs().Set(key, val)
 	}
 
-	ctx.Redirect(u.String(), http.StatusFound)
+	ctx.Redirect(redirectURL.String(), http.StatusFound)
 }
 
 func (h *RequestHandler) handleExchange(ctx *http.RequestCtx) {
@@ -281,10 +285,11 @@ func (h *RequestHandler) handleExchange(ctx *http.RequestCtx) {
 
 	encoder := json.NewEncoder(ctx)
 
-	req := new(ExchangeRequest)
+	req := new(AuthExchangeRequest)
 	if err := req.bind(ctx); err != nil {
 		ctx.SetStatusCode(http.StatusBadRequest)
-		encoder.Encode(err)
+
+		_ = encoder.Encode(err)
 
 		return
 	}
@@ -297,17 +302,18 @@ func (h *RequestHandler) handleExchange(ctx *http.RequestCtx) {
 	})
 	if err != nil {
 		ctx.SetStatusCode(http.StatusBadRequest)
-		encoder.Encode(err)
+
+		_ = encoder.Encode(err)
 
 		return
 	}
 
-	encoder.Encode(&ExchangeResponse{
+	_ = encoder.Encode(&AuthExchangeResponse{
 		Me: me,
 	})
 }
 
-func (r *AuthorizeRequest) bind(ctx *http.RequestCtx) error {
+func (r *AuthAuthorizeRequest) bind(ctx *http.RequestCtx) error {
 	indieAuthError := new(domain.Error)
 	if err := form.Unmarshal(ctx.QueryArgs(), r); err != nil {
 		if errors.As(err, indieAuthError) {
@@ -341,7 +347,7 @@ func (r *AuthorizeRequest) bind(ctx *http.RequestCtx) error {
 	return nil
 }
 
-func (r *VerifyRequest) bind(ctx *http.RequestCtx) error {
+func (r *AuthVerifyRequest) bind(ctx *http.RequestCtx) error {
 	indieAuthError := new(domain.Error)
 
 	if err := form.Unmarshal(ctx.PostArgs(), r); err != nil {
@@ -369,6 +375,8 @@ func (r *VerifyRequest) bind(ctx *http.RequestCtx) error {
 		)
 	}
 
+	// NOTE(toby3d): backwards-compatible support.
+	// See: https://aaronparecki.com/2020/12/03/1/indieauth-2020#response-type
 	if r.ResponseType == domain.ResponseTypeID {
 		r.ResponseType = domain.ResponseTypeCode
 	}
@@ -386,7 +394,7 @@ func (r *VerifyRequest) bind(ctx *http.RequestCtx) error {
 	return nil
 }
 
-func (r *ExchangeRequest) bind(ctx *http.RequestCtx) error {
+func (r *AuthExchangeRequest) bind(ctx *http.RequestCtx) error {
 	indieAuthError := new(domain.Error)
 	if err := form.Unmarshal(ctx.PostArgs(), r); err != nil {
 		if errors.As(err, indieAuthError) {

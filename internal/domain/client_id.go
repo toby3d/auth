@@ -8,111 +8,94 @@ import (
 	"testing"
 
 	http "github.com/valyala/fasthttp"
-	"golang.org/x/xerrors"
 	"inet.af/netaddr"
 )
 
 // ClientID is a URL client identifier.
 type ClientID struct {
 	clientID *http.URI
-	valid    bool
 }
 
-//nolint: gochecknoglobals
+//nolint: gochecknoglobals // slices cannot be constants
 var (
 	localhostIPv4 = netaddr.MustParseIP("127.0.0.1")
 	localhostIPv6 = netaddr.MustParseIP("::1")
 )
 
 // ParseClientID parse string as client ID URL identifier.
-//nolint: funlen
+//nolint: funlen, cyclop
 func ParseClientID(src string) (*ClientID, error) {
 	cid := http.AcquireURI()
 	if err := cid.Parse(nil, []byte(src)); err != nil {
-		return nil, Error{
-			Code:        ErrorCodeInvalidRequest,
-			Description: err.Error(),
-			URI:         "https://indieauth.net/source/#client-identifier",
-			State:       "",
-			frame:       xerrors.Caller(1),
-		}
+		return nil, NewError(
+			ErrorCodeInvalidRequest,
+			err.Error(),
+			"https://indieauth.net/source/#client-identifier",
+		)
 	}
 
 	scheme := string(cid.Scheme())
 	if scheme != "http" && scheme != "https" {
-		return nil, Error{
-			Code:        ErrorCodeInvalidRequest,
-			Description: "client identifier URL MUST have either an https or http scheme",
-			URI:         "https://indieauth.net/source/#client-identifier",
-			State:       "",
-			frame:       xerrors.Caller(1),
-		}
+		return nil, NewError(
+			ErrorCodeInvalidRequest,
+			"client identifier URL MUST have either an https or http scheme",
+			"https://indieauth.net/source/#client-identifier",
+		)
 	}
 
 	path := string(cid.PathOriginal())
 	if path == "" || strings.Contains(path, "/.") || strings.Contains(path, "/..") {
-		return nil, Error{
-			Code: ErrorCodeInvalidRequest,
-			Description: "client identifier URL MUST contain a path component and MUST NOT contain " +
+		return nil, NewError(
+			ErrorCodeInvalidRequest,
+			"client identifier URL MUST contain a path component and MUST NOT contain "+
 				"single-dot or double-dot path segments",
-			URI:   "https://indieauth.net/source/#client-identifier",
-			State: "",
-			frame: xerrors.Caller(1),
-		}
+			"https://indieauth.net/source/#client-identifier",
+		)
 	}
 
 	if cid.Hash() != nil {
-		return nil, Error{
-			Code:        ErrorCodeInvalidRequest,
-			Description: "client identifier URL MUST NOT contain a fragment component",
-			URI:         "https://indieauth.net/source/#client-identifier",
-			State:       "",
-			frame:       xerrors.Caller(1),
-		}
+		return nil, NewError(
+			ErrorCodeInvalidRequest,
+			"client identifier URL MUST NOT contain a fragment component",
+			"https://indieauth.net/source/#client-identifier",
+		)
 	}
 
 	if cid.Username() != nil || cid.Password() != nil {
-		return nil, Error{
-			Code:        ErrorCodeInvalidRequest,
-			Description: "client identifier URL MUST NOT contain a username or password component",
-			URI:         "https://indieauth.net/source/#client-identifier",
-			State:       "",
-			frame:       xerrors.Caller(1),
-		}
+		return nil, NewError(
+			ErrorCodeInvalidRequest,
+			"client identifier URL MUST NOT contain a username or password component",
+			"https://indieauth.net/source/#client-identifier",
+		)
 	}
 
 	domain := string(cid.Host())
 	if domain == "" {
-		return nil, Error{
-			Code:        ErrorCodeInvalidRequest,
-			Description: "client host name MUST be domain name or a loopback interface",
-			URI:         "https://indieauth.net/source/#client-identifier",
-			State:       "",
-			frame:       xerrors.Caller(1),
-		}
+		return nil, NewError(
+			ErrorCodeInvalidRequest,
+			"client host name MUST be domain name or a loopback interface",
+			"https://indieauth.net/source/#client-identifier",
+		)
 	}
 
 	ip, err := netaddr.ParseIP(domain)
 	if err != nil {
 		ipPort, err := netaddr.ParseIPPort(domain)
 		if err != nil {
-			return &ClientID{
-				clientID: cid,
-			}, nil
+			//nolint: nilerr // ClientID does not contain an IP address, so it is valid
+			return &ClientID{clientID: cid}, nil
 		}
 
 		ip = ipPort.IP()
 	}
 
 	if !ip.IsLoopback() && ip.Compare(localhostIPv4) != 0 && ip.Compare(localhostIPv6) != 0 {
-		return nil, Error{
-			Code: ErrorCodeInvalidRequest,
-			Description: "client identifier URL MUST NOT be IPv4 or IPv6 addresses except for IPv4 " +
+		return nil, NewError(
+			ErrorCodeInvalidRequest,
+			"client identifier URL MUST NOT be IPv4 or IPv6 addresses except for IPv4 "+
 				"127.0.0.1 or IPv6 [::1]",
-			URI:   "https://indieauth.net/source/#client-identifier",
-			State: "",
-			frame: xerrors.Caller(1),
-		}
+			"https://indieauth.net/source/#client-identifier",
+		)
 	}
 
 	return &ClientID{
@@ -126,7 +109,7 @@ func TestClientID(tb testing.TB) *ClientID {
 
 	clientID, err := ParseClientID("https://app.example.com/")
 	if err != nil {
-		tb.Fatalf("%+v", err)
+		tb.Fatal(err)
 	}
 
 	return clientID
@@ -167,23 +150,28 @@ func (cid ClientID) MarshalJSON() ([]byte, error) {
 }
 
 // URI returns copy of parsed *fasthttp.URI.
-// This copy MUST be released via fasthttp.ReleaseURI.
+//
+// WARN(toby3d): This copy MUST be released via fasthttp.ReleaseURI.
 func (cid ClientID) URI() *http.URI {
-	u := http.AcquireURI()
-	cid.clientID.CopyTo(u)
+	uri := http.AcquireURI()
+	cid.clientID.CopyTo(uri)
 
-	return u
+	return uri
 }
 
 // URL returns url.URL representation of client ID.
 func (cid ClientID) URL() *url.URL {
 	return &url.URL{
-		Scheme:   string(cid.clientID.Scheme()),
-		Host:     string(cid.clientID.Host()),
-		Path:     string(cid.clientID.Path()),
-		RawPath:  string(cid.clientID.PathOriginal()),
-		RawQuery: string(cid.clientID.QueryString()),
-		Fragment: string(cid.clientID.Hash()),
+		ForceQuery:  false,
+		Fragment:    string(cid.clientID.Hash()),
+		Host:        string(cid.clientID.Host()),
+		Opaque:      "",
+		Path:        string(cid.clientID.Path()),
+		RawFragment: "",
+		RawPath:     string(cid.clientID.PathOriginal()),
+		RawQuery:    string(cid.clientID.QueryString()),
+		Scheme:      string(cid.clientID.Scheme()),
+		User:        nil,
 	}
 }
 

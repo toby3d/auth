@@ -11,7 +11,7 @@ import (
 )
 
 type (
-	//nolint: tagliatelle
+	//nolint: tagliatelle // https://indieauth.net/source/#indieauth-server-metadata
 	MetadataResponse struct {
 		// The server's issuer identifier. The issuer identifier is a
 		// URL that uses the "https" scheme and has no query or fragment
@@ -72,14 +72,11 @@ type (
 	}
 )
 
-//nolint: gochecknoglobals // NOTE(toby3d): structs cannot be contants.
+// DefaultMetadataResponse contains all supported types by default.
+//nolint: gochecknoglobals // structs cannot be constants
 var DefaultMetadataResponse = MetadataResponse{
-	ServiceDocumentation:                       "https://indieauth.net/source/",
+	AuthorizationEndpoint:                      "",
 	AuthorizationResponseIssParameterSupported: true,
-	ScopesSupported: []string{
-		domain.ScopeEmail.String(),
-		domain.ScopeProfile.String(),
-	},
 	CodeChallengeMethodsSupported: []string{
 		domain.CodeChallengeMethodMD5.String(),
 		domain.CodeChallengeMethodPLAIN.String(),
@@ -87,13 +84,21 @@ var DefaultMetadataResponse = MetadataResponse{
 		domain.CodeChallengeMethodS256.String(),
 		domain.CodeChallengeMethodS512.String(),
 	},
+	GrantTypesSupported: []string{
+		domain.GrantTypeAuthorizationCode.String(),
+		domain.GrantTypeTicket.String(),
+	},
+	Issuer: "",
 	ResponseTypesSupported: []string{
 		domain.ResponseTypeCode.String(),
 		domain.ResponseTypeID.String(),
 	},
-	GrantTypesSupported: []string{
-		domain.GrantTypeAuthorizationCode.String(),
+	ScopesSupported: []string{
+		domain.ScopeEmail.String(),
+		domain.ScopeProfile.String(),
 	},
+	ServiceDocumentation: "https://indieauth.net/source/",
+	TokenEndpoint:        "",
 }
 
 func NewRequestHandler(config *domain.Config) *RequestHandler {
@@ -118,5 +123,5 @@ func (h *RequestHandler) read(ctx *http.RequestCtx) {
 
 	ctx.SetStatusCode(http.StatusOK)
 	ctx.SetContentType(common.MIMEApplicationJSON)
-	json.NewEncoder(ctx).Encode(&resp)
+	_ = json.NewEncoder(ctx).Encode(&resp)
 }

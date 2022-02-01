@@ -17,7 +17,7 @@ import (
 )
 
 type (
-	ExchangeRequest struct {
+	TokenExchangeRequest struct {
 		ClientID     *domain.ClientID `form:"client_id"`
 		RedirectURI  *domain.URL      `form:"redirect_uri"`
 		GrantType    domain.GrantType `form:"grant_type"`
@@ -25,40 +25,40 @@ type (
 		CodeVerifier string           `form:"code_verifier"`
 	}
 
-	RevokeRequest struct {
+	TokenRevokeRequest struct {
 		Action domain.Action `form:"action"`
 		Token  string        `form:"token"`
 	}
 
-	TicketRequest struct {
+	TokenTicketRequest struct {
 		Action domain.Action `form:"action"`
 		Ticket string        `form:"ticket"`
 	}
 
-	//nolint: tagliatelle
-	ExchangeResponse struct {
-		AccessToken string           `json:"access_token"`
-		TokenType   string           `json:"token_type"`
-		Scope       string           `json:"scope"`
-		Me          string           `json:"me"`
-		Profile     *ProfileResponse `json:"profile,omitempty"`
+	//nolint: tagliatelle // https://indieauth.net/source/#access-token-response
+	TokenExchangeResponse struct {
+		AccessToken string                `json:"access_token"`
+		TokenType   string                `json:"token_type"`
+		Scope       string                `json:"scope"`
+		Me          string                `json:"me"`
+		Profile     *TokenProfileResponse `json:"profile,omitempty"`
 	}
 
-	ProfileResponse struct {
+	TokenProfileResponse struct {
 		Name  string        `json:"name,omitempty"`
 		URL   *domain.URL   `json:"url,omitempty"`
 		Photo *domain.URL   `json:"photo,omitempty"`
 		Email *domain.Email `json:"email,omitempty"`
 	}
 
-	//nolint: tagliatelle
-	VerificationResponse struct {
+	//nolint: tagliatelle // https://indieauth.net/source/#access-token-verification-response
+	TokenVerificationResponse struct {
 		Me       *domain.Me       `json:"me"`
 		ClientID *domain.ClientID `json:"client_id"`
 		Scope    domain.Scopes    `json:"scope"`
 	}
 
-	RevocationResponse struct{}
+	TokenRevocationResponse struct{}
 
 	RequestHandler struct {
 		tokens  token.UseCase
@@ -88,11 +88,12 @@ func (h *RequestHandler) handleValidate(ctx *http.RequestCtx) {
 
 	encoder := json.NewEncoder(ctx)
 
-	t, err := h.tokens.Verify(ctx, strings.TrimPrefix(string(ctx.Request.Header.Peek(http.HeaderAuthorization)),
+	tkt, err := h.tokens.Verify(ctx, strings.TrimPrefix(string(ctx.Request.Header.Peek(http.HeaderAuthorization)),
 		"Bearer "))
-	if err != nil || t == nil {
+	if err != nil || tkt == nil {
 		ctx.SetStatusCode(http.StatusUnauthorized)
-		encoder.Encode(domain.NewError(
+
+		_ = encoder.Encode(domain.NewError(
 			domain.ErrorCodeUnauthorizedClient,
 			err.Error(),
 			"https://indieauth.net/source/#access-token-verification",
@@ -101,10 +102,10 @@ func (h *RequestHandler) handleValidate(ctx *http.RequestCtx) {
 		return
 	}
 
-	_ = encoder.Encode(&VerificationResponse{
-		ClientID: t.ClientID,
-		Me:       t.Me,
-		Scope:    t.Scope,
+	_ = encoder.Encode(&TokenVerificationResponse{
+		ClientID: tkt.ClientID,
+		Me:       tkt.Me,
+		Scope:    tkt.Scope,
 	})
 }
 
@@ -120,7 +121,8 @@ func (h *RequestHandler) handleAction(ctx *http.RequestCtx) {
 		action, err := domain.ParseAction(string(ctx.PostArgs().Peek("action")))
 		if err != nil {
 			ctx.SetStatusCode(http.StatusBadRequest)
-			encoder.Encode(domain.NewError(
+
+			_ = encoder.Encode(domain.NewError(
 				domain.ErrorCodeInvalidRequest,
 				err.Error(),
 				"",
@@ -138,15 +140,17 @@ func (h *RequestHandler) handleAction(ctx *http.RequestCtx) {
 	}
 }
 
+//nolint: funlen
 func (h *RequestHandler) handleExchange(ctx *http.RequestCtx) {
 	ctx.SetContentType(common.MIMEApplicationJSONCharsetUTF8)
 
 	encoder := json.NewEncoder(ctx)
 
-	req := new(ExchangeRequest)
+	req := new(TokenExchangeRequest)
 	if err := req.bind(ctx); err != nil {
 		ctx.SetStatusCode(http.StatusBadRequest)
-		encoder.Encode(err)
+
+		_ = encoder.Encode(err)
 
 		return
 	}
@@ -159,7 +163,8 @@ func (h *RequestHandler) handleExchange(ctx *http.RequestCtx) {
 	})
 	if err != nil {
 		ctx.SetStatusCode(http.StatusBadRequest)
-		encoder.Encode(domain.NewError(
+
+		_ = encoder.Encode(domain.NewError(
 			domain.ErrorCodeInvalidRequest,
 			err.Error(),
 			"https://indieauth.net/source/#request",
@@ -168,20 +173,21 @@ func (h *RequestHandler) handleExchange(ctx *http.RequestCtx) {
 		return
 	}
 
-	resp := &ExchangeResponse{
+	resp := &TokenExchangeResponse{
 		AccessToken: token.AccessToken,
 		TokenType:   "Bearer",
 		Scope:       token.Scope.String(),
 		Me:          token.Me.String(),
+		Profile:     nil,
 	}
 
 	if profile == nil {
-		encoder.Encode(resp)
+		_ = encoder.Encode(resp)
 
 		return
 	}
 
-	resp.Profile = new(ProfileResponse)
+	resp.Profile = new(TokenProfileResponse)
 
 	if len(profile.Name) > 0 {
 		resp.Profile.Name = profile.Name[0]
@@ -208,17 +214,19 @@ func (h *RequestHandler) handleRevoke(ctx *http.RequestCtx) {
 
 	encoder := json.NewEncoder(ctx)
 
-	req := new(RevokeRequest)
+	req := new(TokenRevokeRequest)
 	if err := req.bind(ctx); err != nil {
 		ctx.SetStatusCode(http.StatusBadRequest)
-		encoder.Encode(err)
+
+		_ = encoder.Encode(err)
 
 		return
 	}
 
 	if err := h.tokens.Revoke(ctx, req.Token); err != nil {
 		ctx.SetStatusCode(http.StatusBadRequest)
-		encoder.Encode(domain.NewError(
+
+		_ = encoder.Encode(domain.NewError(
 			domain.ErrorCodeInvalidRequest,
 			err.Error(),
 			"",
@@ -227,7 +235,7 @@ func (h *RequestHandler) handleRevoke(ctx *http.RequestCtx) {
 		return
 	}
 
-	_ = encoder.Encode(&RevocationResponse{})
+	_ = encoder.Encode(&TokenRevocationResponse{})
 }
 
 func (h *RequestHandler) handleTicket(ctx *http.RequestCtx) {
@@ -236,18 +244,20 @@ func (h *RequestHandler) handleTicket(ctx *http.RequestCtx) {
 
 	encoder := json.NewEncoder(ctx)
 
-	req := new(TicketRequest)
+	req := new(TokenTicketRequest)
 	if err := req.bind(ctx); err != nil {
 		ctx.SetStatusCode(http.StatusBadRequest)
-		encoder.Encode(err)
+
+		_ = encoder.Encode(err)
 
 		return
 	}
 
-	t, err := h.tickets.Exchange(ctx, req.Ticket)
+	tkn, err := h.tickets.Exchange(ctx, req.Ticket)
 	if err != nil {
 		ctx.SetStatusCode(http.StatusInternalServerError)
-		encoder.Encode(domain.NewError(
+
+		_ = encoder.Encode(domain.NewError(
 			domain.ErrorCodeInvalidRequest,
 			err.Error(),
 			"https://indieauth.net/source/#request",
@@ -256,15 +266,16 @@ func (h *RequestHandler) handleTicket(ctx *http.RequestCtx) {
 		return
 	}
 
-	encoder.Encode(ExchangeResponse{
-		AccessToken: t.AccessToken,
+	_ = encoder.Encode(TokenExchangeResponse{
+		AccessToken: tkn.AccessToken,
 		TokenType:   "Bearer",
-		Scope:       t.Scope.String(),
-		Me:          t.Me.String(),
+		Scope:       tkn.Scope.String(),
+		Me:          tkn.Me.String(),
+		Profile:     nil,
 	})
 }
 
-func (r *ExchangeRequest) bind(ctx *http.RequestCtx) error {
+func (r *TokenExchangeRequest) bind(ctx *http.RequestCtx) error {
 	indieAuthError := new(domain.Error)
 	if err := form.Unmarshal(ctx.PostArgs(), r); err != nil {
 		if errors.As(err, indieAuthError) {
@@ -281,7 +292,7 @@ func (r *ExchangeRequest) bind(ctx *http.RequestCtx) error {
 	return nil
 }
 
-func (r *RevokeRequest) bind(ctx *http.RequestCtx) error {
+func (r *TokenRevokeRequest) bind(ctx *http.RequestCtx) error {
 	indieAuthError := new(domain.Error)
 	if err := form.Unmarshal(ctx.PostArgs(), r); err != nil {
 		if errors.As(err, indieAuthError) {
@@ -298,7 +309,7 @@ func (r *RevokeRequest) bind(ctx *http.RequestCtx) error {
 	return nil
 }
 
-func (r *TicketRequest) bind(ctx *http.RequestCtx) error {
+func (r *TokenTicketRequest) bind(ctx *http.RequestCtx) error {
 	indieAuthError := new(domain.Error)
 	if err := form.Unmarshal(ctx.PostArgs(), r); err != nil {
 		if errors.As(err, indieAuthError) {

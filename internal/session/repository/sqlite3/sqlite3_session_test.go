@@ -12,10 +12,9 @@ import (
 	"source.toby3d.me/website/indieauth/internal/testing/sqltest"
 )
 
-//nolint: gochecknoglobals
+//nolint: gochecknoglobals // slices cannot be contants
 var tableColumns = []string{
-	"created_at", "client_id", "me", "redirect_uri", "code_challenge_method", "scope", "code",
-	"code_challenge",
+	"created_at", "client_id", "me", "redirect_uri", "code_challenge_method", "scope", "code", "code_challenge",
 }
 
 func TestCreate(t *testing.T) {
@@ -40,7 +39,7 @@ func TestCreate(t *testing.T) {
 		).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	if err := repository.NewSQLite3SessionRepository(domain.TestConfig(t), db).
+	if err := repository.NewSQLite3SessionRepository(db).
 		Create(context.TODO(), session); err != nil {
 		t.Error(err)
 	}
@@ -69,7 +68,7 @@ func TestGet(t *testing.T) {
 				model.CodeChallenge,
 			))
 
-	result, err := repository.NewSQLite3SessionRepository(domain.TestConfig(t), db).
+	result, err := repository.NewSQLite3SessionRepository(db).
 		Get(context.TODO(), session.Code)
 	if err != nil {
 		t.Fatal(err)
@@ -108,7 +107,7 @@ func TestGetAndDelete(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
-	result, err := repository.NewSQLite3SessionRepository(domain.TestConfig(t), db).
+	result, err := repository.NewSQLite3SessionRepository(db).
 		GetAndDelete(context.TODO(), session.Code)
 	if err != nil {
 		t.Fatal(err)

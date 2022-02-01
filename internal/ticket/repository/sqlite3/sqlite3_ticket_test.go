@@ -12,8 +12,8 @@ import (
 	repository "source.toby3d.me/website/indieauth/internal/ticket/repository/sqlite3"
 )
 
-//nolint: gochecknoglobals
-var tableColumns []string = []string{"created_at", "resource", "subject", "ticket"}
+//nolint: gochecknoglobals // slices cannot be contants
+var tableColumns = []string{"created_at", "resource", "subject", "ticket"}
 
 func TestCreate(t *testing.T) {
 	t.Parallel()

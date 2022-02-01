@@ -62,8 +62,8 @@ func (repo *sqlite3TokenRepository) Create(ctx context.Context, accessToken *dom
 }
 
 func (repo *sqlite3TokenRepository) Get(ctx context.Context, accessToken string) (*domain.Token, error) {
-	t := new(Token)
-	if err := repo.db.GetContext(ctx, t, QueryGet, accessToken); err != nil {
+	tkn := new(Token)
+	if err := repo.db.GetContext(ctx, tkn, QueryGet, accessToken); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, token.ErrNotExist
 		}
@@ -72,7 +72,7 @@ func (repo *sqlite3TokenRepository) Get(ctx context.Context, accessToken string)
 	}
 
 	result := new(domain.Token)
-	t.Populate(result)
+	tkn.Populate(result)
 
 	return result, nil
 }

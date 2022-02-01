@@ -7,6 +7,7 @@ import (
 
 	"github.com/fasthttp/router"
 	"github.com/goccy/go-json"
+	"github.com/lestrrat-go/jwx/jwa"
 	http "github.com/valyala/fasthttp"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
@@ -21,7 +22,7 @@ import (
 )
 
 type (
-	GenerateRequest struct {
+	TicketGenerateRequest struct {
 		// The access token should be used when acting on behalf of this URL.
 		Subject *domain.Me `form:"subject"`
 
@@ -29,7 +30,7 @@ type (
 		Resource *domain.URL `form:"resource"`
 	}
 
-	ExchangeRequest struct {
+	TicketExchangeRequest struct {
 		// A random string that can be redeemed for an access token.
 		Ticket string `form:"ticket"`
 
@@ -58,21 +59,40 @@ func NewRequestHandler(tickets ticket.UseCase, matcher language.Matcher, config 
 func (h *RequestHandler) Register(r *router.Router) {
 	chain := middleware.Chain{
 		middleware.CSRFWithConfig(middleware.CSRFConfig{
-			CookieSameSite: http.CookieSameSiteLaxMode,
-			ContextKey:     "csrf",
-			CookieName:     "_csrf",
-			TokenLookup:    "form:_csrf",
-			CookieSecure:   true,
-			CookieHTTPOnly: true,
 			Skipper: func(ctx *http.RequestCtx) bool {
 				matched, _ := path.Match("/ticket*", string(ctx.Path()))
 
 				return ctx.IsPost() && matched
 			},
+			CookieMaxAge:   0,
+			CookieSameSite: http.CookieSameSiteLaxMode,
+			ContextKey:     "csrf",
+			CookieDomain:   "",
+			CookieName:     "_csrf",
+			CookiePath:     "",
+			TokenLookup:    "form:_csrf",
+			TokenLength:    0,
+			CookieSecure:   true,
+			CookieHTTPOnly: true,
+		}),
+		middleware.JWTWithConfig(middleware.JWTConfig{
+			AuthScheme:              "Bearer",
+			BeforeFunc:              nil,
+			Claims:                  nil,
+			ContextKey:              "user",
+			ErrorHandler:            nil,
+			ErrorHandlerWithContext: nil,
+			ParseTokenFunc:          nil,
+			SigningKey:              []byte(h.config.JWT.Secret),
+			SigningKeys:             nil,
+			SigningMethod:           jwa.SignatureAlgorithm(h.config.JWT.Algorithm),
+			Skipper:                 middleware.DefaultSkipper,
+			SuccessHandler:          nil,
+			TokenLookup:             middleware.SourceHeader + ":" + http.HeaderAuthorization,
 		}),
 		middleware.LogFmt(),
 	}
-	// TODO(toby3d): secure this via JWT middleware
+
 	r.GET("/ticket", chain.RequestHandler(h.handleRender))
 	r.POST("/api/ticket", chain.RequestHandler(h.handleSend))
 	r.POST("/ticket", chain.RequestHandler(h.handleRedeem))
@@ -102,10 +122,11 @@ func (h *RequestHandler) handleSend(ctx *http.RequestCtx) {
 
 	encoder := json.NewEncoder(ctx)
 
-	req := new(ExchangeRequest)
+	req := new(TicketGenerateRequest)
 	if err := req.bind(ctx); err != nil {
 		ctx.SetStatusCode(http.StatusBadRequest)
-		encoder.Encode(err)
+
+		_ = encoder.Encode(err)
 
 		return
 	}
@@ -119,14 +140,16 @@ func (h *RequestHandler) handleSend(ctx *http.RequestCtx) {
 	var err error
 	if ticket.Ticket, err = random.String(h.config.TicketAuth.Length); err != nil {
 		ctx.SetStatusCode(http.StatusInternalServerError)
-		encoder.Encode(domain.NewError(domain.ErrorCodeServerError, err.Error(), ""))
+
+		_ = encoder.Encode(domain.NewError(domain.ErrorCodeServerError, err.Error(), ""))
 
 		return
 	}
 
 	if err = h.tickets.Generate(ctx, ticket); err != nil {
 		ctx.SetStatusCode(http.StatusInternalServerError)
-		encoder.Encode(domain.NewError(domain.ErrorCodeServerError, err.Error(), ""))
+
+		_ = encoder.Encode(domain.NewError(domain.ErrorCodeServerError, err.Error(), ""))
 
 		return
 	}
@@ -140,10 +163,11 @@ func (h *RequestHandler) handleRedeem(ctx *http.RequestCtx) {
 
 	encoder := json.NewEncoder(ctx)
 
-	req := new(ExchangeRequest)
+	req := new(TicketExchangeRequest)
 	if err := req.bind(ctx); err != nil {
 		ctx.SetStatusCode(http.StatusBadRequest)
-		encoder.Encode(err)
+
+		_ = encoder.Encode(err)
 
 		return
 	}
@@ -155,7 +179,8 @@ func (h *RequestHandler) handleRedeem(ctx *http.RequestCtx) {
 	})
 	if err != nil {
 		ctx.SetStatusCode(http.StatusBadRequest)
-		encoder.Encode(domain.NewError(domain.ErrorCodeServerError, err.Error(), ""))
+
+		_ = encoder.Encode(domain.NewError(domain.ErrorCodeServerError, err.Error(), ""))
 
 		return
 	}
@@ -170,7 +195,7 @@ func (h *RequestHandler) handleRedeem(ctx *http.RequestCtx) {
 	}`, token.AccessToken, token.Scope.String(), token.Me.String()))
 }
 
-func (req *GenerateRequest) bind(ctx *http.RequestCtx) (err error) {
+func (req *TicketGenerateRequest) bind(ctx *http.RequestCtx) (err error) {
 	indieAuthError := new(domain.Error)
 	if err = form.Unmarshal(ctx.Request.PostArgs(), req); err != nil {
 		if errors.As(err, indieAuthError) {
@@ -203,7 +228,7 @@ func (req *GenerateRequest) bind(ctx *http.RequestCtx) (err error) {
 	return nil
 }
 
-func (req *ExchangeRequest) bind(ctx *http.RequestCtx) (err error) {
+func (req *TicketExchangeRequest) bind(ctx *http.RequestCtx) (err error) {
 	indieAuthError := new(domain.Error)
 	if err = form.Unmarshal(ctx.Request.PostArgs(), req); err != nil {
 		if errors.As(err, indieAuthError) {

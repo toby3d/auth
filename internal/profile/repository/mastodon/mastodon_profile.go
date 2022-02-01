@@ -25,8 +25,10 @@ func NewMastodonProfileRepository(server string) profile.Repository {
 
 func (repo *mastodonProfileRepository) Get(ctx context.Context, token *oauth2.Token) (*domain.Profile, error) {
 	account, err := mastodon.NewClient(&mastodon.Config{
-		Server:      repo.server,
-		AccessToken: token.AccessToken,
+		AccessToken:  token.AccessToken,
+		ClientID:     "",
+		ClientSecret: "",
+		Server:       repo.server,
 	}).GetAccountCurrentUser(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("%s: cannot get account info: %w", ErrPrefix, err)
@@ -64,11 +66,9 @@ func (repo *mastodonProfileRepository) Get(ctx context.Context, token *oauth2.To
 		}
 
 		u, err := domain.ParseURL(account.Fields[i].Value)
-		if err != nil {
-			continue
+		if err == nil {
+			result.URL = append(result.URL, u)
 		}
-
-		result.URL = append(result.URL, u)
 	}
 
 	// WARN(toby3d): Mastodon does not provide an email via API.

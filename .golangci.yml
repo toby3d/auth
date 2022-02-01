@@ -1,15 +1,54 @@
 ---
+run:
+  tests: true
+  skip-dirs:
+    - locales
+    - testdata
+    - web
+  skip-dirs-use-default: true
+  skip-files:
+    - ".*_gen\\.go$"
 output:
   sort-results: true
 linters-settings:
-  lll:
-    tab-width: 8
   gci:
     local-prefixes: source.toby3d.me
   goimports:
     local-prefixes: source.toby3d.me
+  ireturn:
+    allow:
+      - "(Repository|UseCase)$"
+      - error
+      - stdlib
+  lll:
+    tab-width: 8
+  varnamelen:
+    ignore-type-assert-ok: true
+    ignore-map-index-ok: true
+    ignore-chan-recv-ok: true
+    ignore-names:
+      - ctx # context
+      - db # dataBase
+      - err # error
+      - i # index
+      - ip
+      - ln # listener
+      - me
+      - ok
+      - tc # testCase
+      - ts # timeStamp
+      - tx # transaction
+    ignore-decls:
+      - "cid *domain.ClientID"
+      - "ctx *fasthttp.RequestCtx"
+      - "ctx context.Context"
+      - "i int"
+      - "me *domain.Me"
+      - "r *router.Router"
 linters:
   enable-all: true
+  disable:
+    - godox
 issues:
   exclude-rules:
     - source: "^//go:generate "

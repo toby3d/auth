@@ -18,7 +18,7 @@ type Me struct {
 }
 
 // ParseMe parse string as me URL identifier.
-//nolint: funlen
+//nolint: funlen, cyclop
 func ParseMe(raw string) (*Me, error) {
 	me := http.AcquireURI()
 	if err := me.Parse(nil, []byte(raw)); err != nil {
@@ -114,7 +114,7 @@ func TestMe(tb testing.TB, src string) *Me {
 
 	me, err := ParseMe(src)
 	if err != nil {
-		tb.Fatalf("%+v", err)
+		tb.Fatal(err)
 	}
 
 	return me
@@ -174,12 +174,16 @@ func (m Me) URL() *url.URL {
 	}
 
 	return &url.URL{
-		Scheme:   string(m.me.Scheme()),
-		Host:     string(m.me.Host()),
-		Path:     string(m.me.Path()),
-		RawPath:  string(m.me.PathOriginal()),
-		RawQuery: string(m.me.QueryString()),
-		Fragment: string(m.me.Hash()),
+		ForceQuery:  false,
+		Fragment:    string(m.me.Hash()),
+		Host:        string(m.me.Host()),
+		Opaque:      "",
+		Path:        string(m.me.Path()),
+		RawFragment: "",
+		RawPath:     string(m.me.PathOriginal()),
+		RawQuery:    string(m.me.QueryString()),
+		Scheme:      string(m.me.Scheme()),
+		User:        nil,
 	}
 }
 

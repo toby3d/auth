@@ -14,7 +14,7 @@ import (
 )
 
 type (
-	//nolint: tagliatelle
+	//nolint: tagliatelle // https://indieauth.net/source/#access-token-response
 	Response struct {
 		Me          *domain.Me    `json:"me"`
 		Scope       domain.Scopes `json:"scope"`
@@ -37,11 +37,11 @@ func NewTicketUseCase(tickets ticket.Repository, client *http.Client, config *do
 	}
 }
 
-func (useCase *ticketUseCase) Generate(ctx context.Context, t *domain.Ticket) error {
+func (useCase *ticketUseCase) Generate(ctx context.Context, tkt *domain.Ticket) error {
 	req := http.AcquireRequest()
 	defer http.ReleaseRequest(req)
 	req.Header.SetMethod(http.MethodGet)
-	req.SetRequestURI(t.Subject.String())
+	req.SetRequestURI(tkt.Subject.String())
 
 	resp := http.AcquireResponse()
 	defer http.ReleaseResponse(resp)
@@ -65,7 +65,7 @@ func (useCase *ticketUseCase) Generate(ctx context.Context, t *domain.Ticket) er
 		return ticket.ErrTicketEndpointNotExist
 	}
 
-	if err := useCase.tickets.Create(ctx, t); err != nil {
+	if err := useCase.tickets.Create(ctx, tkt); err != nil {
 		return fmt.Errorf("cannot save ticket in store: %w", err)
 	}
 
@@ -73,9 +73,9 @@ func (useCase *ticketUseCase) Generate(ctx context.Context, t *domain.Ticket) er
 	req.Header.SetMethod(http.MethodPost)
 	req.SetRequestURIBytes(ticketEndpoint.RequestURI())
 	req.Header.SetContentType(common.MIMEApplicationForm)
-	req.PostArgs().Set("ticket", t.Ticket)
-	req.PostArgs().Set("subject", t.Subject.String())
-	req.PostArgs().Set("resource", t.Resource.String())
+	req.PostArgs().Set("ticket", tkt.Ticket)
+	req.PostArgs().Set("subject", tkt.Subject.String())
+	req.PostArgs().Set("resource", tkt.Resource.String())
 	resp.Reset()
 
 	if err := useCase.client.Do(req, resp); err != nil {
@@ -85,10 +85,10 @@ func (useCase *ticketUseCase) Generate(ctx context.Context, t *domain.Ticket) er
 	return nil
 }
 
-func (useCase *ticketUseCase) Redeem(ctx context.Context, t *domain.Ticket) (*domain.Token, error) {
+func (useCase *ticketUseCase) Redeem(ctx context.Context, tkt *domain.Ticket) (*domain.Token, error) {
 	req := http.AcquireRequest()
 	defer http.ReleaseRequest(req)
-	req.SetRequestURI(t.Resource.String())
+	req.SetRequestURI(tkt.Resource.String())
 	req.Header.SetMethod(http.MethodGet)
 
 	resp := http.AcquireResponse()
@@ -119,7 +119,7 @@ func (useCase *ticketUseCase) Redeem(ctx context.Context, t *domain.Ticket) (*do
 	req.Header.SetContentType(common.MIMEApplicationForm)
 	req.Header.Set(http.HeaderAccept, common.MIMEApplicationJSON)
 	req.PostArgs().Set("grant_type", domain.GrantTypeTicket.String())
-	req.PostArgs().Set("ticket", t.Ticket)
+	req.PostArgs().Set("ticket", tkt.Ticket)
 	resp.Reset()
 
 	if err := useCase.client.Do(req, resp); err != nil {
@@ -142,19 +142,19 @@ func (useCase *ticketUseCase) Redeem(ctx context.Context, t *domain.Ticket) (*do
 }
 
 func (useCase *ticketUseCase) Exchange(ctx context.Context, ticket string) (*domain.Token, error) {
-	t, err := useCase.tickets.GetAndDelete(ctx, ticket)
+	tkt, err := useCase.tickets.GetAndDelete(ctx, ticket)
 	if err != nil {
 		return nil, fmt.Errorf("cannot find provided ticket: %w", err)
 	}
 
 	token, err := domain.NewToken(domain.NewTokenOptions{
-		Algorithm:  useCase.config.JWT.Algorithm,
-		Expiration: useCase.config.JWT.Expiry,
-		// TODO(toby3d): Issuer: &domain.ClientID{},
-		NonceLength: useCase.config.JWT.NonceLength,
+		Expiration:  useCase.config.JWT.Expiry,
 		Scope:       domain.Scopes{domain.ScopeRead},
+		Issuer:      nil,
+		Subject:     tkt.Subject,
 		Secret:      []byte(useCase.config.JWT.Secret),
-		Subject:     t.Subject,
+		Algorithm:   useCase.config.JWT.Algorithm,
+		NonceLength: useCase.config.JWT.NonceLength,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate a new access token: %w", err)

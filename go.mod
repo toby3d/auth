@@ -14,6 +14,7 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.0 // indirect
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/klauspost/compress v1.14.2 // indirect
+	github.com/lestrrat-go/iter v1.0.1 // indirect
 	github.com/lestrrat-go/jwx v1.2.18
 	github.com/mattn/go-mastodon v0.0.4
 	github.com/spf13/afero v1.8.0 // indirect

@@ -69,8 +69,8 @@ func TestGet(t *testing.T) {
 func testHandler(tb testing.TB, user *domain.User) http.RequestHandler {
 	tb.Helper()
 
-	r := router.New()
-	r.GET("/", func(ctx *http.RequestCtx) {
+	router := router.New()
+	router.GET("/", func(ctx *http.RequestCtx) {
 		ctx.Response.Header.Set(http.HeaderLink, strings.Join([]string{
 			`<` + user.AuthorizationEndpoint.String() + `>; rel="authorization_endpoint"`,
 			`<` + user.IndieAuthMetadata.String() + `>; rel="indieauth-metadata"`,
@@ -83,7 +83,7 @@ func testHandler(tb testing.TB, user *domain.User) http.RequestHandler {
 			testBody, user.Name[0], user.URL[0].String(), user.Photo[0].String(), user.Email[0],
 		))
 	})
-	r.GET(string(user.IndieAuthMetadata.Path()), func(ctx *http.RequestCtx) {
+	router.GET(string(user.IndieAuthMetadata.Path()), func(ctx *http.RequestCtx) {
 		ctx.SuccessString(common.MIMEApplicationJSONCharsetUTF8, `{
 			"issuer": "`+user.Me.String()+`",
 			"authorization_endpoint": "`+user.AuthorizationEndpoint.String()+`",
@@ -91,5 +91,5 @@ func testHandler(tb testing.TB, user *domain.User) http.RequestHandler {
 		}`)
 	})
 
-	return r.Handler
+	return router.Handler
 }

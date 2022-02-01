@@ -7,7 +7,6 @@ import (
 	"source.toby3d.me/website/indieauth/internal/domain"
 )
 
-//nolint: funlen
 func TestParseMe(t *testing.T) {
 	t.Parallel()
 
@@ -15,47 +14,18 @@ func TestParseMe(t *testing.T) {
 		name     string
 		in       string
 		expError bool
-	}{{
-		name:     "valid",
-		in:       "https://example.com/",
-		expError: false,
-	}, {
-		name:     "valid path",
-		in:       "https://example.com/username",
-		expError: false,
-	}, {
-		name:     "valid query",
-		in:       "https://example.com/users?id=100",
-		expError: false,
-	}, {
-		name:     "missing scheme",
-		in:       "example.com",
-		expError: true,
-	}, {
-		name:     "invalid scheme",
-		in:       "mailto:user@example.com",
-		expError: true,
-	}, {
-		name:     "contains double-dot path",
-		in:       "https://example.com/foo/../bar",
-		expError: true,
-	}, {
-		name:     "contains fragment",
-		in:       "https://example.com/#me",
-		expError: true,
-	}, {
-		name:     "contains user",
-		in:       "https://user:pass@example.com/",
-		expError: true,
-	}, {
-		name:     "contains port",
-		in:       "https://example.com:8443/",
-		expError: true,
-	}, {
-		name:     "host is an IP address",
-		in:       "https://172.28.92.51/",
-		expError: true,
-	}} {
+	}{
+		{name: "valid", in: "https://example.com/", expError: false},
+		{name: "valid path", in: "https://example.com/username", expError: false},
+		{name: "valid query", in: "https://example.com/users?id=100", expError: false},
+		{name: "missing scheme", in: "example.com", expError: true},
+		{name: "invalid scheme", in: "mailto:user@example.com", expError: true},
+		{name: "contains double-dot path", in: "https://example.com/foo/../bar", expError: true},
+		{name: "contains fragment", in: "https://example.com/#me", expError: true},
+		{name: "contains user", in: "https://user:pass@example.com/", expError: true},
+		{name: "contains port", in: "https://example.com:8443/", expError: true},
+		{name: "host is an IP address", in: "https://172.28.92.51/", expError: true},
+	} {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {

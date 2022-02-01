@@ -1,6 +1,6 @@
 package domain
 
-//nolint: tagliatelle
+//nolint: tagliatelle // https://indieauth.net/source/#indieauth-server-metadata
 type Metadata struct {
 	// The server's issuer identifier. The issuer identifier is a URL that
 	// uses the "https" scheme and has no query or fragment components. The

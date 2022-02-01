@@ -1,3 +1,4 @@
+//nolint: dupl
 package domain_test
 
 import (
@@ -12,13 +13,10 @@ func TestParseAction(t *testing.T) {
 	for _, tc := range []struct {
 		in  string
 		out domain.Action
-	}{{
-		in:  "revoke",
-		out: domain.ActionRevoke,
-	}, {
-		in:  "ticket",
-		out: domain.ActionTicket,
-	}} {
+	}{
+		{in: "revoke", out: domain.ActionRevoke},
+		{in: "ticket", out: domain.ActionTicket},
+	} {
 		tc := tc
 
 		t.Run(tc.in, func(t *testing.T) {
@@ -73,15 +71,10 @@ func TestAction_String(t *testing.T) {
 		name string
 		in   domain.Action
 		out  string
-	}{{
-		name: "revoke",
-		in:   domain.ActionRevoke,
-		out:  "revoke",
-	}, {
-		name: "ticket",
-		in:   domain.ActionTicket,
-		out:  "ticket",
-	}} {
+	}{
+		{name: "revoke", in: domain.ActionRevoke, out: "revoke"},
+		{name: "ticket", in: domain.ActionTicket, out: "ticket"},
+	} {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {

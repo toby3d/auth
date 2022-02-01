@@ -19,6 +19,7 @@ func NewGithubProfileRepository() profile.Repository {
 	return &githubProfileRepository{}
 }
 
+//nolint: cyclop
 func (repo *githubProfileRepository) Get(ctx context.Context, token *oauth2.Token) (*domain.Profile, error) {
 	user, _, err := github.NewClient(oauth2.NewClient(ctx, oauth2.StaticTokenSource(token))).Users.Get(ctx, "")
 	if err != nil {
@@ -41,6 +42,7 @@ func (repo *githubProfileRepository) Get(ctx context.Context, token *oauth2.Toke
 
 	// NOTE(toby3d): Profile URLs.
 	result.URL = make([]*domain.URL, 0)
+
 	var twitterURL *string
 
 	if user.TwitterUsername != nil {

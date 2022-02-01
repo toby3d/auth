@@ -12,14 +12,15 @@ import (
 	repository "source.toby3d.me/website/indieauth/internal/token/repository/sqlite3"
 )
 
-//nolint: gochecknoglobals
-var tableColumns []string = []string{"created_at", "access_token", "client_id", "me", "scope"}
+//nolint: gochecknoglobals // slices cannot be contants
+var tableColumns = []string{"created_at", "access_token", "client_id", "me", "scope"}
 
 func TestCreate(t *testing.T) {
 	t.Parallel()
 
 	token := domain.TestToken(t)
 	model := repository.NewToken(token)
+
 	db, mock, cleanup := sqltest.Open(t)
 	t.Cleanup(cleanup)
 
@@ -44,6 +45,7 @@ func TestGet(t *testing.T) {
 
 	token := domain.TestToken(t)
 	model := repository.NewToken(token)
+
 	db, mock, cleanup := sqltest.Open(t)
 	t.Cleanup(cleanup)
 

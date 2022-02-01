@@ -14,19 +14,11 @@ func TestParseEmail(t *testing.T) {
 		name string
 		in   string
 		out  string
-	}{{
-		name: "simple",
-		in:   "user@example.com",
-		out:  "user@example.com",
-	}, {
-		name: "subAddress",
-		in:   "user+suffix@example.com",
-		out:  "user+suffix@example.com",
-	}, {
-		name: "mailto prefix",
-		in:   "mailto:user@example.com",
-		out:  "user@example.com",
-	}} {
+	}{
+		{name: "simple", in: "user@example.com", out: "user@example.com"},
+		{name: "subAddress", in: "user+suffix@example.com", out: "user+suffix@example.com"},
+		{name: "mailto prefix", in: "mailto:user@example.com", out: "user@example.com"},
+	} {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -47,7 +39,7 @@ func TestParseEmail(t *testing.T) {
 func TestEmail_String(t *testing.T) {
 	t.Parallel()
 
-	email := domain.TestEmail(t)
+	email := domain.TestEmail(t) //nolint: ifshort
 	if result := email.String(); result != fmt.Sprint(email) {
 		t.Errorf("String() = %v, want %v", result, email)
 	}

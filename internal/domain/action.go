@@ -1,3 +1,4 @@
+//nolint: dupl
 package domain
 
 import (
@@ -14,7 +15,7 @@ type Action struct {
 	uid string
 }
 
-//nolint: gochecknoglobals // NOTE(toby3d): structs cannot be constants
+//nolint: gochecknoglobals // structs cannot be constants
 var (
 	ActionUndefined = Action{uid: ""}
 

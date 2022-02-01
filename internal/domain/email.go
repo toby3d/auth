@@ -12,12 +12,14 @@ type Email struct {
 	subAddress string
 }
 
+const DefaultEmailPartsLength int = 2
+
 var ErrEmailInvalid error = NewError(ErrorCodeInvalidRequest, "cannot parse email", "")
 
 // ParseEmail parse strings to email identifier.
 func ParseEmail(src string) (*Email, error) {
 	parts := strings.Split(strings.TrimPrefix(src, "mailto:"), "@")
-	if len(parts) != 2 { //nolint: gomnd
+	if len(parts) != DefaultEmailPartsLength {
 		return nil, ErrEmailInvalid
 	}
 
@@ -27,7 +29,7 @@ func ParseEmail(src string) (*Email, error) {
 		subAddress: "",
 	}
 
-	if userParts := strings.SplitN(parts[0], `+`, 2); len(userParts) > 1 {
+	if userParts := strings.SplitN(parts[0], `+`, DefaultEmailPartsLength); len(userParts) > 1 {
 		result.user = userParts[0]
 		result.subAddress = userParts[1]
 	}

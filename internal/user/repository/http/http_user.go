@@ -52,31 +52,38 @@ func (repo *httpUserRepository) Get(ctx context.Context, me *domain.Me) (*domain
 
 	// TODO(toby3d): handle error here?
 	resolvedMe, _ := domain.ParseMe(string(resp.Header.Peek(http.HeaderLocation)))
-	u := &domain.User{
-		Me: resolvedMe,
+
+	user := &domain.User{
+		AuthorizationEndpoint: nil,
+		IndieAuthMetadata:     nil,
+		Me:                    resolvedMe,
+		Micropub:              nil,
+		Microsub:              nil,
 		Profile: &domain.Profile{
-			Name:  make([]string, 0),
-			URL:   make([]*domain.URL, 0),
-			Photo: make([]*domain.URL, 0),
 			Email: make([]*domain.Email, 0),
+			Name:  make([]string, 0),
+			Photo: make([]*domain.URL, 0),
+			URL:   make([]*domain.URL, 0),
 		},
+		TicketEndpoint: nil,
+		TokenEndpoint:  nil,
 	}
 
-	metadata, err := util.ExtractMetadata(resp, repo.client)
-	if err == nil && metadata != nil {
-		u.AuthorizationEndpoint = metadata.AuthorizationEndpoint
-		u.Micropub = metadata.Micropub
-		u.Microsub = metadata.Microsub
-		u.TicketEndpoint = metadata.TicketEndpoint
-		u.TokenEndpoint = metadata.TokenEndpoint
+	if metadata, err := util.ExtractMetadata(resp, repo.client); err == nil {
+		user.AuthorizationEndpoint = metadata.AuthorizationEndpoint
+		user.Micropub = metadata.Micropub
+		user.Microsub = metadata.Microsub
+		user.TicketEndpoint = metadata.TicketEndpoint
+		user.TokenEndpoint = metadata.TokenEndpoint
 	}
 
-	extractUser(u, resp)
-	extractProfile(u.Profile, resp)
+	extractUser(user, resp)
+	extractProfile(user.Profile, resp)
 
-	return u, nil
+	return user, nil
 }
 
+//nolint: cyclop
 func extractUser(dst *domain.User, src *http.Response) {
 	if dst.IndieAuthMetadata != nil {
 		if endpoints := util.ExtractEndpoints(src, relIndieAuthMetadata); len(endpoints) > 0 {
@@ -115,14 +122,12 @@ func extractUser(dst *domain.User, src *http.Response) {
 	}
 }
 
+//nolint: cyclop
 func extractProfile(dst *domain.Profile, src *http.Response) {
 	for _, name := range util.ExtractProperty(src, hCard, propertyName) {
-		n, ok := name.(string)
-		if !ok {
-			continue
+		if n, ok := name.(string); ok {
+			dst.Name = append(dst.Name, n)
 		}
-
-		dst.Name = append(dst.Name, n)
 	}
 
 	for _, rawEmail := range util.ExtractProperty(src, hCard, propertyEmail) {
@@ -131,26 +136,20 @@ func extractProfile(dst *domain.Profile, src *http.Response) {
 			continue
 		}
 
-		e, err := domain.ParseEmail(email)
-		if err != nil {
-			continue
+		if e, err := domain.ParseEmail(email); err == nil {
+			dst.Email = append(dst.Email, e)
 		}
-
-		dst.Email = append(dst.Email, e)
 	}
 
-	for _, rawUrl := range util.ExtractProperty(src, hCard, propertyURL) {
-		url, ok := rawUrl.(string)
+	for _, rawURL := range util.ExtractProperty(src, hCard, propertyURL) {
+		url, ok := rawURL.(string)
 		if !ok {
 			continue
 		}
 
-		u, err := domain.ParseURL(url)
-		if err != nil {
-			continue
+		if u, err := domain.ParseURL(url); err == nil {
+			dst.URL = append(dst.URL, u)
 		}
-
-		dst.URL = append(dst.URL, u)
 	}
 
 	for _, rawPhoto := range util.ExtractProperty(src, hCard, propertyPhoto) {
@@ -159,11 +158,8 @@ func extractProfile(dst *domain.Profile, src *http.Response) {
 			continue
 		}
 
-		p, err := domain.ParseURL(photo)
-		if err != nil {
-			continue
+		if p, err := domain.ParseURL(photo); err == nil {
+			dst.Photo = append(dst.Photo, p)
 		}
-
-		dst.Photo = append(dst.Photo, p)
 	}
 }

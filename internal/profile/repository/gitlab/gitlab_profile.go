@@ -19,7 +19,7 @@ func NewGitlabProfileRepository() profile.Repository {
 	return &gitlabProfileRepository{}
 }
 
-//nolint: funlen // NOTE(toby3d): uses hyphenation on new lines for readability.
+//nolint: funlen, cyclop
 func (repo *gitlabProfileRepository) Get(_ context.Context, token *oauth2.Token) (*domain.Profile, error) {
 	client, err := gitlab.NewClient(token.AccessToken)
 	if err != nil {

@@ -11,7 +11,6 @@ type UseCase interface {
 
 	// Redeem transform received ticket into access token.
 	Redeem(ctx context.Context, ticket *domain.Ticket) (*domain.Token, error)
-
 	Exchange(ctx context.Context, ticket string) (*domain.Token, error)
 }
 

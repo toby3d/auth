@@ -32,10 +32,10 @@ func NewHTTPClientRepository(c *http.Client) client.Repository {
 	}
 }
 
-func (repo *httpClientRepository) Get(ctx context.Context, id *domain.ClientID) (*domain.Client, error) {
+func (repo *httpClientRepository) Get(ctx context.Context, cid *domain.ClientID) (*domain.Client, error) {
 	req := http.AcquireRequest()
 	defer http.ReleaseRequest(req)
-	req.SetRequestURI(id.String())
+	req.SetRequestURI(cid.String())
 	req.Header.SetMethod(http.MethodGet)
 
 	resp := http.AcquireResponse()
@@ -50,7 +50,7 @@ func (repo *httpClientRepository) Get(ctx context.Context, id *domain.ClientID) 
 	}
 
 	client := &domain.Client{
-		ID:          id,
+		ID:          cid,
 		RedirectURI: make([]*domain.URL, 0),
 		Logo:        make([]*domain.URL, 0),
 		URL:         make([]*domain.URL, 0),
@@ -62,68 +62,52 @@ func (repo *httpClientRepository) Get(ctx context.Context, id *domain.ClientID) 
 	return client, nil
 }
 
+//nolint: gocognit, cyclop
 func extract(dst *domain.Client, src *http.Response) {
-	for _, u := range util.ExtractEndpoints(src, relRedirectURI) {
-		if containsURL(dst.RedirectURI, u) {
-			continue
+	for _, endpoint := range util.ExtractEndpoints(src, relRedirectURI) {
+		if !containsURL(dst.RedirectURI, endpoint) {
+			dst.RedirectURI = append(dst.RedirectURI, endpoint)
 		}
-
-		dst.RedirectURI = append(dst.RedirectURI, u)
 	}
 
-	for _, t := range []string{hXApp, hApp} {
-		for _, name := range util.ExtractProperty(src, t, propertyName) {
-			n, ok := name.(string)
-			if !ok || containsString(dst.Name, n) {
-				continue
+	for _, itemType := range []string{hXApp, hApp} {
+		for _, name := range util.ExtractProperty(src, itemType, propertyName) {
+			if n, ok := name.(string); ok && !containsString(dst.Name, n) {
+				dst.Name = append(dst.Name, n)
 			}
-
-			dst.Name = append(dst.Name, n)
 		}
 
-		for _, logo := range util.ExtractProperty(src, t, propertyLogo) {
-			var err error
+		for _, logo := range util.ExtractProperty(src, itemType, propertyLogo) {
+			var (
+				uri *domain.URL
+				err error
+			)
 
-			var u *domain.URL
 			switch l := logo.(type) {
 			case string:
-				u, err = domain.ParseURL(l)
+				uri, err = domain.ParseURL(l)
 			case map[string]string:
-				value, ok := l["value"]
-				if !ok {
-					continue
+				if value, ok := l["value"]; ok {
+					uri, err = domain.ParseURL(value)
 				}
-
-				u, err = domain.ParseURL(value)
 			}
 
-			if err != nil {
+			if err != nil || containsURL(dst.Logo, uri) {
 				continue
 			}
 
-			if containsURL(dst.Logo, u) {
-				continue
-			}
-
-			dst.Logo = append(dst.Logo, u)
+			dst.Logo = append(dst.Logo, uri)
 		}
 
-		for _, url := range util.ExtractProperty(src, t, propertyURL) {
-			l, ok := url.(string)
+		for _, property := range util.ExtractProperty(src, itemType, propertyURL) {
+			prop, ok := property.(string)
 			if !ok {
 				continue
 			}
 
-			u, err := domain.ParseURL(l)
-			if err != nil {
-				continue
+			if u, err := domain.ParseURL(prop); err == nil || !containsURL(dst.URL, u) {
+				dst.URL = append(dst.URL, u)
 			}
-
-			if containsURL(dst.URL, u) {
-				continue
-			}
-
-			dst.URL = append(dst.URL, u)
 		}
 	}
 }

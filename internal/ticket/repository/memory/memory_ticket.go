@@ -59,8 +59,8 @@ func (repo *memoryTicketRepository) GC() {
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
 
-	for ts := range ticker.C {
-		ts := ts.UTC()
+	for timeStamp := range ticker.C {
+		timeStamp := timeStamp.UTC()
 
 		repo.store.Range(func(key, value interface{}) bool {
 			k, ok := key.(string)
@@ -78,7 +78,7 @@ func (repo *memoryTicketRepository) GC() {
 				return false
 			}
 
-			if val.CreatedAt.Add(repo.config.Code.Expiry).After(ts) {
+			if val.CreatedAt.Add(repo.config.Code.Expiry).After(timeStamp) {
 				return false
 			}
 

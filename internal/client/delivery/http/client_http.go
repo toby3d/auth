@@ -18,7 +18,7 @@ import (
 )
 
 type (
-	CallbackRequest struct {
+	ClientCallbackRequest struct {
 		Iss              *domain.ClientID `form:"iss"`
 		Code             string           `form:"code"`
 		Error            string           `form:"error"`
@@ -60,13 +60,14 @@ func (h *RequestHandler) Register(r *router.Router) {
 }
 
 func (h *RequestHandler) handleRender(ctx *http.RequestCtx) {
-	redirectUri := make([]string, len(h.client.RedirectURI))
+	redirect := make([]string, len(h.client.RedirectURI))
+
 	for i := range h.client.RedirectURI {
-		redirectUri[i] = h.client.RedirectURI[i].String()
+		redirect[i] = h.client.RedirectURI[i].String()
 	}
 
 	ctx.Response.Header.Set(
-		http.HeaderLink, `<`+strings.Join(redirectUri, `>; rel="redirect_uri", `)+`>; rel="redirect_uri"`,
+		http.HeaderLink, `<`+strings.Join(redirect, `>; rel="redirect_uri", `)+`>; rel="redirect_uri"`,
 	)
 
 	tags, _, _ := language.ParseAcceptLanguage(string(ctx.Request.Header.Peek(http.HeaderAcceptLanguage)))
@@ -87,7 +88,7 @@ func (h *RequestHandler) handleRender(ctx *http.RequestCtx) {
 }
 
 func (h *RequestHandler) handleCallback(ctx *http.RequestCtx) {
-	req := new(CallbackRequest)
+	req := new(ClientCallbackRequest)
 	if err := req.bind(ctx); err != nil {
 		ctx.Error(err.Error(), http.StatusInternalServerError)
 
@@ -134,7 +135,7 @@ func (h *RequestHandler) handleCallback(ctx *http.RequestCtx) {
 	})
 }
 
-func (req *CallbackRequest) bind(ctx *http.RequestCtx) error {
+func (req *ClientCallbackRequest) bind(ctx *http.RequestCtx) error {
 	indieAuthError := new(domain.Error)
 
 	if err := form.Unmarshal(ctx.QueryArgs(), req); err != nil {

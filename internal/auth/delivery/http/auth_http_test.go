@@ -35,15 +35,15 @@ func TestRender(t *testing.T) {
 	require.NoError(t, s.SetProvider(provider))
 
 	me := domain.TestMe(t, "https://user.example.net")
-	c := domain.TestClient(t)
+	client := domain.TestClient(t)
 	config := domain.TestConfig(t)
 	store := new(sync.Map)
 	user := domain.TestUser(t)
 	store.Store(path.Join(userrepo.DefaultPathPrefix, me.String()), user)
-	store.Store(path.Join(clientrepo.DefaultPathPrefix, c.ID.String()), c)
+	store.Store(path.Join(clientrepo.DefaultPathPrefix, client.ID.String()), client)
 	store.Store(path.Join(profilerepo.DefaultPathPrefix, me.String()), user.Profile)
 
-	r := router.New()
+	router := router.New()
 	delivery.NewRequestHandler(delivery.NewRequestHandlerOptions{
 		Clients: clientucase.NewClientUseCase(clientrepo.NewMemoryClientRepository(store)),
 		Config:  config,
@@ -52,35 +52,35 @@ func TestRender(t *testing.T) {
 			sessionrepo.NewMemorySessionRepository(config, store),
 			config,
 		),
-	}).Register(r)
+	}).Register(router)
 
-	client, _, cleanup := httptest.New(t, r.Handler)
+	httpClient, _, cleanup := httptest.New(t, router.Handler)
 	t.Cleanup(cleanup)
 
-	u := http.AcquireURI()
-	defer http.ReleaseURI(u)
-	u.Update("https://example.com/authorize")
+	uri := http.AcquireURI()
+	defer http.ReleaseURI(uri)
+	uri.Update("https://example.com/authorize")
 
-	for k, v := range map[string]string{
-		"client_id":             c.ID.String(),
+	for key, val := range map[string]string{
+		"client_id":             client.ID.String(),
 		"code_challenge":        "OfYAxt8zU2dAPDWQxTAUIteRzMsoj9QBdMIVEDOErUo",
 		"code_challenge_method": domain.CodeChallengeMethodS256.String(),
 		"me":                    me.String(),
-		"redirect_uri":          c.RedirectURI[0].String(),
+		"redirect_uri":          client.RedirectURI[0].String(),
 		"response_type":         domain.ResponseTypeCode.String(),
 		"scope":                 "profile email",
 		"state":                 "1234567890",
 	} {
-		u.QueryArgs().Set(k, v)
+		uri.QueryArgs().Set(key, val)
 	}
 
-	req := httptest.NewRequest(http.MethodGet, u.String(), nil)
+	req := httptest.NewRequest(http.MethodGet, uri.String(), nil)
 	defer http.ReleaseRequest(req)
 
 	resp := http.AcquireResponse()
 	defer http.ReleaseResponse(resp)
 
-	require.NoError(t, client.Do(req, resp))
+	require.NoError(t, httpClient.Do(req, resp))
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode())
 	assert.Contains(t, string(resp.Body()), `Authorize application`)

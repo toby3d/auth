@@ -1,3 +1,4 @@
+//nolint: dupl
 package domain_test
 
 import (
@@ -12,13 +13,10 @@ func TestParseGrantType(t *testing.T) {
 	for _, tc := range []struct {
 		in  string
 		out domain.GrantType
-	}{{
-		in:  "authorization_code",
-		out: domain.GrantTypeAuthorizationCode,
-	}, {
-		in:  "ticket",
-		out: domain.GrantTypeTicket,
-	}} {
+	}{
+		{in: "authorization_code", out: domain.GrantTypeAuthorizationCode},
+		{in: "ticket", out: domain.GrantTypeTicket},
+	} {
 		tc := tc
 
 		t.Run(tc.in, func(t *testing.T) {
@@ -73,15 +71,10 @@ func TestGrantType_String(t *testing.T) {
 		name string
 		in   domain.GrantType
 		out  string
-	}{{
-		name: "authorization_code",
-		in:   domain.GrantTypeAuthorizationCode,
-		out:  "authorization_code",
-	}, {
-		name: "ticket",
-		in:   domain.GrantTypeTicket,
-		out:  "ticket",
-	}} {
+	}{
+		{name: "authorization_code", in: domain.GrantTypeAuthorizationCode, out: "authorization_code"},
+		{name: "ticket", in: domain.GrantTypeTicket, out: "ticket"},
+	} {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {

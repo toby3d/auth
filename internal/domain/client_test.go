@@ -15,13 +15,10 @@ func TestClient_ValidateRedirectURI(t *testing.T) {
 	for _, tc := range []struct {
 		name string
 		in   *domain.URL
-	}{{
-		name: "client_id prefix",
-		in:   domain.TestURL(t, fmt.Sprint(client.ID, "/callback")),
-	}, {
-		name: "registered redirect_uri",
-		in:   client.RedirectURI[len(client.RedirectURI)-1],
-	}} {
+	}{
+		{name: "client_id prefix", in: domain.TestURL(t, fmt.Sprint(client.ID, "/callback"))},
+		{name: "registered redirect_uri", in: client.RedirectURI[len(client.RedirectURI)-1]},
+	} {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {

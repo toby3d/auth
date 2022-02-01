@@ -1,3 +1,4 @@
+//nolint: dupl
 package domain_test
 
 import (
@@ -12,13 +13,10 @@ func TestResponseTypeType(t *testing.T) {
 	for _, tc := range []struct {
 		in  string
 		out domain.ResponseType
-	}{{
-		in:  "id",
-		out: domain.ResponseTypeID,
-	}, {
-		in:  "code",
-		out: domain.ResponseTypeCode,
-	}} {
+	}{
+		{in: "id", out: domain.ResponseTypeID},
+		{in: "code", out: domain.ResponseTypeCode},
+	} {
 		tc := tc
 
 		t.Run(tc.in, func(t *testing.T) {
@@ -73,15 +71,10 @@ func TestResponseType_String(t *testing.T) {
 		name string
 		in   domain.ResponseType
 		out  string
-	}{{
-		name: "id",
-		in:   domain.ResponseTypeID,
-		out:  "id",
-	}, {
-		name: "code",
-		in:   domain.ResponseTypeCode,
-		out:  "code",
-	}} {
+	}{
+		{name: "id", in: domain.ResponseTypeID, out: "id"},
+		{name: "code", in: domain.ResponseTypeCode, out: "code"},
+	} {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {

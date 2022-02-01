@@ -1,5 +1,6 @@
 package domain_test
 
+//nolint: gosec // support old clients
 import (
 	"crypto/md5"
 	"crypto/sha1"
@@ -23,32 +24,14 @@ func TestParseCodeChallengeMethod(t *testing.T) {
 		in       string
 		out      domain.CodeChallengeMethod
 		expError bool
-	}{{
-		expError: true,
-		name:     "invalid",
-		in:       "und",
-		out:      domain.CodeChallengeMethodUndefined,
-	}, {
-		name: "PLAIN",
-		in:   "plain",
-		out:  domain.CodeChallengeMethodPLAIN,
-	}, {
-		name: "MD5",
-		in:   "Md5",
-		out:  domain.CodeChallengeMethodMD5,
-	}, {
-		name: "S1",
-		in:   "S1",
-		out:  domain.CodeChallengeMethodS1,
-	}, {
-		name: "S256",
-		in:   "S256",
-		out:  domain.CodeChallengeMethodS256,
-	}, {
-		name: "S512",
-		in:   "S512",
-		out:  domain.CodeChallengeMethodS512,
-	}} {
+	}{
+		{name: "invalid", in: "und", out: domain.CodeChallengeMethodUndefined, expError: true},
+		{name: "PLAIN", in: "plain", out: domain.CodeChallengeMethodPLAIN, expError: false},
+		{name: "MD5", in: "Md5", out: domain.CodeChallengeMethodMD5, expError: false},
+		{name: "S1", in: "S1", out: domain.CodeChallengeMethodS1, expError: false},
+		{name: "S256", in: "S256", out: domain.CodeChallengeMethodS256, expError: false},
+		{name: "S512", in: "S512", out: domain.CodeChallengeMethodS512, expError: false},
+	} {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -107,27 +90,13 @@ func TestCodeChallengeMethod_String(t *testing.T) {
 		name string
 		in   domain.CodeChallengeMethod
 		out  string
-	}{{
-		name: "plain",
-		in:   domain.CodeChallengeMethodPLAIN,
-		out:  "PLAIN",
-	}, {
-		name: "md5",
-		in:   domain.CodeChallengeMethodMD5,
-		out:  "MD5",
-	}, {
-		name: "s1",
-		in:   domain.CodeChallengeMethodS1,
-		out:  "S1",
-	}, {
-		name: "s256",
-		in:   domain.CodeChallengeMethodS256,
-		out:  "S256",
-	}, {
-		name: "s512",
-		in:   domain.CodeChallengeMethodS512,
-		out:  "S512",
-	}} {
+	}{
+		{name: "plain", in: domain.CodeChallengeMethodPLAIN, out: "PLAIN"},
+		{name: "md5", in: domain.CodeChallengeMethodMD5, out: "MD5"},
+		{name: "s1", in: domain.CodeChallengeMethodS1, out: "S1"},
+		{name: "s256", in: domain.CodeChallengeMethodS256, out: "S256"},
+		{name: "s512", in: domain.CodeChallengeMethodS512, out: "S512"},
+	} {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -141,7 +110,7 @@ func TestCodeChallengeMethod_String(t *testing.T) {
 	}
 }
 
-//nolint: funlen
+//nolint: gosec // support old clients
 func TestCodeChallengeMethod_Validate(t *testing.T) {
 	t.Parallel()
 
@@ -155,42 +124,15 @@ func TestCodeChallengeMethod_Validate(t *testing.T) {
 		in       domain.CodeChallengeMethod
 		name     string
 		expError bool
-	}{{
-		name:     "invalid",
-		in:       domain.CodeChallengeMethodS256,
-		hash:     md5.New(),
-		expError: true,
-	}, {
-		name:     "MD5",
-		in:       domain.CodeChallengeMethodMD5,
-		hash:     md5.New(),
-		expError: false,
-	}, {
-		name:     "plain",
-		in:       domain.CodeChallengeMethodPLAIN,
-		hash:     nil,
-		expError: false,
-	}, {
-		name:     "S1",
-		in:       domain.CodeChallengeMethodS1,
-		hash:     sha1.New(),
-		expError: false,
-	}, {
-		name:     "S256",
-		in:       domain.CodeChallengeMethodS256,
-		hash:     sha256.New(),
-		expError: false,
-	}, {
-		name:     "S512",
-		in:       domain.CodeChallengeMethodS512,
-		hash:     sha512.New(),
-		expError: false,
-	}, {
-		name:     "undefined",
-		in:       domain.CodeChallengeMethodUndefined,
-		hash:     nil,
-		expError: true,
-	}} {
+	}{
+		{name: "invalid", in: domain.CodeChallengeMethodS256, hash: md5.New(), expError: true},
+		{name: "MD5", in: domain.CodeChallengeMethodMD5, hash: md5.New(), expError: false},
+		{name: "plain", in: domain.CodeChallengeMethodPLAIN, hash: nil, expError: false},
+		{name: "S1", in: domain.CodeChallengeMethodS1, hash: sha1.New(), expError: false},
+		{name: "S256", in: domain.CodeChallengeMethodS256, hash: sha256.New(), expError: false},
+		{name: "S512", in: domain.CodeChallengeMethodS512, hash: sha512.New(), expError: false},
+		{name: "undefined", in: domain.CodeChallengeMethodUndefined, hash: nil, expError: true},
+	} {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {

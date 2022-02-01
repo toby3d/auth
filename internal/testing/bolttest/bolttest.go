@@ -23,7 +23,6 @@ func New(tb testing.TB) (*bolt.DB, func()) {
 	db, err := bolt.Open(filePath, os.ModePerm, nil)
 	require.NoError(tb, err)
 
-	//nolint: errcheck
 	return db, func() {
 		db.Close()
 		os.Remove(filePath)

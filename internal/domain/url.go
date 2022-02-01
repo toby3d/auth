@@ -71,7 +71,7 @@ func (u URL) URL() *url.URL {
 		return nil
 	}
 
-	result, err := url.ParseRequestURI(u.URI.String())
+	result, err := url.ParseRequestURI(u.String())
 	if err != nil {
 		return nil
 	}

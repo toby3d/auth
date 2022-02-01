@@ -22,12 +22,12 @@ func TestRedeem(t *testing.T) {
 	token := domain.TestToken(t)
 	ticket := domain.TestTicket(t)
 
-	r := router.New()
-	r.GET(string(ticket.Resource.Path()), func(ctx *http.RequestCtx) {
+	router := router.New()
+	router.GET(string(ticket.Resource.Path()), func(ctx *http.RequestCtx) {
 		ctx.SuccessString(common.MIMETextHTMLCharsetUTF8, `<link rel="token_endpoint" href="`+
 			ticket.Subject.String()+`token">`)
 	})
-	r.POST("/token", func(ctx *http.RequestCtx) {
+	router.POST("/token", func(ctx *http.RequestCtx) {
 		ctx.SuccessString(common.MIMEApplicationJSONCharsetUTF8, fmt.Sprintf(`{
 			"token_type": "Bearer",
 			"access_token": "%s",
@@ -36,7 +36,7 @@ func TestRedeem(t *testing.T) {
 		}`, token.AccessToken, token.Scope.String(), token.Me.String()))
 	})
 
-	client, _, cleanup := httptest.New(t, r.Handler)
+	client, _, cleanup := httptest.New(t, router.Handler)
 	t.Cleanup(cleanup)
 
 	result, err := ucase.NewTicketUseCase(nil, client, domain.TestConfig(t)).

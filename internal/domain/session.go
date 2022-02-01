@@ -8,22 +8,22 @@ import (
 
 type Session struct {
 	ClientID            *ClientID
-	Me                  *Me
 	RedirectURI         *URL
-	Profile             *Profile
+	Me                  *Me
 	CodeChallengeMethod CodeChallengeMethod
 	Scope               Scopes
-	Code                string
 	CodeChallenge       string
+	Code                string
 }
 
 // TestSession returns valid random generated session for tests.
+//nolint: gomnd // testing domain can contains non-standart values
 func TestSession(tb testing.TB) *Session {
 	tb.Helper()
 
 	code, err := random.String(24)
 	if err != nil {
-		tb.Fatalf("%+v", err)
+		tb.Fatal(err)
 	}
 
 	return &Session{

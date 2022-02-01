@@ -7,7 +7,6 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/jmoiron/sqlx"
-	_ "modernc.org/sqlite"
 )
 
 type Time struct{}
@@ -24,17 +23,17 @@ func Open(tb testing.TB) (*sqlx.DB, sqlmock.Sqlmock, func()) {
 
 	db, mock, err := sqlmock.New()
 	if err != nil {
-		tb.Fatalf("%+v", err)
+		tb.Fatal(err)
 	}
 
 	xdb := sqlx.NewDb(db, "sqlite")
 	if err = xdb.Ping(); err != nil {
 		_ = db.Close()
 
-		tb.Fatalf("%+v", err)
+		tb.Fatal(err)
 	}
 
 	return xdb, mock, func() {
-		_ = db.Close() //nolint: errcheck
+		_ = db.Close()
 	}
 }

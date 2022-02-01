@@ -25,16 +25,16 @@ func TestRead(t *testing.T) {
 	store := new(sync.Map)
 	config := domain.TestConfig(t)
 
-	r := router.New()
+	router := router.New()
 	delivery.NewRequestHandler(delivery.NewRequestHandlerOptions{
 		Client:  domain.TestClient(t),
 		Config:  config,
 		Matcher: language.NewMatcher(message.DefaultCatalog.Languages()),
 		Tokens: tokenucase.NewTokenUseCase(tokenrepo.NewMemoryTokenRepository(store),
 			sessionrepo.NewMemorySessionRepository(config, store), config),
-	}).Register(r)
+	}).Register(router)
 
-	client, _, cleanup := httptest.New(t, r.Handler)
+	client, _, cleanup := httptest.New(t, router.Handler)
 	t.Cleanup(cleanup)
 
 	req := httptest.NewRequest(http.MethodGet, "https://app.example.com/", nil)

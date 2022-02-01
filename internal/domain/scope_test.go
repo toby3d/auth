@@ -14,43 +14,20 @@ func TestParseScope(t *testing.T) {
 	for _, tc := range []struct {
 		in  string
 		out domain.Scope
-	}{{
-		in:  "create",
-		out: domain.ScopeCreate,
-	}, {
-		in:  "delete",
-		out: domain.ScopeDelete,
-	}, {
-		in:  "draft",
-		out: domain.ScopeDraft,
-	}, {
-		in:  "media",
-		out: domain.ScopeMedia,
-	}, {
-		in:  "update",
-		out: domain.ScopeUpdate,
-	}, {
-		in:  "block",
-		out: domain.ScopeBlock,
-	}, {
-		in:  "channels",
-		out: domain.ScopeChannels,
-	}, {
-		in:  "follow",
-		out: domain.ScopeFollow,
-	}, {
-		in:  "mute",
-		out: domain.ScopeMute,
-	}, {
-		in:  "read",
-		out: domain.ScopeRead,
-	}, {
-		in:  "profile",
-		out: domain.ScopeProfile,
-	}, {
-		in:  "email",
-		out: domain.ScopeEmail,
-	}} {
+	}{
+		{in: "create", out: domain.ScopeCreate},
+		{in: "delete", out: domain.ScopeDelete},
+		{in: "draft", out: domain.ScopeDraft},
+		{in: "media", out: domain.ScopeMedia},
+		{in: "update", out: domain.ScopeUpdate},
+		{in: "block", out: domain.ScopeBlock},
+		{in: "channels", out: domain.ScopeChannels},
+		{in: "follow", out: domain.ScopeFollow},
+		{in: "mute", out: domain.ScopeMute},
+		{in: "read", out: domain.ScopeRead},
+		{in: "profile", out: domain.ScopeProfile},
+		{in: "email", out: domain.ScopeEmail},
+	} {
 		tc := tc
 
 		t.Run(tc.in, func(t *testing.T) {
@@ -118,47 +95,24 @@ func TestScopes_MarshalJSON(t *testing.T) {
 func TestScope_String(t *testing.T) {
 	t.Parallel()
 
-	//nolint: paralleltest // NOTE(toby3d): false positive, tc.in is used.
+	//nolint: paralleltest // false positive, in is used
 	for _, tc := range []struct {
 		in  domain.Scope
 		out string
-	}{{
-		in:  domain.ScopeCreate,
-		out: "create",
-	}, {
-		in:  domain.ScopeDelete,
-		out: "delete",
-	}, {
-		in:  domain.ScopeDraft,
-		out: "draft",
-	}, {
-		in:  domain.ScopeMedia,
-		out: "media",
-	}, {
-		in:  domain.ScopeUpdate,
-		out: "update",
-	}, {
-		in:  domain.ScopeBlock,
-		out: "block",
-	}, {
-		in:  domain.ScopeChannels,
-		out: "channels",
-	}, {
-		in:  domain.ScopeFollow,
-		out: "follow",
-	}, {
-		in:  domain.ScopeMute,
-		out: "mute",
-	}, {
-		in:  domain.ScopeRead,
-		out: "read",
-	}, {
-		in:  domain.ScopeProfile,
-		out: "profile",
-	}, {
-		in:  domain.ScopeEmail,
-		out: "email",
-	}} {
+	}{
+		{in: domain.ScopeCreate, out: "create"},
+		{in: domain.ScopeDelete, out: "delete"},
+		{in: domain.ScopeDraft, out: "draft"},
+		{in: domain.ScopeMedia, out: "media"},
+		{in: domain.ScopeUpdate, out: "update"},
+		{in: domain.ScopeBlock, out: "block"},
+		{in: domain.ScopeChannels, out: "channels"},
+		{in: domain.ScopeFollow, out: "follow"},
+		{in: domain.ScopeMute, out: "mute"},
+		{in: domain.ScopeRead, out: "read"},
+		{in: domain.ScopeProfile, out: "profile"},
+		{in: domain.ScopeEmail, out: "email"},
+	} {
 		tc := tc
 
 		t.Run(fmt.Sprint(tc.in), func(t *testing.T) {

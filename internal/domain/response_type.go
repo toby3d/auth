@@ -1,3 +1,4 @@
+//nolint: dupl
 package domain
 
 import (
@@ -12,20 +13,20 @@ type ResponseType struct {
 	uid string
 }
 
-//nolint: gochecknoglobals // NOTE(toby3d): structs cannot be constants
+//nolint: gochecknoglobals // structs cannot be constants
 var (
-	ResponseTypeUndefined ResponseType = ResponseType{uid: ""}
+	ResponseTypeUndefined = ResponseType{uid: ""}
 
 	// Deprecated(toby3d): Only accept response_type=code requests, and for
 	// backwards-compatible support, treat response_type=id requests as
 	// response_type=code requests:
 	// https://aaronparecki.com/2020/12/03/1/indieauth-2020#response-type
-	ResponseTypeID ResponseType = ResponseType{uid: "id"}
+	ResponseTypeID = ResponseType{uid: "id"}
 
 	// Indicates to the authorization server that an authorization code
 	// should be returned as the response:
 	// https://indieauth.net/source/#authorization-request-li-1
-	ResponseTypeCode ResponseType = ResponseType{uid: "code"}
+	ResponseTypeCode = ResponseType{uid: "code"}
 )
 
 var ErrResponseTypeUnknown error = NewError(
@@ -65,7 +66,7 @@ func (rt *ResponseType) UnmarshalJSON(v []byte) error {
 		return fmt.Errorf("UnmarshalJSON: %w", err)
 	}
 
-	responseType, err := ParseResponseType(string(uid))
+	responseType, err := ParseResponseType(uid)
 	if err != nil {
 		return fmt.Errorf("UnmarshalJSON: %w", err)
 	}

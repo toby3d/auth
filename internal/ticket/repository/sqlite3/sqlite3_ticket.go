@@ -63,16 +63,17 @@ func (repo *sqlite3TicketRepository) Create(ctx context.Context, t *domain.Ticke
 	return nil
 }
 
-func (repo *sqlite3TicketRepository) GetAndDelete(ctx context.Context, t string) (*domain.Ticket, error) {
+func (repo *sqlite3TicketRepository) GetAndDelete(ctx context.Context, rawTicket string) (*domain.Ticket, error) {
 	tx, err := repo.db.Beginx()
 	if err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
 
 	tkt := new(Ticket)
-	if err = tx.GetContext(ctx, tkt, QueryGet, t); err != nil {
+	if err = tx.GetContext(ctx, tkt, QueryGet, rawTicket); err != nil {
+		//nolint: errcheck // deffered method
 		defer tx.Rollback()
 
 		if errors.Is(err, sql.ErrNoRows) {
@@ -82,8 +83,8 @@ func (repo *sqlite3TicketRepository) GetAndDelete(ctx context.Context, t string)
 		return nil, fmt.Errorf("cannot find ticket in db: %w", err)
 	}
 
-	if _, err = tx.ExecContext(ctx, QueryDelete, t); err != nil {
-		tx.Rollback()
+	if _, err = tx.ExecContext(ctx, QueryDelete, rawTicket); err != nil {
+		_ = tx.Rollback()
 
 		return nil, fmt.Errorf("cannot remove ticket from db: %w", err)
 	}

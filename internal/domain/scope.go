@@ -21,7 +21,7 @@ type (
 
 var ErrScopeUnknown error = NewError(ErrorCodeInvalidRequest, "unknown scope", "https://indieweb.org/scope")
 
-//nolint: gochecknoglobals // NOTE(toby3d): structs cannot be constants
+//nolint: gochecknoglobals // structs cannot be constants
 var (
 	ScopeUndefined = Scope{uid: ""}
 
@@ -56,7 +56,7 @@ var (
 	ScopeEmail = Scope{uid: "email"}
 )
 
-//nolint: gochecknoglobals // NOTE(toby3d): maps cannot be constants
+//nolint: gochecknoglobals // maps cannot be constants
 var uidsScopes = map[string]Scope{
 	ScopeBlock.uid:    ScopeBlock,
 	ScopeChannels.uid: ScopeChannels,
@@ -112,17 +112,17 @@ func (s *Scopes) UnmarshalJSON(v []byte) error {
 
 	result := make(Scopes, 0)
 
-	for _, scope := range strings.Fields(src) {
-		s, err := ParseScope(scope)
+	for _, rawScope := range strings.Fields(src) {
+		scope, err := ParseScope(rawScope)
 		if err != nil {
 			return fmt.Errorf("UnmarshalJSON: %w", err)
 		}
 
-		if result.Has(s) {
+		if result.Has(scope) {
 			continue
 		}
 
-		result = append(result, s)
+		result = append(result, scope)
 	}
 
 	*s = result

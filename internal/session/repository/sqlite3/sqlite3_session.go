@@ -27,8 +27,7 @@ type (
 	}
 
 	sqlite3SessionRepository struct {
-		config *domain.Config
-		db     *sqlx.DB
+		db *sqlx.DB
 	}
 )
 
@@ -57,7 +56,7 @@ const (
 		WHERE code=$1;`
 )
 
-func NewSQLite3SessionRepository(config *domain.Config, db *sqlx.DB) session.Repository {
+func NewSQLite3SessionRepository(db *sqlx.DB) session.Repository {
 	db.MustExec(QueryTable)
 
 	return &sqlite3SessionRepository{
@@ -74,7 +73,7 @@ func (repo *sqlite3SessionRepository) Create(ctx context.Context, session *domai
 }
 
 func (repo *sqlite3SessionRepository) Get(ctx context.Context, code string) (*domain.Session, error) {
-	s := new(Session)
+	s := new(Session) //nolint: varnamelen // cannot redaclare import
 	if err := repo.db.GetContext(ctx, s, QueryGet, code); err != nil {
 		return nil, fmt.Errorf("cannot find session in db: %w", err)
 	}
@@ -86,16 +85,17 @@ func (repo *sqlite3SessionRepository) Get(ctx context.Context, code string) (*do
 }
 
 func (repo *sqlite3SessionRepository) GetAndDelete(ctx context.Context, code string) (*domain.Session, error) {
-	s := new(Session)
+	s := new(Session) //nolint: varnamelen // cannot redaclare import
 
 	tx, err := repo.db.Beginx()
 	if err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
 
 	if err = tx.GetContext(ctx, s, QueryGet, code); err != nil {
+		//nolint: errcheck // deffered method
 		defer tx.Rollback()
 
 		if errors.Is(err, sql.ErrNoRows) {
@@ -106,7 +106,7 @@ func (repo *sqlite3SessionRepository) GetAndDelete(ctx context.Context, code str
 	}
 
 	if _, err = tx.ExecContext(ctx, QueryDelete, code); err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 
 		return nil, fmt.Errorf("cannot remove session from db: %w", err)
 	}

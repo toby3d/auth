@@ -46,13 +46,13 @@ func TestUpdate(t *testing.T) {
 	userClient, _, userCleanup := httptest.New(t, userRouter.Handler)
 	t.Cleanup(userCleanup)
 
-	r := router.New()
+	router := router.New()
 	delivery.NewRequestHandler(
 		ucase.NewTicketUseCase(ticketrepo.NewMemoryTicketRepository(new(sync.Map), config), userClient, config),
 		language.NewMatcher(message.DefaultCatalog.Languages()), config,
-	).Register(r)
+	).Register(router)
 
-	client, _, cleanup := httptest.New(t, r.Handler)
+	client, _, cleanup := httptest.New(t, router.Handler)
 	t.Cleanup(cleanup)
 
 	req := httptest.NewRequest(http.MethodPost, "https://example.com/ticket", []byte(

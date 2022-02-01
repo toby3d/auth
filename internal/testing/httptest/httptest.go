@@ -3,6 +3,8 @@ package httptest
 
 import (
 	"crypto/tls"
+
+	// used for running tests.
 	_ "embed"
 	"net"
 	"testing"
@@ -47,9 +49,8 @@ func New(tb testing.TB, handler http.RequestHandler) (*http.Client, *http.Server
 		},
 	}
 
-	//nolint: errcheck
 	return client, server, func() {
-		server.Shutdown()
+		_ = server.Shutdown()
 	}
 }
 

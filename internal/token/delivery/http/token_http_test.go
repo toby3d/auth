@@ -36,7 +36,7 @@ func TestVerification(t *testing.T) {
 	config := domain.TestConfig(t)
 	token := domain.TestToken(t)
 
-	r := router.New()
+	router := router.New()
 	// TODO(toby3d): provide tickets
 	delivery.NewRequestHandler(
 		tokenucase.NewTokenUseCase(
@@ -49,9 +49,9 @@ func TestVerification(t *testing.T) {
 			new(http.Client),
 			config,
 		),
-	).Register(r)
+	).Register(router)
 
-	client, _, cleanup := httptest.New(t, r.Handler)
+	client, _, cleanup := httptest.New(t, router.Handler)
 	t.Cleanup(cleanup)
 
 	req := httptest.NewRequest(http.MethodGet, "https://app.example.com/token", nil)
@@ -65,7 +65,7 @@ func TestVerification(t *testing.T) {
 	require.NoError(t, client.Do(req, resp))
 	assert.Equal(t, http.StatusOK, resp.StatusCode())
 
-	result := new(delivery.VerificationResponse)
+	result := new(delivery.TokenVerificationResponse)
 	require.NoError(t, json.Unmarshal(resp.Body(), result))
 	assert.Equal(t, token.ClientID.String(), result.ClientID.String())
 	assert.Equal(t, token.Me.String(), result.Me.String())
@@ -80,7 +80,7 @@ func TestRevocation(t *testing.T) {
 	tokens := tokenrepo.NewMemoryTokenRepository(store)
 	accessToken := domain.TestToken(t)
 
-	r := router.New()
+	router := router.New()
 	delivery.NewRequestHandler(
 		tokenucase.NewTokenUseCase(
 			tokens,
@@ -92,9 +92,9 @@ func TestRevocation(t *testing.T) {
 			new(http.Client),
 			config,
 		),
-	).Register(r)
+	).Register(router)
 
-	client, _, cleanup := httptest.New(t, r.Handler)
+	client, _, cleanup := httptest.New(t, router.Handler)
 	t.Cleanup(cleanup)
 
 	req := httptest.NewRequest(http.MethodPost, "https://app.example.com/token", nil)

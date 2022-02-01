@@ -55,7 +55,8 @@ import (
 
 const (
 	DefaultCacheDuration time.Duration = 8760 * time.Hour // NOTE(toby3d): year
-	DefaultPort          int           = 3000
+	DefaultReadTimeout   time.Duration = 5 * time.Second
+	DefaultWriteTimeout  time.Duration = 10 * time.Second
 )
 
 //nolint: gochecknoglobals
@@ -126,7 +127,7 @@ func init() {
 	client.RedirectURI = []*domain.URL{redirectURI}
 }
 
-//nolint: funlen
+//nolint: funlen, cyclop // "god object" and the entry point of all modules
 func main() {
 	var (
 		tokens   token.Repository
@@ -146,7 +147,7 @@ func main() {
 		}
 
 		tokens = tokensqlite3repo.NewSQLite3TokenRepository(store)
-		sessions = sessionsqlite3repo.NewSQLite3SessionRepository(config, store)
+		sessions = sessionsqlite3repo.NewSQLite3SessionRepository(store)
 		tickets = ticketsqlite3repo.NewSQLite3TicketRepository(store, config)
 	case "memory":
 		store := new(sync.Map)
@@ -160,12 +161,11 @@ func main() {
 	go sessions.GC()
 
 	matcher := language.NewMatcher(message.DefaultCatalog.Languages())
+	//nolint: exhaustivestruct // too many options
 	httpClient := &http.Client{
-		Name:               fmt.Sprintf("%s/0.1 (+%s)", config.Name, config.Server.GetAddress()),
-		MaxConnDuration:    10 * time.Second,
-		ReadTimeout:        10 * time.Second,
-		WriteTimeout:       10 * time.Second,
-		MaxConnWaitTimeout: 10 * time.Second,
+		Name:         fmt.Sprintf("%s/0.1 (+%s)", config.Name, config.Server.GetAddress()),
+		ReadTimeout:  DefaultReadTimeout,
+		WriteTimeout: DefaultWriteTimeout,
 	}
 	ticketService := ticketucase.NewTicketUseCase(tickets, httpClient, config)
 	tokenService := tokenucase.NewTokenUseCase(tokens, sessions, config)
@@ -187,6 +187,7 @@ func main() {
 		Matcher: matcher,
 		Config:  config,
 	}).Register(r)
+	//nolint: exhaustivestruct// too many options
 	r.ServeFilesCustom(path.Join(config.Server.StaticURLPrefix, "{filepath:*}"), &http.FS{
 		Root:               config.Server.StaticRootPath,
 		CacheDuration:      DefaultCacheDuration,
@@ -200,11 +201,12 @@ func main() {
 		r.GET("/debug/pprof/{filepath:*}", pprofhandler.PprofHandler)
 	}
 
+	//nolint: exhaustivestruct
 	server := &http.Server{
 		Name:                  fmt.Sprintf("IndieAuth/0.1 (+%s)", config.Server.GetAddress()),
 		Handler:               r.Handler,
-		ReadTimeout:           10 * time.Second,
-		WriteTimeout:          10 * time.Second,
+		ReadTimeout:           DefaultReadTimeout,
+		WriteTimeout:          DefaultWriteTimeout,
 		DisableKeepalive:      true,
 		ReduceMemoryUsage:     true,
 		SecureErrorLogMessage: true,
@@ -212,7 +214,7 @@ func main() {
 	}
 
 	done := make(chan os.Signal, 1)
-	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	if cpuProfilePath != "" {
 		cpuProfile, err := os.Create(cpuProfilePath)

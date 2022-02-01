@@ -2,6 +2,7 @@ package random
 
 import (
 	"crypto/rand"
+	"fmt"
 	"math/big"
 	"strings"
 )
@@ -17,32 +18,31 @@ const (
 )
 
 func Bytes(length int) ([]byte, error) {
-	b := make([]byte, length)
+	bytes := make([]byte, length)
 
-	if _, err := rand.Read(b); err != nil {
-		return nil, err
+	if _, err := rand.Read(bytes); err != nil {
+		return nil, fmt.Errorf("cannot read bytes: %w", err)
 	}
 
-	return b, nil
+	return bytes, nil
 }
 
 func String(length int, charsets ...string) (string, error) {
 	charset := strings.Join(charsets, "")
-
 	if charset == "" {
 		charset = Alphabetic
 	}
 
-	b := make([]byte, length)
+	bytes := make([]byte, length)
 
-	for i := range b {
+	for i := range bytes {
 		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("failed to randomize bytes: %w", err)
 		}
 
-		b[i] = charset[n.Int64()]
+		bytes[i] = charset[n.Int64()]
 	}
 
-	return string(b), nil
+	return string(bytes), nil
 }

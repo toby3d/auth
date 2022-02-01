@@ -56,7 +56,7 @@ func (useCase *tokenUseCase) Exchange(ctx context.Context, opts token.ExchangeOp
 		return nil, nil, token.ErrEmptyScope
 	}
 
-	t, err := domain.NewToken(domain.NewTokenOptions{
+	tkn, err := domain.NewToken(domain.NewTokenOptions{
 		Algorithm:   useCase.config.JWT.Algorithm,
 		Expiration:  useCase.config.JWT.Expiry,
 		Issuer:      session.ClientID,
@@ -70,14 +70,14 @@ func (useCase *tokenUseCase) Exchange(ctx context.Context, opts token.ExchangeOp
 	}
 
 	if !session.Scope.Has(domain.ScopeProfile) {
-		return t, nil, nil
+		return tkn, nil, nil
 	}
 
 	p := new(domain.Profile)
 
 	// TODO(toby3d): if session.Scope.Has(domain.ScopeEmail) {}
 
-	return t, p, nil
+	return tkn, p, nil
 }
 
 func (useCase *tokenUseCase) Verify(ctx context.Context, accessToken string) (*domain.Token, error) {
@@ -90,23 +90,26 @@ func (useCase *tokenUseCase) Verify(ctx context.Context, accessToken string) (*d
 		return nil, token.ErrRevoke
 	}
 
-	t, err := jwt.ParseString(accessToken, jwt.WithVerify(jwa.SignatureAlgorithm(useCase.config.JWT.Algorithm),
+	tkn, err := jwt.ParseString(accessToken, jwt.WithVerify(jwa.SignatureAlgorithm(useCase.config.JWT.Algorithm),
 		[]byte(useCase.config.JWT.Secret)))
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse JWT token: %w", err)
 	}
 
-	if err = jwt.Validate(t); err != nil {
+	if err = jwt.Validate(tkn); err != nil {
 		return nil, fmt.Errorf("cannot validate JWT token: %w", err)
 	}
 
 	result := &domain.Token{
+		Scope:       nil,
+		ClientID:    nil,
+		Me:          nil,
 		AccessToken: accessToken,
 	}
-	result.ClientID, _ = domain.ParseClientID(t.Issuer())
-	result.Me, _ = domain.ParseMe(t.Subject())
+	result.ClientID, _ = domain.ParseClientID(tkn.Issuer())
+	result.Me, _ = domain.ParseMe(tkn.Subject())
 
-	if scope, ok := t.Get("scope"); ok {
+	if scope, ok := tkn.Get("scope"); ok {
 		result.Scope, _ = scope.(domain.Scopes)
 	}
 
@@ -114,12 +117,12 @@ func (useCase *tokenUseCase) Verify(ctx context.Context, accessToken string) (*d
 }
 
 func (useCase *tokenUseCase) Revoke(ctx context.Context, accessToken string) error {
-	t, err := useCase.Verify(ctx, accessToken)
+	tkn, err := useCase.Verify(ctx, accessToken)
 	if err != nil {
 		return fmt.Errorf("cannot verify token: %w", err)
 	}
 
-	if err = useCase.tokens.Create(ctx, t); err != nil {
+	if err = useCase.tokens.Create(ctx, tkn); err != nil {
 		return fmt.Errorf("cannot save token in database: %w", err)
 	}
 
