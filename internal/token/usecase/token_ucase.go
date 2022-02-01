@@ -2,11 +2,11 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/lestrrat-go/jwx/jwa"
 	"github.com/lestrrat-go/jwx/jwt"
-	"golang.org/x/xerrors"
 
 	"source.toby3d.me/website/indieauth/internal/domain"
 	"source.toby3d.me/website/indieauth/internal/session"
@@ -15,16 +15,16 @@ import (
 
 type tokenUseCase struct {
 	sessions session.Repository
-	config   *domain.Config
 	tokens   token.Repository
+	config   *domain.Config
 }
 
 func NewTokenUseCase(tokens token.Repository, sessions session.Repository, config *domain.Config) token.UseCase {
 	jwt.RegisterCustomField("scope", make(domain.Scopes, 0))
 
 	return &tokenUseCase{
-		sessions: sessions,
 		config:   config,
+		sessions: sessions,
 		tokens:   tokens,
 	}
 }
@@ -51,7 +51,7 @@ func (useCase *tokenUseCase) Exchange(ctx context.Context, opts token.ExchangeOp
 
 	// NOTE(toby3d): If the authorization code was issued with no scope, the
 	// token endpoint MUST NOT issue an access token, as empty scopes are
-	// invalid per Section 3.3 of OAuth 2.0 RFC6749.
+	// invalid (RFC 6749 section 3.3).
 	if session.Scope.IsEmpty() {
 		return nil, nil, token.ErrEmptyScope
 	}
@@ -82,7 +82,7 @@ func (useCase *tokenUseCase) Exchange(ctx context.Context, opts token.ExchangeOp
 
 func (useCase *tokenUseCase) Verify(ctx context.Context, accessToken string) (*domain.Token, error) {
 	find, err := useCase.tokens.Get(ctx, accessToken)
-	if err != nil && !xerrors.Is(err, token.ErrNotExist) {
+	if err != nil && !errors.Is(err, token.ErrNotExist) {
 		return nil, fmt.Errorf("cannot check token in store: %w", err)
 	}
 
@@ -100,12 +100,8 @@ func (useCase *tokenUseCase) Verify(ctx context.Context, accessToken string) (*d
 		return nil, fmt.Errorf("cannot validate JWT token: %w", err)
 	}
 
-	result := &domain.Token{
-		Scope:       nil,
-		ClientID:    nil,
-		Me:          nil,
-		AccessToken: accessToken,
-	}
+	result := new(domain.Token)
+	result.AccessToken = accessToken
 	result.ClientID, _ = domain.ParseClientID(tkn.Issuer())
 	result.Me, _ = domain.ParseMe(tkn.Subject())
 

@@ -2,10 +2,9 @@ package memory
 
 import (
 	"context"
+	"errors"
 	"path"
 	"sync"
-
-	"golang.org/x/xerrors"
 
 	"source.toby3d.me/website/indieauth/internal/domain"
 	"source.toby3d.me/website/indieauth/internal/token"
@@ -25,7 +24,7 @@ func NewMemoryTokenRepository(store *sync.Map) token.Repository {
 
 func (repo *memoryTokenRepository) Create(ctx context.Context, accessToken *domain.Token) error {
 	t, err := repo.Get(ctx, accessToken.AccessToken)
-	if err != nil && !xerrors.Is(err, token.ErrNotExist) {
+	if err != nil && !errors.Is(err, token.ErrNotExist) {
 		return err
 	}
 
