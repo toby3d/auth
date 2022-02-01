@@ -12,14 +12,14 @@ import (
 func New(tb testing.TB) (*bolt.DB, func()) {
 	tb.Helper()
 
-	f, err := os.CreateTemp(os.TempDir(), "bbolt_*.db")
+	tempFile, err := os.CreateTemp(os.TempDir(), "bbolt_*.db")
 	if err != nil {
 		tb.Fatal(err)
 	}
 
-	filePath := f.Name()
+	filePath := tempFile.Name()
 
-	if err := f.Close(); err != nil {
+	if err := tempFile.Close(); err != nil {
 		tb.Fatal(err)
 	}
 

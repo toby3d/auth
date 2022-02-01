@@ -24,7 +24,7 @@ import (
 	tokenucase "source.toby3d.me/website/indieauth/internal/token/usecase"
 )
 
-type dependencies struct {
+type Dependencies struct {
 	client        *http.Client
 	config        *domain.Config
 	sessions      session.Repository
@@ -131,7 +131,7 @@ func TestRevocation(t *testing.T) {
 	}
 }
 
-func NewDependencies(tb testing.TB) dependencies {
+func NewDependencies(tb testing.TB) Dependencies {
 	tb.Helper()
 
 	client := new(http.Client)
@@ -144,7 +144,7 @@ func NewDependencies(tb testing.TB) dependencies {
 	ticketService := ticketucase.NewTicketUseCase(tickets, client, config)
 	tokenService := tokenucase.NewTokenUseCase(tokens, sessions, config)
 
-	return dependencies{
+	return Dependencies{
 		client:        client,
 		config:        config,
 		sessions:      sessions,

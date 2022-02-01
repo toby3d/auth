@@ -18,7 +18,7 @@ import (
 	ucase "source.toby3d.me/website/indieauth/internal/ticket/usecase"
 )
 
-type dependencies struct {
+type Dependencies struct {
 	client        *http.Client
 	config        *domain.Config
 	matcher       language.Matcher
@@ -70,7 +70,7 @@ func TestUpdate(t *testing.T) {
 	}
 }
 
-func NewDependencies(tb testing.TB) dependencies {
+func NewDependencies(tb testing.TB) Dependencies {
 	tb.Helper()
 
 	config := domain.TestConfig(tb)
@@ -79,7 +79,7 @@ func NewDependencies(tb testing.TB) dependencies {
 	ticket := domain.TestTicket(tb)
 	token := domain.TestToken(tb)
 
-	r := router.New()
+	r := router.New() //nolint: varnamelen
 	// NOTE(toby3d): private resource
 	r.GET(ticket.Resource.URL().EscapedPath(), func(ctx *http.RequestCtx) {
 		ctx.SuccessString(common.MIMETextHTMLCharsetUTF8,
@@ -101,7 +101,7 @@ func NewDependencies(tb testing.TB) dependencies {
 	tickets := ticketrepo.NewMemoryTicketRepository(store, config)
 	ticketService := ucase.NewTicketUseCase(tickets, client, config)
 
-	return dependencies{
+	return Dependencies{
 		client:        client,
 		config:        config,
 		matcher:       matcher,

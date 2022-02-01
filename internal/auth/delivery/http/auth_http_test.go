@@ -25,7 +25,7 @@ import (
 	userrepo "source.toby3d.me/website/indieauth/internal/user/repository/memory"
 )
 
-type dependencies struct {
+type Dependencies struct {
 	authService   auth.UseCase
 	clients       client.Repository
 	clientService client.UseCase
@@ -47,7 +47,7 @@ func TestRender(t *testing.T) {
 	deps.store.Store(path.Join(profilerepo.DefaultPathPrefix, me.String()), user.Profile)
 	deps.store.Store(path.Join(userrepo.DefaultPathPrefix, me.String()), user)
 
-	r := router.New()
+	r := router.New() //nolint: varnamelen
 	delivery.NewRequestHandler(delivery.NewRequestHandlerOptions{
 		Auth:    deps.authService,
 		Clients: deps.clientService,
@@ -95,18 +95,18 @@ func TestRender(t *testing.T) {
 	}
 }
 
-func NewDependencies(tb testing.TB) dependencies {
+func NewDependencies(tb testing.TB) Dependencies {
 	tb.Helper()
 
 	config := domain.TestConfig(tb)
 	matcher := language.NewMatcher(message.DefaultCatalog.Languages())
 	store := new(sync.Map)
 	clients := clientrepo.NewMemoryClientRepository(store)
-	sessions := sessionrepo.NewMemorySessionRepository(config, store)
+	sessions := sessionrepo.NewMemorySessionRepository(store, config)
 	authService := ucase.NewAuthUseCase(sessions, config)
 	clientService := clientucase.NewClientUseCase(clients)
 
-	return dependencies{
+	return Dependencies{
 		authService:   authService,
 		clients:       clients,
 		clientService: clientService,

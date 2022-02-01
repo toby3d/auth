@@ -19,7 +19,7 @@ import (
 	tokenucase "source.toby3d.me/website/indieauth/internal/token/usecase"
 )
 
-type dependencies struct {
+type Dependencies struct {
 	client       *domain.Client
 	config       *domain.Config
 	matcher      language.Matcher
@@ -34,7 +34,7 @@ func TestRead(t *testing.T) {
 
 	deps := NewDependencies(t)
 
-	r := router.New()
+	r := router.New() //nolint: varnamelen
 	delivery.NewRequestHandler(delivery.NewRequestHandlerOptions{
 		Client:  deps.client,
 		Config:  deps.config,
@@ -62,18 +62,18 @@ func TestRead(t *testing.T) {
 	}
 }
 
-func NewDependencies(tb testing.TB) dependencies {
+func NewDependencies(tb testing.TB) Dependencies {
 	tb.Helper()
 
 	client := domain.TestClient(tb)
 	config := domain.TestConfig(tb)
 	matcher := language.NewMatcher(message.DefaultCatalog.Languages())
 	store := new(sync.Map)
-	sessions := sessionrepo.NewMemorySessionRepository(config, store)
+	sessions := sessionrepo.NewMemorySessionRepository(store, config)
 	tokens := tokenrepo.NewMemoryTokenRepository(store)
 	tokenService := tokenucase.NewTokenUseCase(tokens, sessions, config)
 
-	return dependencies{
+	return Dependencies{
 		client:       client,
 		config:       config,
 		matcher:      matcher,

@@ -25,7 +25,7 @@ type (
 
 const DefaultPathPrefix string = "sessions"
 
-func NewMemorySessionRepository(config *domain.Config, store *sync.Map) session.Repository {
+func NewMemorySessionRepository(store *sync.Map, config *domain.Config) session.Repository {
 	return &memorySessionRepository{
 		config: config,
 		store:  store,
