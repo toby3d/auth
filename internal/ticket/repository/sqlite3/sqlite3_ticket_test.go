@@ -34,7 +34,7 @@ func TestCreate(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	if err := repository.NewSQLite3TicketRepository(db, domain.TestConfig(t)).
-		Create(context.Background(), ticket); err != nil {
+		Create(context.TODO(), ticket); err != nil {
 		t.Error(err)
 	}
 }
@@ -64,7 +64,7 @@ func TestGetAndDelete(t *testing.T) {
 	mock.ExpectCommit()
 
 	result, err := repository.NewSQLite3TicketRepository(db, domain.TestConfig(t)).
-		GetAndDelete(context.Background(), ticket.Ticket)
+		GetAndDelete(context.TODO(), ticket.Ticket)
 	if err != nil {
 		t.Fatal(err)
 	}

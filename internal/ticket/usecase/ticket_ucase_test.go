@@ -40,7 +40,7 @@ func TestRedeem(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	result, err := ucase.NewTicketUseCase(nil, client, domain.TestConfig(t)).
-		Redeem(context.Background(), ticket)
+		Redeem(context.TODO(), ticket)
 	require.NoError(t, err)
 	assert.Equal(t, token.AccessToken, result.AccessToken)
 	assert.Equal(t, token.Me.String(), result.Me.String())

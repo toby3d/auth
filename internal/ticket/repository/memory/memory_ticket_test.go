@@ -21,7 +21,7 @@ func TestCreate(t *testing.T) {
 	ticket := domain.TestTicket(t)
 
 	require.NoError(t, repository.NewMemoryTicketRepository(store, domain.TestConfig(t)).
-		Create(context.Background(), ticket))
+		Create(context.TODO(), ticket))
 
 	src, ok := store.Load(path.Join(repository.DefaultPathPrefix, ticket.Ticket))
 	require.True(t, ok)
@@ -43,7 +43,7 @@ func TestGetAndDelete(t *testing.T) {
 	})
 
 	result, err := repository.NewMemoryTicketRepository(store, domain.TestConfig(t)).
-		GetAndDelete(context.Background(), ticket.Ticket)
+		GetAndDelete(context.TODO(), ticket.Ticket)
 	require.NoError(t, err)
 	assert.Equal(t, ticket, result)
 
