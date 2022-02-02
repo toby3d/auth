@@ -144,12 +144,32 @@ func TestCodeChallengeMethod_Validate(t *testing.T) {
 			case domain.CodeChallengeMethodUndefined, domain.CodeChallengeMethodPLAIN:
 				codeChallenge = verifier
 			default:
-				codeChallenge = base64.RawURLEncoding.EncodeToString(tc.hash.Sum([]byte(verifier)))
+				h := tc.hash
+				h.Reset()
+
+				if _, err := h.Write([]byte(verifier)); err != nil {
+					t.Error(err)
+				}
+
+				codeChallenge = base64.RawURLEncoding.EncodeToString(h.Sum(nil))
 			}
 
 			if result := tc.in.Validate(codeChallenge, verifier); result != !tc.expError {
 				t.Errorf("Validate(%s, %s) = %t, want %t", codeChallenge, verifier, result, tc.expError)
 			}
 		})
+	}
+}
+
+func TestCodeChallengeMethod_Validate_IndieAuth(t *testing.T) {
+	t.Parallel()
+
+	if ok := domain.CodeChallengeMethodS256.Validate(
+		"ALiMNf5FvF_LIWLhSkd9tjPKh3PEmai2OrdDBzrVZ3M",
+		"6f535c952339f0670311b4bbec5c41c00805e83291fc7eb15ca4963f82a4d57595787dcc6ee90571fb7789cbd521fe0178ed",
+	); !ok {
+		t.Errorf("Validate(%s, %s) = %t, want %t", "ALiMNf5FvF_LIWLhSkd9tjPKh3PEmai2OrdDBzrVZ3M",
+			"6f535c952339f0670311b4bbec5c41c00805e83291fc7eb15ca4963f82a4d57595787dcc6ee90571fb7789cbd521fe0178ed", ok, true,
+		)
 	}
 }
