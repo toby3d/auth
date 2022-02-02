@@ -1,12 +1,17 @@
 [Unit]
 Description=IndieAuth
-After=multi-user.target
 
 [Service]
-Type=simple
+ExecStart=%h/indieauth/indieauth
+Group=%u
+PermissionsStartOnly=true
 Restart=always
 RestartSec=5s
-ExecStart=/usr/local/bin/indieauth
+StandardError=syslog
+StandardOutput=syslog
+SyslogIdentifier=indieauth
+Type=simple
+WorkingDirectory=%h/indieauth
 
 [Install]
 WantedBy=multi-user.target
