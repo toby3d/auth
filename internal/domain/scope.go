@@ -40,7 +40,7 @@ var (
 	ScopeRead     = Scope{uid: "read"}
 
 	// This scope requests access to the user's default profile information
-	// which include the following properties: name, `photo, url.
+	// which include the following properties: name, photo, url.
 	//
 	// NOTE(toby3d): https://indieauth.net/source/#profile-information
 	ScopeProfile = Scope{uid: "profile"}

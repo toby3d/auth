@@ -280,40 +280,35 @@ func Template(p Page) string {
 func (p *BaseOf) StreamT(qw422016 *qt422016.Writer, format string, args ...interface{}) {
 //line web/baseof.qtpl:82
 	qw422016.N().S(` `)
+//line web/baseof.qtpl:83
+	qw422016.E().S(p.Printer.Sprintf(format, args...))
+//line web/baseof.qtpl:83
+	qw422016.N().S(` `)
 //line web/baseof.qtpl:84
-	result := p.Printer.Sprintf(format, args...)
-
-//line web/baseof.qtpl:85
-	qw422016.N().S(` `)
-//line web/baseof.qtpl:86
-	qw422016.E().S(result)
-//line web/baseof.qtpl:86
-	qw422016.N().S(` `)
-//line web/baseof.qtpl:87
 }
 
-//line web/baseof.qtpl:87
+//line web/baseof.qtpl:84
 func (p *BaseOf) WriteT(qq422016 qtio422016.Writer, format string, args ...interface{}) {
-//line web/baseof.qtpl:87
+//line web/baseof.qtpl:84
 	qw422016 := qt422016.AcquireWriter(qq422016)
-//line web/baseof.qtpl:87
+//line web/baseof.qtpl:84
 	p.StreamT(qw422016, format, args...)
-//line web/baseof.qtpl:87
+//line web/baseof.qtpl:84
 	qt422016.ReleaseWriter(qw422016)
-//line web/baseof.qtpl:87
+//line web/baseof.qtpl:84
 }
 
-//line web/baseof.qtpl:87
+//line web/baseof.qtpl:84
 func (p *BaseOf) T(format string, args ...interface{}) string {
-//line web/baseof.qtpl:87
+//line web/baseof.qtpl:84
 	qb422016 := qt422016.AcquireByteBuffer()
-//line web/baseof.qtpl:87
+//line web/baseof.qtpl:84
 	p.WriteT(qb422016, format, args...)
-//line web/baseof.qtpl:87
+//line web/baseof.qtpl:84
 	qs422016 := string(qb422016.B)
-//line web/baseof.qtpl:87
+//line web/baseof.qtpl:84
 	qt422016.ReleaseByteBuffer(qb422016)
-//line web/baseof.qtpl:87
+//line web/baseof.qtpl:84
 	return qs422016
-//line web/baseof.qtpl:87
+//line web/baseof.qtpl:84
 }

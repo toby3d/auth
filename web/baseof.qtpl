@@ -80,9 +80,6 @@
 {% endfunc %}
 
 {% func (p *BaseOf) T(format string, args ...interface{}) %}
-  {% code
-    result := p.Printer.Sprintf(format, args...)
-  %}
-  {%s result %}
+  {%s p.Printer.Sprintf(format, args...) %}
 {% endfunc %}
 {% endcollapsespace %}
