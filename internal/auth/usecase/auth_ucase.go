@@ -51,29 +51,16 @@ func (useCase *authUseCase) Exchange(ctx context.Context, opts auth.ExchangeOpti
 	}
 
 	if opts.ClientID.String() != session.ClientID.String() {
-		return nil, domain.NewError(
-			domain.ErrorCodeInvalidRequest,
-			"client's URL MUST match the client_id used in the authentication request",
-			"https://indieauth.net/source/#request",
-		)
+		return nil, auth.ErrMismatchClientID
 	}
 
 	if opts.RedirectURI.String() != session.RedirectURI.String() {
-		return nil, domain.NewError(
-			domain.ErrorCodeInvalidRequest,
-			"client's redirect URL MUST match the initial authentication request",
-			"https://indieauth.net/source/#request",
-		)
+		return nil, auth.ErrMismatchRedirectURI
 	}
 
-	if session.CodeChallenge != "" &&
+	if session.CodeChallenge != "" && session.CodeChallengeMethod != domain.CodeChallengeMethodUndefined &&
 		!session.CodeChallengeMethod.Validate(session.CodeChallenge, opts.CodeVerifier) {
-		return nil, domain.NewError(
-			domain.ErrorCodeInvalidRequest,
-			"code_verifier is not hashes to the same value as given in the code_challenge in the original "+
-				"authorization request",
-			"https://indieauth.net/source/#request",
-		)
+		return nil, auth.ErrMismatchPKCE
 	}
 
 	return session.Me, nil

@@ -123,9 +123,7 @@ func (h *RequestHandler) Register(r *router.Router) {
 	chain := middleware.Chain{
 		middleware.CSRFWithConfig(middleware.CSRFConfig{
 			Skipper: func(ctx *http.RequestCtx) bool {
-				matched, _ := path.Match("/api/*", string(ctx.Path()))
-
-				return ctx.IsPost() && matched
+				return ctx.IsPost() && string(ctx.Path()) == "/authorize"
 			},
 			CookieMaxAge:   0,
 			CookieSameSite: http.CookieSameSiteStrictMode,
@@ -175,7 +173,7 @@ func (h *RequestHandler) handleRender(ctx *http.RequestCtx) {
 		Printer:  message.NewPrinter(tag),
 	}
 
-	req := new(AuthAuthorizeRequest)
+	req := NewAuthAuthorizeRequest()
 	if err := req.bind(ctx); err != nil {
 		ctx.SetStatusCode(http.StatusBadRequest)
 		web.WriteTemplate(ctx, &web.ErrorPage{
@@ -232,7 +230,7 @@ func (h *RequestHandler) handleVerify(ctx *http.RequestCtx) {
 
 	encoder := json.NewEncoder(ctx)
 
-	req := new(AuthVerifyRequest)
+	req := NewAuthVerifyRequest()
 	if err := req.bind(ctx); err != nil {
 		ctx.SetStatusCode(http.StatusBadRequest)
 
@@ -313,6 +311,19 @@ func (h *RequestHandler) handleExchange(ctx *http.RequestCtx) {
 	})
 }
 
+func NewAuthAuthorizeRequest() *AuthAuthorizeRequest {
+	return &AuthAuthorizeRequest{
+		ClientID:            new(domain.ClientID),
+		CodeChallenge:       "",
+		CodeChallengeMethod: domain.CodeChallengeMethodUndefined,
+		Me:                  new(domain.Me),
+		RedirectURI:         new(domain.URL),
+		ResponseType:        domain.ResponseTypeUndefined,
+		Scope:               make(domain.Scopes, 0),
+		State:               "",
+	}
+}
+
 func (r *AuthAuthorizeRequest) bind(ctx *http.RequestCtx) error {
 	indieAuthError := new(domain.Error)
 	if err := form.Unmarshal(ctx.QueryArgs(), r); err != nil {
@@ -327,7 +338,6 @@ func (r *AuthAuthorizeRequest) bind(ctx *http.RequestCtx) error {
 		)
 	}
 
-	r.Scope = make(domain.Scopes, 0)
 	if err := r.Scope.UnmarshalForm(ctx.QueryArgs().Peek("scope")); err != nil {
 		if errors.As(err, indieAuthError) {
 			return indieAuthError
@@ -340,11 +350,53 @@ func (r *AuthAuthorizeRequest) bind(ctx *http.RequestCtx) error {
 		)
 	}
 
+	if ctx.QueryArgs().Has("code_challenge") {
+		err := r.CodeChallengeMethod.UnmarshalForm(ctx.QueryArgs().Peek("code_challenge_method"))
+		if err != nil {
+			if errors.As(err, indieAuthError) {
+				return indieAuthError
+			}
+
+			return domain.NewError(
+				domain.ErrorCodeInvalidRequest,
+				err.Error(),
+				"",
+			)
+		}
+	}
+
+	if err := r.ResponseType.UnmarshalForm(ctx.QueryArgs().Peek("response_type")); err != nil {
+		if errors.As(err, indieAuthError) {
+			return indieAuthError
+		}
+
+		return domain.NewError(
+			domain.ErrorCodeUnsupportedResponseType,
+			err.Error(),
+			"",
+		)
+	}
+
 	if r.ResponseType == domain.ResponseTypeID {
 		r.ResponseType = domain.ResponseTypeCode
 	}
 
 	return nil
+}
+
+func NewAuthVerifyRequest() *AuthVerifyRequest {
+	return &AuthVerifyRequest{
+		Authorize:           "",
+		ClientID:            new(domain.ClientID),
+		CodeChallenge:       "",
+		CodeChallengeMethod: domain.CodeChallengeMethodUndefined,
+		Me:                  new(domain.Me),
+		Provider:            "",
+		RedirectURI:         new(domain.URL),
+		ResponseType:        domain.ResponseTypeUndefined,
+		Scope:               make(domain.Scopes, 0),
+		State:               "",
+	}
 }
 
 func (r *AuthVerifyRequest) bind(ctx *http.RequestCtx) error {
@@ -362,7 +414,6 @@ func (r *AuthVerifyRequest) bind(ctx *http.RequestCtx) error {
 		)
 	}
 
-	r.Scope = make(domain.Scopes, 0)
 	if err := r.Scope.UnmarshalForm(bytes.Join(ctx.PostArgs().PeekMulti("scope[]"), []byte(" "))); err != nil {
 		if errors.As(err, indieAuthError) {
 			return indieAuthError
@@ -372,6 +423,33 @@ func (r *AuthVerifyRequest) bind(ctx *http.RequestCtx) error {
 			domain.ErrorCodeInvalidScope,
 			err.Error(),
 			"https://indieweb.org/scope",
+		)
+	}
+
+	if ctx.PostArgs().Has("code_challenge") {
+		err := r.CodeChallengeMethod.UnmarshalForm(ctx.PostArgs().Peek("code_challenge_method"))
+		if err != nil {
+			if errors.As(err, indieAuthError) {
+				return indieAuthError
+			}
+
+			return domain.NewError(
+				domain.ErrorCodeInvalidRequest,
+				err.Error(),
+				"",
+			)
+		}
+	}
+
+	if err := r.ResponseType.UnmarshalForm(ctx.PostArgs().Peek("response_type")); err != nil {
+		if errors.As(err, indieAuthError) {
+			return indieAuthError
+		}
+
+		return domain.NewError(
+			domain.ErrorCodeUnsupportedResponseType,
+			err.Error(),
+			"",
 		)
 	}
 
