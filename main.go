@@ -35,6 +35,7 @@ import (
 	authucase "source.toby3d.me/website/indieauth/internal/auth/usecase"
 	"source.toby3d.me/website/indieauth/internal/client"
 	clienthttpdelivery "source.toby3d.me/website/indieauth/internal/client/delivery/http"
+	clienthttprepo "source.toby3d.me/website/indieauth/internal/client/repository/http"
 	clientucase "source.toby3d.me/website/indieauth/internal/client/usecase"
 	"source.toby3d.me/website/indieauth/internal/domain"
 	healthhttpdelivery "source.toby3d.me/website/indieauth/internal/health/delivery/http"
@@ -183,6 +184,7 @@ func main() {
 		ReadTimeout:  DefaultReadTimeout,
 		WriteTimeout: DefaultWriteTimeout,
 	}
+	opts.Clients = clienthttprepo.NewHTTPClientRepository(opts.Client)
 
 	r := router.New() //nolint: varnamelen
 	NewApp(opts).Register(r)
