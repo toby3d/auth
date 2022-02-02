@@ -100,8 +100,10 @@ func init() {
 	flag.BoolVar(&enablePprof, "pprof", false, "enable pprof mode")
 	flag.Parse()
 
+	viper.AddConfigPath(".")
 	viper.AddConfigPath(filepath.Join(".", "configs"))
 	viper.SetConfigName("config")
+	viper.SetConfigType("yml")
 
 	if configPath != "" {
 		viper.SetConfigFile(configPath)
