@@ -21,7 +21,7 @@ type (
 	ClientCallbackRequest struct {
 		Iss              *domain.ClientID `form:"iss"`
 		Code             string           `form:"code"`
-		Error            string           `form:"error"`
+		Error            domain.ErrorCode `form:"error"`
 		ErrorDescription string           `form:"error_description"`
 		State            string           `form:"state"`
 	}
@@ -88,23 +88,55 @@ func (h *RequestHandler) handleRender(ctx *http.RequestCtx) {
 }
 
 func (h *RequestHandler) handleCallback(ctx *http.RequestCtx) {
+	ctx.SetContentType(common.MIMETextHTMLCharsetUTF8)
+
+	tags, _, _ := language.ParseAcceptLanguage(string(ctx.Request.Header.Peek(http.HeaderAcceptLanguage)))
+	tag, _, _ := h.matcher.Match(tags...)
+	baseOf := web.BaseOf{
+		Config:   h.config,
+		Language: tag,
+		Printer:  message.NewPrinter(tag),
+	}
+
 	req := new(ClientCallbackRequest)
 	if err := req.bind(ctx); err != nil {
-		ctx.Error(err.Error(), http.StatusInternalServerError)
+		ctx.SetStatusCode(http.StatusInternalServerError)
+		web.WriteTemplate(ctx, &web.ErrorPage{
+			BaseOf: baseOf,
+			Error:  err,
+		})
 
 		return
 	}
 
-	if req.Error != "" {
-		ctx.Error(req.ErrorDescription, http.StatusUnauthorized)
+	if req.Error != domain.ErrorCodeUndefined {
+		ctx.SetStatusCode(http.StatusUnauthorized)
+		web.WriteTemplate(ctx, &web.ErrorPage{
+			BaseOf: baseOf,
+			Error: domain.NewError(
+				domain.ErrorCodeAccessDenied,
+				req.ErrorDescription,
+				"",
+				req.State,
+			),
+		})
 
 		return
 	}
 
 	// TODO(toby3d): load and check state
 
-	if req.Iss.String() != h.client.ID.String() {
-		ctx.Error("iss is not equal", http.StatusBadRequest)
+	if req.Iss == nil || req.Iss.String() != h.client.ID.String() {
+		ctx.SetStatusCode(http.StatusBadRequest)
+		web.WriteTemplate(ctx, &web.ErrorPage{
+			BaseOf: baseOf,
+			Error: domain.NewError(
+				domain.ErrorCodeInvalidClient,
+				"iss does not match client_id",
+				"https://indieauth.net/source/#authorization-response",
+				req.State,
+			),
+		})
 
 		return
 	}
@@ -116,22 +148,19 @@ func (h *RequestHandler) handleCallback(ctx *http.RequestCtx) {
 		CodeVerifier: "", // TODO(toby3d): validate PKCE here
 	})
 	if err != nil {
-		ctx.Error(err.Error(), http.StatusBadRequest)
+		ctx.SetStatusCode(http.StatusBadRequest)
+		web.WriteTemplate(ctx, &web.ErrorPage{
+			BaseOf: baseOf,
+			Error:  err,
+		})
 
 		return
 	}
 
-	tags, _, _ := language.ParseAcceptLanguage(string(ctx.Request.Header.Peek(http.HeaderAcceptLanguage)))
-	tag, _, _ := h.matcher.Match(tags...)
-
 	ctx.SetContentType(common.MIMETextHTMLCharsetUTF8)
 	web.WriteTemplate(ctx, &web.CallbackPage{
-		BaseOf: web.BaseOf{
-			Config:   h.config,
-			Language: tag,
-			Printer:  message.NewPrinter(tag),
-		},
-		Token: token,
+		BaseOf: baseOf,
+		Token:  token,
 	})
 }
 
@@ -144,6 +173,17 @@ func (req *ClientCallbackRequest) bind(ctx *http.RequestCtx) error {
 		}
 
 		return domain.NewError(domain.ErrorCodeInvalidRequest, err.Error(), "")
+	}
+
+	// TODO(toby3d): fix this in form package logic.
+	if ctx.QueryArgs().Has("error") {
+		if err := req.Error.UnmarshalForm(ctx.QueryArgs().Peek("error")); err != nil {
+			if errors.As(err, indieAuthError) {
+				return indieAuthError
+			}
+
+			return domain.NewError(domain.ErrorCodeInvalidRequest, err.Error(), "")
+		}
 	}
 
 	return nil
