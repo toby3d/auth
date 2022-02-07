@@ -3,6 +3,7 @@ package domain
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	http "github.com/valyala/fasthttp"
 	"golang.org/x/xerrors"
@@ -185,9 +186,39 @@ var (
 	}
 )
 
+var ErrErrorCodeUnknown error = NewError(ErrorCodeInvalidRequest, "unknown error code", "")
+
+//nolint: gochecknoglobals // maps cannot be constants
+var uidsErrorCodes = map[string]ErrorCode{
+	ErrorCodeAccessDenied.uid:            ErrorCodeAccessDenied,
+	ErrorCodeInsufficientScope.uid:       ErrorCodeInsufficientScope,
+	ErrorCodeInvalidClient.uid:           ErrorCodeInvalidClient,
+	ErrorCodeInvalidGrant.uid:            ErrorCodeInvalidGrant,
+	ErrorCodeInvalidRequest.uid:          ErrorCodeInvalidRequest,
+	ErrorCodeInvalidScope.uid:            ErrorCodeInvalidScope,
+	ErrorCodeInvalidToken.uid:            ErrorCodeInvalidToken,
+	ErrorCodeServerError.uid:             ErrorCodeServerError,
+	ErrorCodeTemporarilyUnavailable.uid:  ErrorCodeTemporarilyUnavailable,
+	ErrorCodeUnauthorizedClient.uid:      ErrorCodeUnauthorizedClient,
+	ErrorCodeUnsupportedGrantType.uid:    ErrorCodeUnsupportedGrantType,
+	ErrorCodeUnsupportedResponseType.uid: ErrorCodeUnsupportedResponseType,
+}
+
 // String returns a string representation of the error code.
 func (ec ErrorCode) String() string {
 	return ec.uid
+}
+
+// UnmarshalForm implements custom unmarshler for form values.
+func (ec *ErrorCode) UnmarshalForm(v []byte) error {
+	code, ok := uidsErrorCodes[strings.ToLower(string(v))]
+	if !ok {
+		return fmt.Errorf("UnmarshalForm: %w", ErrErrorCodeUnknown)
+	}
+
+	*ec = code
+
+	return nil
 }
 
 // MarshalJSON encodes the error code into its string representation in JSON.
