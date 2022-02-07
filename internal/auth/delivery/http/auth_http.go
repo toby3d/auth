@@ -123,13 +123,15 @@ func (h *RequestHandler) Register(r *router.Router) {
 	chain := middleware.Chain{
 		middleware.CSRFWithConfig(middleware.CSRFConfig{
 			Skipper: func(ctx *http.RequestCtx) bool {
-				return ctx.IsPost() && string(ctx.Path()) == "/authorize"
+				matched, _ := path.Match("/authorize*", string(ctx.Path()))
+
+				return ctx.IsPost() && matched
 			},
 			CookieMaxAge:   0,
 			CookieSameSite: http.CookieSameSiteStrictMode,
-			ContextKey:     "",
-			CookieDomain:   "",
-			CookieName:     "_csrf",
+			ContextKey:     "csrf",
+			CookieDomain:   h.config.Server.Domain,
+			CookieName:     "__Secure-csrf",
 			CookiePath:     "",
 			TokenLookup:    "form:_csrf",
 			TokenLength:    0,
@@ -226,6 +228,7 @@ func (h *RequestHandler) handleRender(ctx *http.RequestCtx) {
 }
 
 func (h *RequestHandler) handleVerify(ctx *http.RequestCtx) {
+	ctx.Response.Header.Set(http.HeaderAccessControlAllowOrigin, h.config.Server.Domain)
 	ctx.SetContentType(common.MIMEApplicationJSONCharsetUTF8)
 
 	encoder := json.NewEncoder(ctx)
@@ -399,6 +402,7 @@ func NewAuthVerifyRequest() *AuthVerifyRequest {
 	}
 }
 
+//nolint: funlen
 func (r *AuthVerifyRequest) bind(ctx *http.RequestCtx) error {
 	indieAuthError := new(domain.Error)
 

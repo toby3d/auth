@@ -65,10 +65,10 @@ func (h *RequestHandler) Register(r *router.Router) {
 				return ctx.IsPost() && matched
 			},
 			CookieMaxAge:   0,
-			CookieSameSite: http.CookieSameSiteLaxMode,
+			CookieSameSite: http.CookieSameSiteStrictMode,
 			ContextKey:     "csrf",
-			CookieDomain:   "",
-			CookieName:     "_csrf",
+			CookieDomain:   h.config.Server.Domain,
+			CookieName:     "__Secure-csrf",
 			CookiePath:     "",
 			TokenLookup:    "form:_csrf",
 			TokenLength:    0,
@@ -88,7 +88,8 @@ func (h *RequestHandler) Register(r *router.Router) {
 			SigningMethod:           jwa.SignatureAlgorithm(h.config.JWT.Algorithm),
 			Skipper:                 middleware.DefaultSkipper,
 			SuccessHandler:          nil,
-			TokenLookup:             middleware.SourceHeader + ":" + http.HeaderAuthorization,
+			TokenLookup: middleware.SourceHeader + ":" + http.HeaderAuthorization +
+				"," + middleware.SourceCookie + ":" + "__Secure-auth-token",
 		}),
 		middleware.LogFmt(),
 	}
@@ -117,6 +118,7 @@ func (h *RequestHandler) handleRender(ctx *http.RequestCtx) {
 }
 
 func (h *RequestHandler) handleSend(ctx *http.RequestCtx) {
+	ctx.Response.Header.Set(http.HeaderAccessControlAllowOrigin, h.config.Server.Domain)
 	ctx.SetContentType(common.MIMEApplicationJSONCharsetUTF8)
 	ctx.SetStatusCode(http.StatusOK)
 
