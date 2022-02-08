@@ -13,14 +13,14 @@ import (
 
 // Me is a URL user identifier.
 type Me struct {
-	me *http.URI
+	id *http.URI
 }
 
 // ParseMe parse string as me URL identifier.
 //nolint: funlen, cyclop
 func ParseMe(raw string) (*Me, error) {
-	me := http.AcquireURI()
-	if err := me.Parse(nil, []byte(raw)); err != nil {
+	id := http.AcquireURI()
+	if err := id.Parse(nil, []byte(raw)); err != nil {
 		return nil, NewError(
 			ErrorCodeInvalidRequest,
 			err.Error(),
@@ -29,7 +29,7 @@ func ParseMe(raw string) (*Me, error) {
 		)
 	}
 
-	scheme := string(me.Scheme())
+	scheme := string(id.Scheme())
 	if scheme != "http" && scheme != "https" {
 		return nil, NewError(
 			ErrorCodeInvalidRequest,
@@ -39,7 +39,7 @@ func ParseMe(raw string) (*Me, error) {
 		)
 	}
 
-	path := string(me.PathOriginal())
+	path := string(id.PathOriginal())
 	if path == "" || strings.Contains(path, "/.") || strings.Contains(path, "/..") {
 		return nil, NewError(
 			ErrorCodeInvalidRequest,
@@ -50,7 +50,7 @@ func ParseMe(raw string) (*Me, error) {
 		)
 	}
 
-	if me.Hash() != nil {
+	if id.Hash() != nil {
 		return nil, NewError(
 			ErrorCodeInvalidRequest,
 			"profile URL MUST NOT contain a fragment component",
@@ -59,7 +59,7 @@ func ParseMe(raw string) (*Me, error) {
 		)
 	}
 
-	if me.Username() != nil || me.Password() != nil {
+	if id.Username() != nil || id.Password() != nil {
 		return nil, NewError(
 			ErrorCodeInvalidRequest,
 			"profile URL MUST NOT contain a username or password component",
@@ -68,7 +68,7 @@ func ParseMe(raw string) (*Me, error) {
 		)
 	}
 
-	domain := string(me.Host())
+	domain := string(id.Host())
 	if domain == "" {
 		return nil, NewError(
 			ErrorCodeInvalidRequest,
@@ -96,7 +96,7 @@ func ParseMe(raw string) (*Me, error) {
 		)
 	}
 
-	return &Me{me: me}, nil
+	return &Me{id: id}, nil
 }
 
 // TestMe returns valid random generated me for tests.
@@ -148,41 +148,41 @@ func (m Me) MarshalJSON() ([]byte, error) {
 // URI returns copy of parsed me in *fasthttp.URI representation.
 // This copy MUST be released via fasthttp.ReleaseURI.
 func (m Me) URI() *http.URI {
-	if m.me == nil {
+	if m.id == nil {
 		return nil
 	}
 
 	u := http.AcquireURI()
-	m.me.CopyTo(u)
+	m.id.CopyTo(u)
 
 	return u
 }
 
 // URL returns copy of parsed me in *url.URL representation.
 func (m Me) URL() *url.URL {
-	if m.me == nil {
+	if m.id == nil {
 		return nil
 	}
 
 	return &url.URL{
 		ForceQuery:  false,
-		Fragment:    string(m.me.Hash()),
-		Host:        string(m.me.Host()),
+		Fragment:    string(m.id.Hash()),
+		Host:        string(m.id.Host()),
 		Opaque:      "",
-		Path:        string(m.me.Path()),
+		Path:        string(m.id.Path()),
 		RawFragment: "",
-		RawPath:     string(m.me.PathOriginal()),
-		RawQuery:    string(m.me.QueryString()),
-		Scheme:      string(m.me.Scheme()),
+		RawPath:     string(m.id.PathOriginal()),
+		RawQuery:    string(m.id.QueryString()),
+		Scheme:      string(m.id.Scheme()),
 		User:        nil,
 	}
 }
 
 // String returns string representation of me.
 func (m Me) String() string {
-	if m.me == nil {
+	if m.id == nil {
 		return ""
 	}
 
-	return m.me.String()
+	return m.id.String()
 }
