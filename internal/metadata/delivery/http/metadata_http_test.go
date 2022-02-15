@@ -1,7 +1,6 @@
 package http_test
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/fasthttp/router"
@@ -17,8 +16,8 @@ func TestMetadata(t *testing.T) {
 	t.Parallel()
 
 	r := router.New()
-	cfg := domain.TestConfig(t)
-	delivery.NewRequestHandler(cfg).Register(r)
+	metadata := domain.TestMetadata(t)
+	delivery.NewRequestHandler(metadata).Register(r)
 
 	client, _, cleanup := httptest.New(t, r.Handler)
 	t.Cleanup(cleanup)
@@ -36,15 +35,7 @@ func TestMetadata(t *testing.T) {
 
 	result := new(delivery.MetadataResponse)
 	if err = json.Unmarshal(body, result); err != nil {
-		t.Fatal(err)
-	}
-
-	expResult := delivery.DefaultMetadataResponse
-	expResult.Issuer = cfg.Server.GetRootURL()
-	expResult.AuthorizationEndpoint = expResult.Issuer + "authorize"
-	expResult.TokenEndpoint = expResult.Issuer + "token"
-
-	if !reflect.DeepEqual(*result, expResult) {
-		t.Errorf("Unmarshal(%s) = %+v, want %+v", body, result, expResult)
+		e := err.(*json.SyntaxError)
+		t.Fatalf("%s#ERROR#%s", body[:e.Offset], body[e.Offset:])
 	}
 }

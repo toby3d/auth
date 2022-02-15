@@ -14,7 +14,7 @@ type URL struct {
 	*http.URI
 }
 
-// ParseURL parse strings as URL.
+// ParseURL parse string as URL.
 func ParseURL(src string) (*URL, error) {
 	u := http.AcquireURI()
 	if err := u.Parse(nil, []byte(src)); err != nil {
@@ -22,6 +22,16 @@ func ParseURL(src string) (*URL, error) {
 	}
 
 	return &URL{URI: u}, nil
+}
+
+// MustParseURL parse string as URL or panic.
+func MustParseURL(src string) *URL {
+	uri, err := ParseURL(src)
+	if err != nil {
+		panic("MustParseURL: " + err.Error())
+	}
+
+	return uri
 }
 
 // TestURL returns URL of provided input for tests.
@@ -40,7 +50,7 @@ func TestURL(tb testing.TB, src string) *URL {
 func (u *URL) UnmarshalForm(v []byte) error {
 	url, err := ParseURL(string(v))
 	if err != nil {
-		return fmt.Errorf("UnmarshalForm: %w", err)
+		return fmt.Errorf("URL: UnmarshalForm: %w", err)
 	}
 
 	*u = *url
@@ -52,17 +62,21 @@ func (u *URL) UnmarshalForm(v []byte) error {
 func (u *URL) UnmarshalJSON(v []byte) error {
 	src, err := strconv.Unquote(string(v))
 	if err != nil {
-		return fmt.Errorf("UnmarshalJSON: %w", err)
+		return fmt.Errorf("URL: UnmarshalJSON: %w", err)
 	}
 
 	url, err := ParseURL(src)
 	if err != nil {
-		return fmt.Errorf("UnmarshalJSON: %w", err)
+		return fmt.Errorf("URL: UnmarshalJSON: %w", err)
 	}
 
 	*u = *url
 
 	return nil
+}
+
+func (u URL) MarshalJSON() ([]byte, error) {
+	return []byte(strconv.Quote(u.String())), nil
 }
 
 // URL returns url.URL representation of URL.

@@ -35,7 +35,7 @@ type Dependencies struct {
 	store         *sync.Map
 }
 
-func TestRender(t *testing.T) {
+func TestAuthorize(t *testing.T) {
 	t.Parallel()
 
 	deps := NewDependencies(t)

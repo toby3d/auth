@@ -1,4 +1,3 @@
-//nolint: dupl
 package domain
 
 import (
@@ -44,7 +43,7 @@ func ParseAction(uid string) (Action, error) {
 func (a *Action) UnmarshalForm(v []byte) error {
 	action, err := ParseAction(string(v))
 	if err != nil {
-		return fmt.Errorf("UnmarshalForm: %w", err)
+		return fmt.Errorf("Action: UnmarshalForm: %w", err)
 	}
 
 	*a = action
@@ -56,12 +55,12 @@ func (a *Action) UnmarshalForm(v []byte) error {
 func (a *Action) UnmarshalJSON(v []byte) error {
 	src, err := strconv.Unquote(string(v))
 	if err != nil {
-		return fmt.Errorf("UnmarshalJSON: %w", err)
+		return fmt.Errorf("Action: UnmarshalJSON: %w", err)
 	}
 
 	action, err := ParseAction(src)
 	if err != nil {
-		return fmt.Errorf("UnmarshalJSON: %w", err)
+		return fmt.Errorf("Action: UnmarshalJSON: %w", err)
 	}
 
 	*a = action

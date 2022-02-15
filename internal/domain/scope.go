@@ -81,6 +81,15 @@ func ParseScope(uid string) (Scope, error) {
 	return ScopeUndefined, fmt.Errorf("%w: %s", ErrScopeUnknown, uid)
 }
 
+func (s Scope) MarshalJSON() ([]byte, error) {
+	return []byte(strconv.Quote(s.uid)), nil
+}
+
+// String returns string representation of scope.
+func (s Scope) String() string {
+	return s.uid
+}
+
 // UnmarshalForm implements custom unmarshler for form values.
 func (s *Scopes) UnmarshalForm(v []byte) error {
 	scopes := make(Scopes, 0)
@@ -88,7 +97,7 @@ func (s *Scopes) UnmarshalForm(v []byte) error {
 	for _, rawScope := range strings.Fields(string(v)) {
 		scope, err := ParseScope(rawScope)
 		if err != nil {
-			return fmt.Errorf("UnmarshalForm: %w", err)
+			return fmt.Errorf("Scopes: UnmarshalForm: %w", err)
 		}
 
 		if scopes.Has(scope) {
@@ -107,7 +116,7 @@ func (s *Scopes) UnmarshalForm(v []byte) error {
 func (s *Scopes) UnmarshalJSON(v []byte) error {
 	src, err := strconv.Unquote(string(v))
 	if err != nil {
-		return fmt.Errorf("UnmarshalJSON: %w", err)
+		return fmt.Errorf("Scopes: UnmarshalJSON: %w", err)
 	}
 
 	result := make(Scopes, 0)
@@ -115,7 +124,7 @@ func (s *Scopes) UnmarshalJSON(v []byte) error {
 	for _, rawScope := range strings.Fields(src) {
 		scope, err := ParseScope(rawScope)
 		if err != nil {
-			return fmt.Errorf("UnmarshalJSON: %w", err)
+			return fmt.Errorf("Scopes: UnmarshalJSON: %w", err)
 		}
 
 		if result.Has(scope) {
@@ -139,11 +148,6 @@ func (s Scopes) MarshalJSON() ([]byte, error) {
 	}
 
 	return []byte(strconv.Quote(strings.Join(scopes, " "))), nil
-}
-
-// String returns string representation of scope.
-func (s Scope) String() string {
-	return s.uid
 }
 
 // String returns string representation of scopes.

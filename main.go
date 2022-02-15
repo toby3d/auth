@@ -279,7 +279,45 @@ func NewApp(opts NewAppOptions) *App {
 func (app *App) Register(r *router.Router) {
 	tickethttpdelivery.NewRequestHandler(app.tickets, app.matcher, config).Register(r)
 	healthhttpdelivery.NewRequestHandler().Register(r)
-	metadatahttpdelivery.NewRequestHandler(config).Register(r)
+	metadatahttpdelivery.NewRequestHandler(&domain.Metadata{
+		Issuer:                indieAuthClient.ID,
+		AuthorizationEndpoint: domain.MustParseURL(indieAuthClient.ID.String() + "authorize"),
+		TokenEndpoint:         domain.MustParseURL(indieAuthClient.ID.String() + "token"),
+		ScopesSupported: domain.Scopes{
+			domain.ScopeBlock,
+			domain.ScopeChannels,
+			domain.ScopeCreate,
+			domain.ScopeDelete,
+			domain.ScopeDraft,
+			domain.ScopeEmail,
+			domain.ScopeFollow,
+			domain.ScopeMedia,
+			domain.ScopeMute,
+			domain.ScopeProfile,
+			domain.ScopeRead,
+			domain.ScopeUpdate,
+		},
+		ResponseTypesSupported: []domain.ResponseType{
+			domain.ResponseTypeCode,
+			domain.ResponseTypeID,
+		},
+		GrantTypesSupported: []domain.GrantType{
+			domain.GrantTypeAuthorizationCode,
+			domain.GrantTypeTicket,
+		},
+		ServiceDocumentation: domain.MustParseURL("https://indieauth.net/source/"),
+		CodeChallengeMethodsSupported: []domain.CodeChallengeMethod{
+			domain.CodeChallengeMethodMD5,
+			domain.CodeChallengeMethodPLAIN,
+			domain.CodeChallengeMethodS1,
+			domain.CodeChallengeMethodS256,
+			domain.CodeChallengeMethodS512,
+		},
+		AuthorizationResponseIssParameterSupported: true,
+		TicketEndpoint: domain.MustParseURL(indieAuthClient.ID.String() + "ticket"),
+		Micropub:       nil,
+		Microsub:       nil,
+	}).Register(r)
 	tokenhttpdelivery.NewRequestHandler(app.tokens, app.tickets).Register(r)
 	clienthttpdelivery.NewRequestHandler(clienthttpdelivery.NewRequestHandlerOptions{
 		Client:  indieAuthClient,

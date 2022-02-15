@@ -46,7 +46,7 @@ func ParseGrantType(uid string) (GrantType, error) {
 func (gt *GrantType) UnmarshalForm(src []byte) error {
 	responseType, err := ParseGrantType(string(src))
 	if err != nil {
-		return fmt.Errorf("UnmarshalForm: %w", err)
+		return fmt.Errorf("GrantType: UnmarshalForm: %w", err)
 	}
 
 	*gt = responseType
@@ -58,17 +58,21 @@ func (gt *GrantType) UnmarshalForm(src []byte) error {
 func (gt *GrantType) UnmarshalJSON(v []byte) error {
 	src, err := strconv.Unquote(string(v))
 	if err != nil {
-		return fmt.Errorf("UnmarshalJSON: %w", err)
+		return fmt.Errorf("GrantType: UnmarshalJSON: %w", err)
 	}
 
 	responseType, err := ParseGrantType(src)
 	if err != nil {
-		return fmt.Errorf("UnmarshalJSON: %w", err)
+		return fmt.Errorf("GrantType: UnmarshalJSON: %w", err)
 	}
 
 	*gt = responseType
 
 	return nil
+}
+
+func (gt GrantType) MarshalJSON() ([]byte, error) {
+	return []byte(strconv.Quote(gt.uid)), nil
 }
 
 // String returns string representation of grant type.

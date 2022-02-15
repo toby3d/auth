@@ -107,7 +107,7 @@ func ParseClientID(src string) (*ClientID, error) {
 func TestClientID(tb testing.TB) *ClientID {
 	tb.Helper()
 
-	clientID, err := ParseClientID("https://app.example.com/")
+	clientID, err := ParseClientID("https://indieauth.example.com/")
 	if err != nil {
 		tb.Fatal(err)
 	}
@@ -119,7 +119,7 @@ func TestClientID(tb testing.TB) *ClientID {
 func (cid *ClientID) UnmarshalForm(v []byte) error {
 	clientID, err := ParseClientID(string(v))
 	if err != nil {
-		return fmt.Errorf("UnmarshalForm: %w", err)
+		return fmt.Errorf("ClientID: UnmarshalForm: %w", err)
 	}
 
 	*cid = *clientID
@@ -131,12 +131,12 @@ func (cid *ClientID) UnmarshalForm(v []byte) error {
 func (cid *ClientID) UnmarshalJSON(v []byte) error {
 	src, err := strconv.Unquote(string(v))
 	if err != nil {
-		return fmt.Errorf("UnmarshalJSON: %w", err)
+		return fmt.Errorf("ClientID: UnmarshalJSON: %w", err)
 	}
 
 	clientID, err := ParseClientID(src)
 	if err != nil {
-		return fmt.Errorf("UnmarshalJSON: %w", err)
+		return fmt.Errorf("ClientID: UnmarshalJSON: %w", err)
 	}
 
 	*cid = *clientID

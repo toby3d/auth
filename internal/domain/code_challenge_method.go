@@ -35,15 +35,13 @@ var (
 	}
 
 	CodeChallengeMethodMD5 = CodeChallengeMethod{
-		uid: "MD5",
-		//nolint: gosec // support old clients
-		hash: md5.New(),
+		uid:  "MD5",
+		hash: md5.New(), //nolint: gosec // support old clients
 	}
 
 	CodeChallengeMethodS1 = CodeChallengeMethod{
-		uid: "S1",
-		//nolint: gosec // support old clients
-		hash: sha1.New(),
+		uid:  "S1",
+		hash: sha1.New(), //nolint: gosec // support old clients
 	}
 
 	CodeChallengeMethodS256 = CodeChallengeMethod{
@@ -64,7 +62,7 @@ var ErrCodeChallengeMethodUnknown error = NewError(
 )
 
 //nolint: gochecknoglobals // maps cannot be constants
-var slugsMethods = map[string]CodeChallengeMethod{
+var uidsMethods = map[string]CodeChallengeMethod{
 	CodeChallengeMethodMD5.uid:   CodeChallengeMethodMD5,
 	CodeChallengeMethodPLAIN.uid: CodeChallengeMethodPLAIN,
 	CodeChallengeMethodS1.uid:    CodeChallengeMethodS1,
@@ -75,7 +73,7 @@ var slugsMethods = map[string]CodeChallengeMethod{
 // ParseCodeChallengeMethod parse string identifier of code challenge method
 // into struct enum.
 func ParseCodeChallengeMethod(uid string) (CodeChallengeMethod, error) {
-	if method, ok := slugsMethods[strings.ToUpper(uid)]; ok {
+	if method, ok := uidsMethods[strings.ToUpper(uid)]; ok {
 		return method, nil
 	}
 
@@ -86,7 +84,7 @@ func ParseCodeChallengeMethod(uid string) (CodeChallengeMethod, error) {
 func (ccm *CodeChallengeMethod) UnmarshalForm(v []byte) error {
 	method, err := ParseCodeChallengeMethod(string(v))
 	if err != nil {
-		return fmt.Errorf("UnmarshalForm: %w", err)
+		return fmt.Errorf("CodeChallengeMethod: UnmarshalForm: %w", err)
 	}
 
 	*ccm = method
@@ -98,17 +96,21 @@ func (ccm *CodeChallengeMethod) UnmarshalForm(v []byte) error {
 func (ccm *CodeChallengeMethod) UnmarshalJSON(v []byte) error {
 	src, err := strconv.Unquote(string(v))
 	if err != nil {
-		return fmt.Errorf("UnmarshalJSON: %w", err)
+		return fmt.Errorf("CodeChallengeMethod: UnmarshalJSON: %w", err)
 	}
 
 	method, err := ParseCodeChallengeMethod(src)
 	if err != nil {
-		return fmt.Errorf("UnmarshalJSON: %w", err)
+		return fmt.Errorf("CodeChallengeMethod: UnmarshalJSON: %w", err)
 	}
 
 	*ccm = method
 
 	return nil
+}
+
+func (ccm CodeChallengeMethod) MarshalJSON() ([]byte, error) {
+	return []byte(strconv.Quote(ccm.uid)), nil
 }
 
 // String returns string representation of code challenge method.

@@ -1,5 +1,7 @@
 package domain
 
+import "testing"
+
 //nolint: tagliatelle // https://indieauth.net/source/#indieauth-server-metadata
 type Metadata struct {
 	// The server's issuer identifier. The issuer identifier is a URL that
@@ -10,7 +12,7 @@ type Metadata struct {
 	// issuer URL could be https://example.com/, or for a metadata URL of
 	// https://example.com/wp-json/indieauth/1.0/metadata, the issuer URL
 	// could be https://example.com/wp-json/indieauth/1.0
-	Issuer *URL `json:"issuer"`
+	Issuer *ClientID `json:"issuer"`
 
 	// The Authorization Endpoint.
 	AuthorizationEndpoint *URL `json:"authorization_endpoint"`
@@ -59,4 +61,49 @@ type Metadata struct {
 	// The Microsub Endpoint.
 	// WARN(toby3d): experimental
 	Microsub *URL `json:"microsub,omitempty"`
+}
+
+// TestMetadata returns valid random generated Metadata for tests.
+func TestMetadata(tb testing.TB) *Metadata {
+	tb.Helper()
+
+	return &Metadata{
+		Issuer:                TestClientID(tb),
+		AuthorizationEndpoint: TestURL(tb, "https://indieauth.example.com/auth"),
+		TokenEndpoint:         TestURL(tb, "https://indieauth.example.com/token"),
+		ScopesSupported: Scopes{
+			ScopeBlock,
+			ScopeChannels,
+			ScopeCreate,
+			ScopeDelete,
+			ScopeDraft,
+			ScopeEmail,
+			ScopeFollow,
+			ScopeMedia,
+			ScopeMute,
+			ScopeProfile,
+			ScopeRead,
+			ScopeUpdate,
+		},
+		ResponseTypesSupported: []ResponseType{
+			ResponseTypeCode,
+			ResponseTypeID,
+		},
+		GrantTypesSupported: []GrantType{
+			GrantTypeAuthorizationCode,
+			GrantTypeTicket,
+		},
+		ServiceDocumentation: TestURL(tb, "https://indieauth.net/draft/"),
+		CodeChallengeMethodsSupported: []CodeChallengeMethod{
+			CodeChallengeMethodMD5,
+			CodeChallengeMethodPLAIN,
+			CodeChallengeMethodS1,
+			CodeChallengeMethodS256,
+			CodeChallengeMethodS512,
+		},
+		AuthorizationResponseIssParameterSupported: true,
+		TicketEndpoint: TestURL(tb, "https://auth.example.org/ticket"),
+		Micropub:       TestURL(tb, "https://example.com/micropub"),
+		Microsub:       TestURL(tb, "https://example.com/microsub"),
+	}
 }

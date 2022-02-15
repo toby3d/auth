@@ -159,12 +159,12 @@ func (h *RequestHandler) Register(r *router.Router) {
 		middleware.LogFmt(),
 	}
 
-	r.GET("/authorize", chain.RequestHandler(h.handleRender))
+	r.GET("/authorize", chain.RequestHandler(h.handleAuthorize))
 	r.POST("/api/authorize", chain.RequestHandler(h.handleVerify))
 	r.POST("/authorize", chain.RequestHandler(h.handleExchange))
 }
 
-func (h *RequestHandler) handleRender(ctx *http.RequestCtx) {
+func (h *RequestHandler) handleAuthorize(ctx *http.RequestCtx) {
 	ctx.SetContentType(common.MIMETextHTMLCharsetUTF8)
 
 	tags, _, _ := language.ParseAcceptLanguage(string(ctx.Request.Header.Peek(http.HeaderAcceptLanguage)))

@@ -39,8 +39,8 @@ type (
 	TokenExchangeResponse struct {
 		AccessToken string                `json:"access_token"`
 		TokenType   string                `json:"token_type"`
-		Scope       string                `json:"scope"`
-		Me          string                `json:"me"`
+		Scope       domain.Scopes         `json:"scope"`
+		Me          *domain.Me            `json:"me"`
 		Profile     *TokenProfileResponse `json:"profile,omitempty"`
 	}
 
@@ -176,8 +176,8 @@ func (h *RequestHandler) handleExchange(ctx *http.RequestCtx) {
 	resp := &TokenExchangeResponse{
 		AccessToken: token.AccessToken,
 		TokenType:   "Bearer",
-		Scope:       token.Scope.String(),
-		Me:          token.Me.String(),
+		Scope:       token.Scope,
+		Me:          token.Me,
 		Profile:     nil,
 	}
 
@@ -269,9 +269,9 @@ func (h *RequestHandler) handleTicket(ctx *http.RequestCtx) {
 	_ = encoder.Encode(TokenExchangeResponse{
 		AccessToken: tkn.AccessToken,
 		TokenType:   "Bearer",
-		Scope:       tkn.Scope.String(),
-		Me:          tkn.Me.String(),
-		Profile:     nil,
+		Scope:       tkn.Scope,
+		Me:          tkn.Me,
+		Profile:     nil, // TODO(toby3d)
 	})
 }
 

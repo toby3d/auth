@@ -23,39 +23,39 @@ type (
 		// metadata URL of
 		// https://example.com/wp-json/indieauth/1.0/metadata, the
 		// issuer URL could be https://example.com/wp-json/indieauth/1.0
-		Issuer string `json:"issuer"`
+		Issuer *domain.ClientID `json:"issuer"`
 
 		// The Authorization Endpoint.
-		AuthorizationEndpoint string `json:"authorization_endpoint"`
+		AuthorizationEndpoint *domain.URL `json:"authorization_endpoint"`
 
 		// The Token Endpoint.
-		TokenEndpoint string `json:"token_endpoint"`
+		TokenEndpoint *domain.URL `json:"token_endpoint"`
 
-		//  JSON array containing scope values supported by the
+		// JSON array containing scope values supported by the
 		// IndieAuth server. Servers MAY choose not to advertise some
 		// supported scope values even when this parameter is used.
-		ScopesSupported []string `json:"scopes_supported,omitempty"`
+		ScopesSupported []domain.Scope `json:"scopes_supported,omitempty"`
 
 		// JSON array containing the response_type values supported.
 		// This differs from RFC8414 in that this parameter is OPTIONAL
 		// and that, if omitted, the default is code.
-		ResponseTypesSupported []string `json:"response_types_supported,omitempty"`
+		ResponseTypesSupported []domain.ResponseType `json:"response_types_supported,omitempty"`
 
 		// JSON array containing grant type values supported. If
 		// omitted, the default value differs from RFC8414 and is
 		// authorization_code.
-		GrantTypesSupported []string `json:"grant_types_supported,omitempty"`
+		GrantTypesSupported []domain.GrantType `json:"grant_types_supported,omitempty"`
 
 		// URL of a page containing human-readable information that
 		// developers might need to know when using the server. This
 		// might be a link to the IndieAuth spec or something more
 		// personal to your implementation.
-		ServiceDocumentation string `json:"service_documentation,omitempty"`
+		ServiceDocumentation *domain.URL `json:"service_documentation,omitempty"`
 
 		// JSON array containing the methods supported for PKCE. This
 		// parameter differs from RFC8414 in that it is not optional as
 		// PKCE is REQUIRED.
-		CodeChallengeMethodsSupported []string `json:"code_challenge_methods_supported"`
+		CodeChallengeMethodsSupported []domain.CodeChallengeMethod `json:"code_challenge_methods_supported"`
 
 		// Boolean parameter indicating whether the authorization server
 		// provides the iss parameter. If omitted, the default value is
@@ -68,52 +68,13 @@ type (
 	}
 
 	RequestHandler struct {
-		config *domain.Config
+		metadata *domain.Metadata
 	}
 )
 
-// DefaultMetadataResponse contains all supported types by default.
-//nolint: gochecknoglobals // structs cannot be constants
-var DefaultMetadataResponse = MetadataResponse{
-	AuthorizationEndpoint:                      "",
-	AuthorizationResponseIssParameterSupported: true,
-	CodeChallengeMethodsSupported: []string{
-		domain.CodeChallengeMethodMD5.String(),
-		domain.CodeChallengeMethodPLAIN.String(),
-		domain.CodeChallengeMethodS1.String(),
-		domain.CodeChallengeMethodS256.String(),
-		domain.CodeChallengeMethodS512.String(),
-	},
-	GrantTypesSupported: []string{
-		domain.GrantTypeAuthorizationCode.String(),
-		domain.GrantTypeTicket.String(),
-	},
-	Issuer: "",
-	ResponseTypesSupported: []string{
-		domain.ResponseTypeCode.String(),
-		domain.ResponseTypeID.String(),
-	},
-	ScopesSupported: []string{
-		domain.ScopeBlock.String(),
-		domain.ScopeChannels.String(),
-		domain.ScopeCreate.String(),
-		domain.ScopeDelete.String(),
-		domain.ScopeDraft.String(),
-		domain.ScopeEmail.String(),
-		domain.ScopeFollow.String(),
-		domain.ScopeMedia.String(),
-		domain.ScopeMute.String(),
-		domain.ScopeProfile.String(),
-		domain.ScopeRead.String(),
-		domain.ScopeUpdate.String(),
-	},
-	ServiceDocumentation: "https://indieauth.net/source/",
-	TokenEndpoint:        "",
-}
-
-func NewRequestHandler(config *domain.Config) *RequestHandler {
+func NewRequestHandler(metadata *domain.Metadata) *RequestHandler {
 	return &RequestHandler{
-		config: config,
+		metadata: metadata,
 	}
 }
 
@@ -126,12 +87,17 @@ func (h *RequestHandler) Register(r *router.Router) {
 }
 
 func (h *RequestHandler) read(ctx *http.RequestCtx) {
-	resp := DefaultMetadataResponse
-	resp.Issuer = h.config.Server.GetRootURL()
-	resp.AuthorizationEndpoint = resp.Issuer + "authorize"
-	resp.TokenEndpoint = resp.Issuer + "token"
-
 	ctx.SetStatusCode(http.StatusOK)
-	ctx.SetContentType(common.MIMEApplicationJSON)
-	_ = json.NewEncoder(ctx).Encode(&resp)
+	ctx.SetContentType(common.MIMEApplicationJSONCharsetUTF8)
+	_ = json.NewEncoder(ctx).Encode(&MetadataResponse{
+		Issuer:                        h.metadata.Issuer,
+		AuthorizationEndpoint:         h.metadata.AuthorizationEndpoint,
+		TokenEndpoint:                 h.metadata.TokenEndpoint,
+		ScopesSupported:               h.metadata.ScopesSupported,
+		ResponseTypesSupported:        h.metadata.ResponseTypesSupported,
+		GrantTypesSupported:           h.metadata.GrantTypesSupported,
+		ServiceDocumentation:          h.metadata.ServiceDocumentation,
+		CodeChallengeMethodsSupported: h.metadata.CodeChallengeMethodsSupported,
+		AuthorizationResponseIssParameterSupported: h.metadata.AuthorizationResponseIssParameterSupported,
+	})
 }

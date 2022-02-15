@@ -1,4 +1,3 @@
-//nolint: dupl
 package domain
 
 import (
@@ -51,7 +50,7 @@ func ParseResponseType(uid string) (ResponseType, error) {
 func (rt *ResponseType) UnmarshalForm(src []byte) error {
 	responseType, err := ParseResponseType(string(src))
 	if err != nil {
-		return fmt.Errorf("UnmarshalForm: %w", err)
+		return fmt.Errorf("ResponseType: UnmarshalForm: %w", err)
 	}
 
 	*rt = responseType
@@ -63,17 +62,21 @@ func (rt *ResponseType) UnmarshalForm(src []byte) error {
 func (rt *ResponseType) UnmarshalJSON(v []byte) error {
 	uid, err := strconv.Unquote(string(v))
 	if err != nil {
-		return fmt.Errorf("UnmarshalJSON: %w", err)
+		return fmt.Errorf("ResponseType: UnmarshalJSON: %w", err)
 	}
 
 	responseType, err := ParseResponseType(uid)
 	if err != nil {
-		return fmt.Errorf("UnmarshalJSON: %w", err)
+		return fmt.Errorf("ResponseType: UnmarshalJSON: %w", err)
 	}
 
 	*rt = responseType
 
 	return nil
+}
+
+func (rt ResponseType) MarshalJSON() ([]byte, error) {
+	return []byte(strconv.Quote(rt.uid)), nil
 }
 
 // String returns string representation of response type.

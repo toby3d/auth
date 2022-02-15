@@ -115,7 +115,7 @@ func TestMe(tb testing.TB, src string) *Me {
 func (m *Me) UnmarshalForm(v []byte) error {
 	me, err := ParseMe(string(v))
 	if err != nil {
-		return fmt.Errorf("UnmarshalForm: %w", err)
+		return fmt.Errorf("Me: UnmarshalForm: %w", err)
 	}
 
 	*m = *me
@@ -127,12 +127,12 @@ func (m *Me) UnmarshalForm(v []byte) error {
 func (m *Me) UnmarshalJSON(v []byte) error {
 	src, err := strconv.Unquote(string(v))
 	if err != nil {
-		return fmt.Errorf("UnmarshalJSON: %w", err)
+		return fmt.Errorf("Me: UnmarshalJSON: %w", err)
 	}
 
 	me, err := ParseMe(src)
 	if err != nil {
-		return fmt.Errorf("UnmarshalJSON: %w", err)
+		return fmt.Errorf("Me: UnmarshalJSON: %w", err)
 	}
 
 	*m = *me
