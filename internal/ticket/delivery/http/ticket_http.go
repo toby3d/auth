@@ -79,7 +79,7 @@ func (h *RequestHandler) Register(r *router.Router) {
 			AuthScheme:              "Bearer",
 			BeforeFunc:              nil,
 			Claims:                  nil,
-			ContextKey:              "user",
+			ContextKey:              "token",
 			ErrorHandler:            nil,
 			ErrorHandlerWithContext: nil,
 			ParseTokenFunc:          nil,
