@@ -100,15 +100,7 @@ func ExtractProperty(resp *http.Response, itemType, key string) []interface{} {
 		Host: string(resp.Header.Peek(http.HeaderHost)),
 	})
 
-	for _, item := range data.Items {
-		if !contains(item.Type, itemType) {
-			continue
-		}
-
-		return item.Properties[key]
-	}
-
-	return nil
+	return findProperty(data.Items, itemType, key)
 }
 
 func contains(src []string, find string) bool {
@@ -121,4 +113,21 @@ func contains(src []string, find string) bool {
 	}
 
 	return false
+}
+
+func findProperty(src []*microformats.Microformat, itemType, key string) []interface{} {
+	for _, item := range src {
+		if contains(item.Type, itemType) {
+			return item.Properties[key]
+		}
+
+		result := findProperty(item.Children, itemType, key)
+		if result == nil {
+			continue
+		}
+
+		return result
+	}
+
+	return nil
 }
