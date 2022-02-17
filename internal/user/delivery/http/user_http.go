@@ -88,18 +88,24 @@ func (h *RequestHandler) handleUserInformation(ctx *http.RequestCtx) {
 	}
 
 	resp := new(UserInformationResponse)
-	if tkn.Extra == nil {
+	if tkn.Profile == nil {
 		_ = encoder.Encode(resp)
 
 		return
 	}
 
-	resp.Name, _ = tkn.Extra["name"].(string)
-	resp.URL, _ = tkn.Extra["url"].(string)
-	resp.Photo, _ = tkn.Extra["photo"].(string)
+	resp.Name = tkn.Profile.GetName()
 
-	if tkn.Scope.Has(domain.ScopeEmail) {
-		resp.Email, _ = tkn.Extra["email"].(string)
+	if url := tkn.Profile.GetURL(); url != nil {
+		resp.URL = url.String()
+	}
+
+	if photo := tkn.Profile.GetPhoto(); photo != nil {
+		resp.Photo = photo.String()
+	}
+
+	if email := tkn.Profile.GetEmail(); email != nil && tkn.Scope.Has(domain.ScopeEmail) {
+		resp.Email = email.String()
 	}
 
 	_ = encoder.Encode(resp)

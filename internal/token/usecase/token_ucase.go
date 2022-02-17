@@ -20,7 +20,10 @@ type tokenUseCase struct {
 }
 
 func NewTokenUseCase(tokens token.Repository, sessions session.Repository, config *domain.Config) token.UseCase {
+	jwt.RegisterCustomField("email", new(domain.Email))
+	jwt.RegisterCustomField("photo", new(domain.URL))
 	jwt.RegisterCustomField("scope", make(domain.Scopes, 0))
+	jwt.RegisterCustomField("url", new(domain.URL))
 
 	return &tokenUseCase{
 		config:   config,
@@ -56,28 +59,27 @@ func (useCase *tokenUseCase) Exchange(ctx context.Context, opts token.ExchangeOp
 		return nil, nil, token.ErrEmptyScope
 	}
 
+	if !session.Scope.Has(domain.ScopeProfile) {
+		session.Profile = nil
+	} else if !session.Scope.Has(domain.ScopeEmail) {
+		session.Profile.Email = nil
+	}
+
 	tkn, err := domain.NewToken(domain.NewTokenOptions{
-		Algorithm:   useCase.config.JWT.Algorithm,
 		Expiration:  useCase.config.JWT.Expiry,
 		Issuer:      session.ClientID,
-		NonceLength: useCase.config.JWT.NonceLength,
+		Subject:     session.Me,
 		Scope:       session.Scope,
 		Secret:      []byte(useCase.config.JWT.Secret),
-		Subject:     session.Me,
+		Profile:     session.Profile,
+		Algorithm:   useCase.config.JWT.Algorithm,
+		NonceLength: useCase.config.JWT.NonceLength,
 	})
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot generate a new access token: %w", err)
 	}
 
-	if !session.Scope.Has(domain.ScopeProfile) {
-		return tkn, nil, nil
-	}
-
-	p := new(domain.Profile)
-
-	// TODO(toby3d): if session.Scope.Has(domain.ScopeEmail) {}
-
-	return tkn, p, nil
+	return tkn, session.Profile, nil
 }
 
 func (useCase *tokenUseCase) Verify(ctx context.Context, accessToken string) (*domain.Token, error) {
@@ -100,13 +102,55 @@ func (useCase *tokenUseCase) Verify(ctx context.Context, accessToken string) (*d
 		return nil, fmt.Errorf("cannot validate JWT token: %w", err)
 	}
 
-	result := new(domain.Token)
-	result.AccessToken = accessToken
+	result := &domain.Token{
+		CreatedAt:    tkn.IssuedAt(),
+		Expiry:       tkn.Expiration(),
+		ClientID:     nil,
+		Me:           nil,
+		Profile:      nil,
+		Scope:        nil,
+		AccessToken:  accessToken,
+		RefreshToken: "", // TODO(toby3d)
+	}
 	result.ClientID, _ = domain.ParseClientID(tkn.Issuer())
 	result.Me, _ = domain.ParseMe(tkn.Subject())
 
 	if scope, ok := tkn.Get("scope"); ok {
 		result.Scope, _ = scope.(domain.Scopes)
+	}
+
+	if !result.Scope.Has(domain.ScopeProfile) {
+		return result, nil
+	}
+
+	result.Profile = domain.NewProfile()
+
+	if name, ok := tkn.Get("name"); ok {
+		if n, ok := name.(string); ok {
+			result.Profile.Name = append(result.Profile.Name, n)
+		}
+	}
+
+	if url, ok := tkn.Get("url"); ok {
+		if u, ok := url.(*domain.URL); ok {
+			result.Profile.URL = append(result.Profile.URL, u)
+		}
+	}
+
+	if photo, ok := tkn.Get("photo"); ok {
+		if p, ok := photo.(*domain.URL); ok {
+			result.Profile.Photo = append(result.Profile.Photo, p)
+		}
+	}
+
+	if !result.Scope.Has(domain.ScopeEmail) {
+		return result, nil
+	}
+
+	if email, ok := tkn.Get("email"); ok {
+		if e, ok := email.(*domain.Email); ok {
+			result.Profile.Email = append(result.Profile.Email, e)
+		}
 	}
 
 	return result, nil

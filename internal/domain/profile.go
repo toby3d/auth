@@ -6,10 +6,10 @@ import (
 
 // Profile describes the data about the user.
 type Profile struct {
-	Photo []*URL   `json:"photo"`
-	URL   []*URL   `json:"url"`
-	Email []*Email `json:"email"`
-	Name  []string `json:"name"`
+	Photo []*URL   `json:"photo,omitempty"`
+	URL   []*URL   `json:"url,omitempty"`
+	Email []*Email `json:"email,omitempty"`
+	Name  []string `json:"name,omitempty"`
 }
 
 func NewProfile() *Profile {
