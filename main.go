@@ -56,6 +56,7 @@ import (
 	tokenmemoryrepo "source.toby3d.me/website/indieauth/internal/token/repository/memory"
 	tokensqlite3repo "source.toby3d.me/website/indieauth/internal/token/repository/sqlite3"
 	tokenucase "source.toby3d.me/website/indieauth/internal/token/usecase"
+	userhttpdelivery "source.toby3d.me/website/indieauth/internal/user/delivery/http"
 )
 
 type (
@@ -340,4 +341,5 @@ func (app *App) Register(r *router.Router) {
 		Config:  config,
 		Matcher: app.matcher,
 	}).Register(r)
+	userhttpdelivery.NewRequestHandler(app.tokens, config).Register(r)
 }
