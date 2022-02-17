@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"fmt"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -35,6 +37,27 @@ func ParseEmail(src string) (*Email, error) {
 	}
 
 	return result, nil
+}
+
+// UnmarshalJSON implements custom unmarshler for JSON.
+func (e *Email) UnmarshalJSON(v []byte) error {
+	src, err := strconv.Unquote(string(v))
+	if err != nil {
+		return fmt.Errorf("Email: UnmarshalJSON: %w", err)
+	}
+
+	email, err := ParseEmail(src)
+	if err != nil {
+		return fmt.Errorf("Email: UnmarshalJSON: %w", err)
+	}
+
+	*e = *email
+
+	return nil
+}
+
+func (e Email) MarshalJSON() ([]byte, error) {
+	return []byte(strconv.Quote(e.String())), nil
 }
 
 // TestEmail returns valid random generated email identifier.
