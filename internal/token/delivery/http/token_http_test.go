@@ -42,23 +42,23 @@ func TestExchange(t *testing.T) {
 }
 */
 
-func TestVerification(t *testing.T) {
+func TestIntrospection(t *testing.T) {
 	t.Parallel()
 
 	deps := NewDependencies(t)
 
 	r := router.New()
-	delivery.NewRequestHandler(deps.tokenService, deps.ticketService).Register(r)
+	delivery.NewRequestHandler(deps.tokenService, deps.ticketService, deps.config).Register(r)
 
 	client, _, cleanup := httptest.New(t, r.Handler)
 	t.Cleanup(cleanup)
 
-	const requestURL = "https://app.example.com/token"
+	const requestURL = "https://app.example.com/introspect"
 
-	req := httptest.NewRequest(http.MethodGet, requestURL, nil)
+	req := httptest.NewRequest(http.MethodPost, requestURL, []byte("token="+deps.token.AccessToken))
 	defer http.ReleaseRequest(req)
 	req.Header.Set(http.HeaderAccept, common.MIMEApplicationJSON)
-	deps.token.SetAuthHeader(req)
+	req.Header.SetContentType(common.MIMEApplicationForm)
 
 	resp := http.AcquireResponse()
 	defer http.ReleaseResponse(resp)
@@ -71,16 +71,19 @@ func TestVerification(t *testing.T) {
 		t.Errorf("GET %s = %d, want %d", requestURL, result, http.StatusOK)
 	}
 
-	result := new(delivery.TokenVerificationResponse)
+	result := new(delivery.TokenIntrospectResponse)
 	if err := json.Unmarshal(resp.Body(), result); err != nil {
+		e := err.(*json.SyntaxError)
+
+		t.Logf("%s\noffset: %d", resp.Body(), e.Offset)
 		t.Fatal(err)
 	}
 
 	deps.token.AccessToken = ""
 
-	if result.ClientID.String() != deps.token.ClientID.String() ||
-		result.Me.String() != deps.token.Me.String() ||
-		result.Scope.String() != deps.token.Scope.String() {
+	if result.ClientID != deps.token.ClientID.String() ||
+		result.Me != deps.token.Me.String() ||
+		result.Scope != deps.token.Scope.String() {
 		t.Errorf("GET %s = %+v, want %+v", requestURL, result, deps.token)
 	}
 }
@@ -91,19 +94,17 @@ func TestRevocation(t *testing.T) {
 	deps := NewDependencies(t)
 
 	r := router.New()
-	delivery.NewRequestHandler(deps.tokenService, deps.ticketService).Register(r)
+	delivery.NewRequestHandler(deps.tokenService, deps.ticketService, deps.config).Register(r)
 
 	client, _, cleanup := httptest.New(t, r.Handler)
 	t.Cleanup(cleanup)
 
-	const requestURL = "https://app.example.com/token"
+	const requestURL = "https://app.example.com/revocation"
 
-	req := httptest.NewRequest(http.MethodPost, requestURL, nil)
+	req := httptest.NewRequest(http.MethodPost, requestURL, []byte("token="+deps.token.AccessToken))
 	defer http.ReleaseRequest(req)
 	req.Header.Set(http.HeaderAccept, common.MIMEApplicationJSON)
 	req.Header.SetContentType(common.MIMEApplicationForm)
-	req.PostArgs().Set("action", domain.ActionRevoke.String())
-	req.PostArgs().Set("token", deps.token.AccessToken)
 
 	resp := http.AcquireResponse()
 	defer http.ReleaseResponse(resp)

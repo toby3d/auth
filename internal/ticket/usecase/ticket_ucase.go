@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"time"
 
 	json "github.com/goccy/go-json"
 	http "github.com/valyala/fasthttp"
@@ -15,11 +16,19 @@ import (
 
 type (
 	//nolint: tagliatelle // https://indieauth.net/source/#access-token-response
-	Response struct {
-		Me          *domain.Me    `json:"me"`
-		Scope       domain.Scopes `json:"scope"`
-		AccessToken string        `json:"access_token"`
-		TokenType   string        `json:"token_type"`
+	AccessToken struct {
+		Me           *domain.Me `json:"me"`
+		Profile      *Profile   `json:"profile,omitempty"`
+		AccessToken  string     `json:"access_token"`
+		RefreshToken string     `json:"refresh_token"`
+		ExpiresIn    int64      `json:"expires_in,omitempty"`
+	}
+
+	Profile struct {
+		Email *domain.Email `json:"email,omitempty"`
+		Photo *domain.URL   `json:"photo,omitempty"`
+		URL   *domain.URL   `json:"url,omitempty"`
+		Name  string        `json:"name,omitempty"`
 	}
 
 	ticketUseCase struct {
@@ -126,18 +135,21 @@ func (useCase *ticketUseCase) Redeem(ctx context.Context, tkt *domain.Ticket) (*
 		return nil, fmt.Errorf("cannot exchange ticket on token_endpoint: %w", err)
 	}
 
-	data := new(Response)
+	data := new(AccessToken)
 	if err := json.Unmarshal(resp.Body(), data); err != nil {
 		return nil, fmt.Errorf("cannot unmarshal access token response: %w", err)
 	}
 
-	// TODO(toby3d): should this also include client_id?
-	// https://github.com/indieweb/indieauth/issues/85
 	return &domain.Token{
-		ClientID:    nil,
-		AccessToken: data.AccessToken,
-		Me:          data.Me,
-		Scope:       data.Scope,
+		CreatedAt: time.Now().UTC(),
+		Expiry:    time.Unix(data.ExpiresIn, 0),
+		Scope:     nil, // TODO(toby3d)
+		// TODO(toby3d): should this also include client_id?
+		// https://github.com/indieweb/indieauth/issues/85
+		ClientID:     nil,
+		Me:           data.Me,
+		AccessToken:  data.AccessToken,
+		RefreshToken: "", // TODO(toby3d)
 	}, nil
 }
 

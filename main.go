@@ -40,6 +40,8 @@ import (
 	"source.toby3d.me/website/indieauth/internal/domain"
 	healthhttpdelivery "source.toby3d.me/website/indieauth/internal/health/delivery/http"
 	metadatahttpdelivery "source.toby3d.me/website/indieauth/internal/metadata/delivery/http"
+	"source.toby3d.me/website/indieauth/internal/profile"
+	profilehttprepo "source.toby3d.me/website/indieauth/internal/profile/repository/http"
 	"source.toby3d.me/website/indieauth/internal/session"
 	sessionmemoryrepo "source.toby3d.me/website/indieauth/internal/session/repository/memory"
 	sessionsqlite3repo "source.toby3d.me/website/indieauth/internal/session/repository/sqlite3"
@@ -72,6 +74,7 @@ type (
 		Sessions session.Repository
 		Tickets  ticket.Repository
 		Tokens   token.Repository
+		Profiles profile.Repository
 	}
 )
 
@@ -187,6 +190,7 @@ func main() {
 		WriteTimeout: DefaultWriteTimeout,
 	}
 	opts.Clients = clienthttprepo.NewHTTPClientRepository(opts.Client)
+	opts.Profiles = profilehttprepo.NewHTPPClientRepository(opts.Client)
 
 	r := router.New() //nolint: varnamelen
 	NewApp(opts).Register(r)
@@ -267,7 +271,7 @@ func main() {
 
 func NewApp(opts NewAppOptions) *App {
 	return &App{
-		auth:     authucase.NewAuthUseCase(opts.Sessions, config),
+		auth:     authucase.NewAuthUseCase(opts.Sessions, opts.Profiles, config),
 		clients:  clientucase.NewClientUseCase(opts.Clients),
 		matcher:  language.NewMatcher(message.DefaultCatalog.Languages()),
 		sessions: sessionucase.NewSessionUseCase(opts.Sessions),
@@ -323,7 +327,7 @@ func (app *App) Register(r *router.Router) {
 		},
 		AuthorizationResponseIssParameterSupported: true,
 	}).Register(r)
-	tokenhttpdelivery.NewRequestHandler(app.tokens, app.tickets).Register(r)
+	tokenhttpdelivery.NewRequestHandler(app.tokens, app.tickets, config).Register(r)
 	clienthttpdelivery.NewRequestHandler(clienthttpdelivery.NewRequestHandlerOptions{
 		Client:  indieAuthClient,
 		Config:  config,
