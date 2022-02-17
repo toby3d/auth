@@ -13,58 +13,51 @@ import (
 type (
 	//nolint: tagliatelle // https://indieauth.net/source/#indieauth-server-metadata
 	MetadataResponse struct {
-		// The server's issuer identifier. The issuer identifier is a
-		// URL that uses the "https" scheme and has no query or fragment
-		// components. The identifier MUST be a prefix of the
-		// indieauth-metadata URL. e.g. for an indieauth-metadata
-		// endpoint
-		// https://example.com/.well-known/oauth-authorization-server,
-		// the issuer URL could be https://example.com/, or for a
-		// metadata URL of
-		// https://example.com/wp-json/indieauth/1.0/metadata, the
-		// issuer URL could be https://example.com/wp-json/indieauth/1.0
-		Issuer *domain.ClientID `json:"issuer"`
+		// The server's issuer identifier.
+		Issuer string `json:"issuer"`
 
 		// The Authorization Endpoint.
-		AuthorizationEndpoint *domain.URL `json:"authorization_endpoint"`
+		AuthorizationEndpoint string `json:"authorization_endpoint"`
 
 		// The Token Endpoint.
-		TokenEndpoint *domain.URL `json:"token_endpoint"`
+		TokenEndpoint string `json:"token_endpoint"`
+
+		// The Introspection Endpoint.
+		IntrospectionEndpoint string `json:"introspection_endpoint"`
+
+		// JSON array containing a list of client authentication methods
+		// supported by this introspection endpoint.
+		IntrospectionEndpointAuthMethodsSupported []string `json:"introspection_endpoint_auth_methods_supported,omitempty"` //nolint: lll
+
+		// The Revocation Endpoint.
+		RevocationEndpoint string `json:"revocation_endpoint,omitempty"`
+
+		// JSON array containing the value "none".
+		RevocationEndpointAuthMethodsSupported []string `json:"revocation_endpoint_auth_methods_supported,omitempty"` //nolint: lll
 
 		// JSON array containing scope values supported by the
-		// IndieAuth server. Servers MAY choose not to advertise some
-		// supported scope values even when this parameter is used.
-		ScopesSupported []domain.Scope `json:"scopes_supported,omitempty"`
+		// IndieAuth server.
+		ScopesSupported []string `json:"scopes_supported,omitempty"`
 
 		// JSON array containing the response_type values supported.
-		// This differs from RFC8414 in that this parameter is OPTIONAL
-		// and that, if omitted, the default is code.
-		ResponseTypesSupported []domain.ResponseType `json:"response_types_supported,omitempty"`
+		ResponseTypesSupported []string `json:"response_types_supported,omitempty"`
 
-		// JSON array containing grant type values supported. If
-		// omitted, the default value differs from RFC8414 and is
-		// authorization_code.
-		GrantTypesSupported []domain.GrantType `json:"grant_types_supported,omitempty"`
+		// JSON array containing grant type values supported.
+		GrantTypesSupported []string `json:"grant_types_supported,omitempty"`
 
 		// URL of a page containing human-readable information that
-		// developers might need to know when using the server. This
-		// might be a link to the IndieAuth spec or something more
-		// personal to your implementation.
-		ServiceDocumentation *domain.URL `json:"service_documentation,omitempty"`
+		// developers might need to know when using the server.
+		ServiceDocumentation string `json:"service_documentation,omitempty"`
 
-		// JSON array containing the methods supported for PKCE. This
-		// parameter differs from RFC8414 in that it is not optional as
-		// PKCE is REQUIRED.
-		CodeChallengeMethodsSupported []domain.CodeChallengeMethod `json:"code_challenge_methods_supported"`
+		// JSON array containing the methods supported for PKCE.
+		CodeChallengeMethodsSupported []string `json:"code_challenge_methods_supported"`
 
 		// Boolean parameter indicating whether the authorization server
-		// provides the iss parameter. If omitted, the default value is
-		// false. As the iss parameter is REQUIRED, this is provided for
-		// compatibility with OAuth 2.0 servers implementing the
-		// parameter.
-		//
-		//nolint: lll
-		AuthorizationResponseIssParameterSupported bool `json:"authorization_response_iss_parameter_supported,omitempty"`
+		// provides the iss parameter.
+		AuthorizationResponseIssParameterSupported bool `json:"authorization_response_iss_parameter_supported,omitempty"` //nolint: lll
+
+		// The User Info Endpoint.
+		UserinfoEndpoint string `json:"userinfo_endpoint,omitempty"`
 	}
 
 	RequestHandler struct {
@@ -89,15 +82,45 @@ func (h *RequestHandler) Register(r *router.Router) {
 func (h *RequestHandler) read(ctx *http.RequestCtx) {
 	ctx.SetStatusCode(http.StatusOK)
 	ctx.SetContentType(common.MIMEApplicationJSONCharsetUTF8)
+
+	scopes, responseTypes, grantTypes, codeChallengeMethods := make([]string, 0), make([]string, 0),
+		make([]string, 0), make([]string, 0)
+
+	for i := range h.metadata.ScopesSupported {
+		scopes = append(scopes, h.metadata.ScopesSupported[i].String())
+	}
+
+	for i := range h.metadata.ResponseTypesSupported {
+		responseTypes = append(responseTypes, h.metadata.ResponseTypesSupported[i].String())
+	}
+
+	for i := range h.metadata.GrantTypesSupported {
+		grantTypes = append(grantTypes, h.metadata.GrantTypesSupported[i].String())
+	}
+
+	for i := range h.metadata.CodeChallengeMethodsSupported {
+		codeChallengeMethods = append(codeChallengeMethods,
+			h.metadata.CodeChallengeMethodsSupported[i].String())
+	}
+
 	_ = json.NewEncoder(ctx).Encode(&MetadataResponse{
-		Issuer:                        h.metadata.Issuer,
-		AuthorizationEndpoint:         h.metadata.AuthorizationEndpoint,
-		TokenEndpoint:                 h.metadata.TokenEndpoint,
-		ScopesSupported:               h.metadata.ScopesSupported,
-		ResponseTypesSupported:        h.metadata.ResponseTypesSupported,
-		GrantTypesSupported:           h.metadata.GrantTypesSupported,
-		ServiceDocumentation:          h.metadata.ServiceDocumentation,
-		CodeChallengeMethodsSupported: h.metadata.CodeChallengeMethodsSupported,
+		AuthorizationEndpoint: h.metadata.AuthorizationEndpoint.String(),
+		IntrospectionEndpoint: h.metadata.IntrospectionEndpoint.String(),
+		Issuer:                h.metadata.Issuer.String(),
+		RevocationEndpoint:    h.metadata.RevocationEndpoint.String(),
+		ServiceDocumentation:  h.metadata.ServiceDocumentation.String(),
+		TokenEndpoint:         h.metadata.TokenEndpoint.String(),
+		UserinfoEndpoint:      h.metadata.UserinfoEndpoint.String(),
 		AuthorizationResponseIssParameterSupported: h.metadata.AuthorizationResponseIssParameterSupported,
+		CodeChallengeMethodsSupported:              codeChallengeMethods,
+		GrantTypesSupported:                        grantTypes,
+		IntrospectionEndpointAuthMethodsSupported:  h.metadata.IntrospectionEndpointAuthMethodsSupported,
+		ResponseTypesSupported:                     responseTypes,
+		ScopesSupported:                            scopes,
+		// NOTE(toby3d): If a revocation endpoint is provided, this
+		// property should also be provided with the value ["none"],
+		// since the omission of this value defaults to
+		// client_secret_basic according to RFC8414.
+		RevocationEndpointAuthMethodsSupported: h.metadata.RevocationEndpointAuthMethodsSupported,
 	})
 }

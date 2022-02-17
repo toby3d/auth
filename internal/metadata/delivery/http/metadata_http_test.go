@@ -35,7 +35,6 @@ func TestMetadata(t *testing.T) {
 
 	result := new(delivery.MetadataResponse)
 	if err = json.Unmarshal(body, result); err != nil {
-		e := err.(*json.SyntaxError)
-		t.Fatalf("%s#ERROR#%s", body[:e.Offset], body[e.Offset:])
+		t.Fatal(err)
 	}
 }
