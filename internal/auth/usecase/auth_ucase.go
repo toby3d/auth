@@ -39,12 +39,8 @@ func (uc *authUseCase) Generate(ctx context.Context, opts auth.GenerateOptions) 
 	// information in the token is not guaranteed and is completely optional:
 	// https://indieauth.net/source/#profile-information
 	if opts.Scope.Has(domain.ScopeProfile) {
-		userInfo, _ = uc.profiles.Get(ctx, opts.Me)
-
-		// NOTE(toby3d): 'email' Scope depends on 'profile'
-		// Scope. Hide the email field if this information has
-		// not been requested.
-		if userInfo != nil && userInfo.Email != nil && !opts.Scope.Has(domain.ScopeEmail) {
+		if userInfo, err = uc.profiles.Get(ctx, opts.Me); err == nil &&
+			userInfo.Email != nil && !opts.Scope.Has(domain.ScopeEmail) {
 			userInfo.Email = nil
 		}
 	}

@@ -29,8 +29,8 @@ type (
 	NewTokenOptions struct {
 		Expiration  time.Duration
 		Issuer      *ClientID
-		Subject     *Me
 		Profile     *Profile
+		Subject     *Me
 		Scope       Scopes
 		Secret      []byte
 		Algorithm   string
@@ -52,7 +52,7 @@ var DefaultNewTokenOptions = NewTokenOptions{
 }
 
 // NewToken create a new token by provided options.
-//nolint: cyclop
+//nolint: funlen,cyclop
 func NewToken(opts NewTokenOptions) (*Token, error) {
 	if opts.NonceLength == 0 {
 		opts.NonceLength = DefaultNewTokenOptions.NonceLength

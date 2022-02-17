@@ -86,7 +86,8 @@ func (repo *httpProfileRepository) Get(ctx context.Context, me *domain.Me) (*dom
 		}
 	}
 
-	if result.GetName() == "" && result.GetURL() == nil && result.GetPhoto() == nil && result.GetEmail() == nil {
+	if result.GetName() == "" && result.GetURL() == nil &&
+		result.GetPhoto() == nil && result.GetEmail() == nil {
 		return nil, profile.ErrNotExist
 	}
 
