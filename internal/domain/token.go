@@ -15,19 +15,24 @@ import (
 type (
 	// Token describes the data of the token used by the clients.
 	Token struct {
-		Scope       Scopes
-		ClientID    *ClientID
-		Me          *Me
-		AccessToken string
+		CreatedAt    time.Time
+		Expiry       time.Time
+		ClientID     *ClientID
+		Me           *Me
+		Scope        Scopes
+		Extra        map[string]interface{}
+		AccessToken  string
+		RefreshToken string
 	}
 
 	// NewTokenOptions contains options for NewToken function.
 	NewTokenOptions struct {
 		Expiration  time.Duration
-		Scope       Scopes
 		Issuer      *ClientID
 		Subject     *Me
+		Scope       Scopes
 		Secret      []byte
+		Claims      map[string]interface{}
 		Algorithm   string
 		NonceLength int
 	}
@@ -36,13 +41,14 @@ type (
 // DefaultNewTokenOptions describes the default settings for NewToken.
 //nolint: gochecknoglobals, gomnd
 var DefaultNewTokenOptions = NewTokenOptions{
-	Algorithm:   "HS256",
 	Expiration:  0,
-	Issuer:      nil,
-	NonceLength: 32,
 	Scope:       nil,
-	Secret:      nil,
+	Issuer:      nil,
 	Subject:     nil,
+	Secret:      nil,
+	Algorithm:   "HS256",
+	NonceLength: 32,
+	Claims:      nil,
 }
 
 // NewToken create a new token by provided options.
@@ -77,6 +83,12 @@ func NewToken(opts NewTokenOptions) (*Token, error) {
 		}
 	}
 
+	for key, val := range opts.Claims {
+		if err = tkn.Set(key, val); err != nil {
+			return nil, fmt.Errorf("failed to set JWT token claim: %w", err)
+		}
+	}
+
 	if opts.Issuer != nil {
 		if err = tkn.Set(jwt.IssuerKey, opts.Issuer.String()); err != nil {
 			return nil, fmt.Errorf("failed to set JWT token field: %w", err)
@@ -95,10 +107,14 @@ func NewToken(opts NewTokenOptions) (*Token, error) {
 	}
 
 	return &Token{
-		AccessToken: string(accessToken),
-		ClientID:    opts.Issuer,
-		Me:          opts.Subject,
-		Scope:       opts.Scope,
+		AccessToken:  string(accessToken),
+		ClientID:     opts.Issuer,
+		CreatedAt:    now,
+		Expiry:       now.Add(opts.Expiration),
+		Extra:        opts.Claims,
+		Me:           opts.Subject,
+		RefreshToken: "", // TODO(toby3d)
+		Scope:        opts.Scope,
 	}, nil
 }
 
@@ -144,10 +160,14 @@ func TestToken(tb testing.TB) *Token {
 	}
 
 	return &Token{
-		ClientID:    cid,
-		Me:          me,
-		Scope:       scope,
-		AccessToken: string(accessToken),
+		CreatedAt:    now.Add(-1 * time.Hour),
+		Expiry:       now.Add(1 * time.Hour),
+		ClientID:     cid,
+		Me:           me,
+		Scope:        scope,
+		Extra:        nil,
+		AccessToken:  string(accessToken),
+		RefreshToken: "", // TODO(toby3d)
 	}
 }
 
