@@ -19,11 +19,12 @@ import (
 	"source.toby3d.me/website/indieauth/internal/client"
 	"source.toby3d.me/website/indieauth/internal/common"
 	"source.toby3d.me/website/indieauth/internal/domain"
+	"source.toby3d.me/website/indieauth/internal/profile"
 	"source.toby3d.me/website/indieauth/web"
 )
 
 type (
-	AuthAuthorizeRequest struct {
+	AuthAuthorizationRequest struct {
 		// Indicates to the authorization server that an authorization
 		// code should be returned as the response.
 		ResponseType domain.ResponseType `form:"response_type"` // code
@@ -92,14 +93,23 @@ type (
 	}
 
 	AuthExchangeResponse struct {
-		Me *domain.Me `json:"me"`
+		Me      *domain.Me           `json:"me"`
+		Profile *AuthProfileResponse `json:"profile,omitempty"`
+	}
+
+	AuthProfileResponse struct {
+		Email *domain.Email `json:"email,omitempty"`
+		Photo *domain.URL   `json:"photo,omitempty"`
+		URL   *domain.URL   `json:"url,omitempty"`
+		Name  string        `json:"name,omitempty"`
 	}
 
 	NewRequestHandlerOptions struct {
-		Auth    auth.UseCase
-		Clients client.UseCase
-		Config  *domain.Config
-		Matcher language.Matcher
+		Auth     auth.UseCase
+		Clients  client.UseCase
+		Config   *domain.Config
+		Matcher  language.Matcher
+		Profiles profile.UseCase
 	}
 
 	RequestHandler struct {
@@ -175,7 +185,7 @@ func (h *RequestHandler) handleAuthorize(ctx *http.RequestCtx) {
 		Printer:  message.NewPrinter(tag),
 	}
 
-	req := NewAuthAuthorizeRequest()
+	req := NewAuthAuthorizationRequest()
 	if err := req.bind(ctx); err != nil {
 		ctx.SetStatusCode(http.StatusBadRequest)
 		web.WriteTemplate(ctx, &web.ErrorPage{
@@ -256,11 +266,11 @@ func (h *RequestHandler) handleVerify(ctx *http.RequestCtx) {
 
 	code, err := h.useCase.Generate(ctx, auth.GenerateOptions{
 		ClientID:            req.ClientID,
+		Me:                  req.Me,
 		RedirectURI:         req.RedirectURI,
-		CodeChallenge:       req.CodeChallenge,
 		CodeChallengeMethod: req.CodeChallengeMethod,
 		Scope:               req.Scope,
-		Me:                  req.Me,
+		CodeChallenge:       req.CodeChallenge,
 	})
 	if err != nil {
 		ctx.SetStatusCode(http.StatusInternalServerError)
@@ -295,7 +305,7 @@ func (h *RequestHandler) handleExchange(ctx *http.RequestCtx) {
 		return
 	}
 
-	me, err := h.useCase.Exchange(ctx, auth.ExchangeOptions{
+	me, profile, err := h.useCase.Exchange(ctx, auth.ExchangeOptions{
 		Code:         req.Code,
 		ClientID:     req.ClientID,
 		RedirectURI:  req.RedirectURI,
@@ -309,13 +319,24 @@ func (h *RequestHandler) handleExchange(ctx *http.RequestCtx) {
 		return
 	}
 
+	var userInfo *AuthProfileResponse
+	if profile != nil {
+		userInfo = &AuthProfileResponse{
+			Email: profile.GetEmail(),
+			Photo: profile.GetPhoto(),
+			URL:   profile.GetURL(),
+			Name:  profile.GetName(),
+		}
+	}
+
 	_ = encoder.Encode(&AuthExchangeResponse{
-		Me: me,
+		Me:      me,
+		Profile: userInfo,
 	})
 }
 
-func NewAuthAuthorizeRequest() *AuthAuthorizeRequest {
-	return &AuthAuthorizeRequest{
+func NewAuthAuthorizationRequest() *AuthAuthorizationRequest {
+	return &AuthAuthorizationRequest{
 		ClientID:            new(domain.ClientID),
 		CodeChallenge:       "",
 		CodeChallengeMethod: domain.CodeChallengeMethodUndefined,
@@ -327,7 +348,7 @@ func NewAuthAuthorizeRequest() *AuthAuthorizeRequest {
 	}
 }
 
-func (r *AuthAuthorizeRequest) bind(ctx *http.RequestCtx) error {
+func (r *AuthAuthorizationRequest) bind(ctx *http.RequestCtx) error {
 	indieAuthError := new(domain.Error)
 	if err := form.Unmarshal(ctx.QueryArgs(), r); err != nil {
 		if errors.As(err, indieAuthError) {

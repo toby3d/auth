@@ -18,6 +18,7 @@ import (
 	clientrepo "source.toby3d.me/website/indieauth/internal/client/repository/memory"
 	clientucase "source.toby3d.me/website/indieauth/internal/client/usecase"
 	"source.toby3d.me/website/indieauth/internal/domain"
+	"source.toby3d.me/website/indieauth/internal/profile"
 	profilerepo "source.toby3d.me/website/indieauth/internal/profile/repository/memory"
 	"source.toby3d.me/website/indieauth/internal/session"
 	sessionrepo "source.toby3d.me/website/indieauth/internal/session/repository/memory"
@@ -31,6 +32,7 @@ type Dependencies struct {
 	clientService client.UseCase
 	config        *domain.Config
 	matcher       language.Matcher
+	profiles      profile.Repository
 	sessions      session.Repository
 	store         *sync.Map
 }
@@ -103,7 +105,8 @@ func NewDependencies(tb testing.TB) Dependencies {
 	store := new(sync.Map)
 	clients := clientrepo.NewMemoryClientRepository(store)
 	sessions := sessionrepo.NewMemorySessionRepository(store, config)
-	authService := ucase.NewAuthUseCase(sessions, config)
+	profiles := profilerepo.NewMemoryProfileRepository(store)
+	authService := ucase.NewAuthUseCase(sessions, profiles, config)
 	clientService := clientucase.NewClientUseCase(clients)
 
 	return Dependencies{
@@ -113,6 +116,7 @@ func NewDependencies(tb testing.TB) Dependencies {
 		config:        config,
 		matcher:       matcher,
 		sessions:      sessions,
+		profiles:      profiles,
 		store:         store,
 	}
 }

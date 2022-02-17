@@ -59,20 +59,15 @@ func (repo *httpUserRepository) Get(ctx context.Context, me *domain.Me) (*domain
 		Me:                    resolvedMe,
 		Micropub:              nil,
 		Microsub:              nil,
-		Profile: &domain.Profile{
-			Email: make([]*domain.Email, 0),
-			Name:  make([]string, 0),
-			Photo: make([]*domain.URL, 0),
-			URL:   make([]*domain.URL, 0),
-		},
-		TicketEndpoint: nil,
-		TokenEndpoint:  nil,
+		Profile:               domain.NewProfile(),
+		TicketEndpoint:        nil,
+		TokenEndpoint:         nil,
 	}
 
 	if metadata, err := util.ExtractMetadata(resp, repo.client); err == nil {
 		user.AuthorizationEndpoint = metadata.AuthorizationEndpoint
-		user.Micropub = metadata.Micropub
-		user.Microsub = metadata.Microsub
+		user.Micropub = metadata.MicropubEndpoint
+		user.Microsub = metadata.MicrosubEndpoint
 		user.TicketEndpoint = metadata.TicketEndpoint
 		user.TokenEndpoint = metadata.TokenEndpoint
 	}

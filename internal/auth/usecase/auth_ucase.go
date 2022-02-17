@@ -6,6 +6,7 @@ import (
 
 	"source.toby3d.me/website/indieauth/internal/auth"
 	"source.toby3d.me/website/indieauth/internal/domain"
+	"source.toby3d.me/website/indieauth/internal/profile"
 	"source.toby3d.me/website/indieauth/internal/random"
 	"source.toby3d.me/website/indieauth/internal/session"
 )
@@ -13,28 +14,48 @@ import (
 type authUseCase struct {
 	config   *domain.Config
 	sessions session.Repository
+	profiles profile.Repository
 }
 
 // NewAuthUseCase creates a new authentication use case.
-func NewAuthUseCase(sessions session.Repository, config *domain.Config) auth.UseCase {
+func NewAuthUseCase(sessions session.Repository, profiles profile.Repository, config *domain.Config) auth.UseCase {
 	return &authUseCase{
 		config:   config,
 		sessions: sessions,
+		profiles: profiles,
 	}
 }
 
-func (useCase *authUseCase) Generate(ctx context.Context, opts auth.GenerateOptions) (string, error) {
-	code, err := random.String(useCase.config.Code.Length)
+func (uc *authUseCase) Generate(ctx context.Context, opts auth.GenerateOptions) (string, error) {
+	code, err := random.String(uc.config.Code.Length)
 	if err != nil {
 		return "", fmt.Errorf("cannot generate random code: %w", err)
 	}
 
-	if err = useCase.sessions.Create(ctx, &domain.Session{
+	var userInfo *domain.Profile
+
+	// NOTE(toby3d): We request information about the profile only if there
+	// is a corresponding Scope. However, the availability of this
+	// information in the token is not guaranteed and is completely optional:
+	// https://indieauth.net/source/#profile-information
+	if opts.Scope.Has(domain.ScopeProfile) {
+		userInfo, _ = uc.profiles.Get(ctx, opts.Me)
+
+		// NOTE(toby3d): 'email' Scope depends on 'profile'
+		// Scope. Hide the email field if this information has
+		// not been requested.
+		if userInfo != nil && userInfo.Email != nil && !opts.Scope.Has(domain.ScopeEmail) {
+			userInfo.Email = nil
+		}
+	}
+
+	if err = uc.sessions.Create(ctx, &domain.Session{
 		ClientID:            opts.ClientID,
 		Code:                code,
 		CodeChallenge:       opts.CodeChallenge,
 		CodeChallengeMethod: opts.CodeChallengeMethod,
 		Me:                  opts.Me,
+		Profile:             userInfo,
 		RedirectURI:         opts.RedirectURI,
 		Scope:               opts.Scope,
 	}); err != nil {
@@ -44,24 +65,25 @@ func (useCase *authUseCase) Generate(ctx context.Context, opts auth.GenerateOpti
 	return code, nil
 }
 
-func (useCase *authUseCase) Exchange(ctx context.Context, opts auth.ExchangeOptions) (*domain.Me, error) {
-	session, err := useCase.sessions.GetAndDelete(ctx, opts.Code)
+func (uc *authUseCase) Exchange(ctx context.Context, opts auth.ExchangeOptions) (*domain.Me, *domain.Profile, error) {
+	session, err := uc.sessions.GetAndDelete(ctx, opts.Code)
 	if err != nil {
-		return nil, fmt.Errorf("cannot find session in store: %w", err)
+		return nil, nil, fmt.Errorf("cannot find session in store: %w", err)
 	}
 
 	if opts.ClientID.String() != session.ClientID.String() {
-		return nil, auth.ErrMismatchClientID
+		return nil, nil, auth.ErrMismatchClientID
 	}
 
 	if opts.RedirectURI.String() != session.RedirectURI.String() {
-		return nil, auth.ErrMismatchRedirectURI
+		return nil, nil, auth.ErrMismatchRedirectURI
 	}
 
-	if session.CodeChallenge != "" && session.CodeChallengeMethod != domain.CodeChallengeMethodUndefined &&
+	if session.CodeChallenge != "" &&
+		session.CodeChallengeMethod != domain.CodeChallengeMethodUndefined &&
 		!session.CodeChallengeMethod.Validate(session.CodeChallenge, opts.CodeVerifier) {
-		return nil, auth.ErrMismatchPKCE
+		return nil, nil, auth.ErrMismatchPKCE
 	}
 
-	return session.Me, nil
+	return session.Me, session.Profile, nil
 }

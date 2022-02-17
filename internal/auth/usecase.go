@@ -25,7 +25,7 @@ type (
 
 	UseCase interface {
 		Generate(ctx context.Context, opts GenerateOptions) (string, error)
-		Exchange(ctx context.Context, opts ExchangeOptions) (*domain.Me, error)
+		Exchange(ctx context.Context, opts ExchangeOptions) (*domain.Me, *domain.Profile, error)
 	}
 )
 
