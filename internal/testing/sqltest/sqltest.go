@@ -7,6 +7,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/jmoiron/sqlx"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type Time struct{}
@@ -26,7 +27,7 @@ func Open(tb testing.TB) (*sqlx.DB, sqlmock.Sqlmock, func()) {
 		tb.Fatal(err)
 	}
 
-	xdb := sqlx.NewDb(db, "sqlite")
+	xdb := sqlx.NewDb(db, "sqlite3")
 	if err = xdb.Ping(); err != nil {
 		_ = db.Close()
 

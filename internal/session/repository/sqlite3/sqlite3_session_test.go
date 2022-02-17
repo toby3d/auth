@@ -13,15 +13,18 @@ import (
 )
 
 //nolint: gochecknoglobals // slices cannot be contants
-var tableColumns = []string{
-	"created_at", "client_id", "me", "redirect_uri", "code_challenge_method", "scope", "code", "code_challenge",
-}
+var tableColumns = []string{"created_at", "code", "data"}
 
 func TestCreate(t *testing.T) {
 	t.Parallel()
 
 	session := domain.TestSession(t)
-	model := repository.NewSession(session)
+
+	model, err := repository.NewSession(session)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	db, mock, cleanup := sqltest.Open(t)
 	t.Cleanup(cleanup)
 
@@ -29,13 +32,8 @@ func TestCreate(t *testing.T) {
 	mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO sessions`)).
 		WithArgs(
 			sqltest.Time{},
-			model.ClientID,
-			model.Me,
-			model.RedirectURI,
-			model.CodeChallengeMethod,
-			model.Scope,
 			model.Code,
-			model.CodeChallenge,
+			model.Data,
 		).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -49,7 +47,12 @@ func TestGet(t *testing.T) {
 	t.Parallel()
 
 	session := domain.TestSession(t)
-	model := repository.NewSession(session)
+
+	model, err := repository.NewSession(session)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	db, mock, cleanup := sqltest.Open(t)
 	t.Cleanup(cleanup)
 
@@ -59,13 +62,8 @@ func TestGet(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows(tableColumns).
 			AddRow(
 				model.CreatedAt.Time,
-				model.ClientID,
-				model.Me,
-				model.RedirectURI,
-				model.CodeChallengeMethod,
-				model.Scope,
 				model.Code,
-				model.CodeChallenge,
+				model.Data,
 			))
 
 	result, err := repository.NewSQLite3SessionRepository(db).
@@ -83,7 +81,12 @@ func TestGetAndDelete(t *testing.T) {
 	t.Parallel()
 
 	session := domain.TestSession(t)
-	model := repository.NewSession(session)
+
+	model, err := repository.NewSession(session)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	db, mock, cleanup := sqltest.Open(t)
 	t.Cleanup(cleanup)
 
@@ -94,13 +97,8 @@ func TestGetAndDelete(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows(tableColumns).
 			AddRow(
 				model.CreatedAt.Time,
-				model.ClientID,
-				model.Me,
-				model.RedirectURI,
-				model.CodeChallengeMethod,
-				model.Scope,
 				model.Code,
-				model.CodeChallenge,
+				model.Data,
 			))
 	mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM sessions`)).
 		WithArgs(model.Code).

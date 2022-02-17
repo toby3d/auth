@@ -3,9 +3,10 @@ package sqlite3
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -16,14 +17,9 @@ import (
 
 type (
 	Session struct {
-		CreatedAt           sql.NullTime `db:"created_at"`
-		ClientID            string       `db:"client_id"`
-		Me                  string       `db:"me"`
-		RedirectURI         string       `db:"redirect_uri"`
-		CodeChallengeMethod string       `db:"code_challenge_method"`
-		Scope               string       `db:"scope"`
-		Code                string       `db:"code"`
-		CodeChallenge       string       `db:"code_challenge"`
+		CreatedAt sql.NullTime `db:"created_at"`
+		Code      string       `db:"code"`
+		Data      string       `db:"data"`
 	}
 
 	sqlite3SessionRepository struct {
@@ -34,23 +30,16 @@ type (
 const (
 	QueryTable string = `CREATE TABLE IF NOT EXISTS sessions (
 		created_at DATETIME NOT NULL,
-		client_id TEXT NOT NULL,
-		me TEXT NOT NULL,
-		redirect_uri TEXT NOT NULL,
-		code_challenge_method TEXT,
-		scope TEXT,
 		code TEXT UNIQUE PRIMARY KEY NOT NULL,
-		code_challenge TEXT
+		data TEXT NOT NULL
 	);`
 
 	QueryGet string = `SELECT *
 		FROM sessions
 		WHERE code=$1;`
 
-	QueryCreate string = `INSERT INTO sessions (created_at, client_id, me, redirect_uri, code_challenge_method,
-			scope, code, code_challenge)
-		VALUES (:created_at, :client_id, :me, :redirect_uri, :code_challenge_method, :scope, :code,
-			:code_challenge);`
+	QueryCreate string = `INSERT INTO sessions (created_at, code, data)
+		VALUES (:created_at, :code, :data);`
 
 	QueryDelete string = `DELETE FROM sessions
 		WHERE code=$1;`
@@ -65,7 +54,12 @@ func NewSQLite3SessionRepository(db *sqlx.DB) session.Repository {
 }
 
 func (repo *sqlite3SessionRepository) Create(ctx context.Context, session *domain.Session) error {
-	if _, err := repo.db.NamedExecContext(ctx, QueryCreate, NewSession(session)); err != nil {
+	src, err := NewSession(session)
+	if err != nil {
+		return fmt.Errorf("cannot encode session data for store: %w", err)
+	}
+
+	if _, err := repo.db.NamedExecContext(ctx, QueryCreate, src); err != nil {
 		return fmt.Errorf("cannot create session record in db: %w", err)
 	}
 
@@ -79,7 +73,9 @@ func (repo *sqlite3SessionRepository) Get(ctx context.Context, code string) (*do
 	}
 
 	result := new(domain.Session)
-	s.Populate(result)
+	if err := s.Populate([]byte(s.Data), result); err != nil {
+		return nil, fmt.Errorf("cannot decode session data from store: %w", err)
+	}
 
 	return result, nil
 }
@@ -116,43 +112,42 @@ func (repo *sqlite3SessionRepository) GetAndDelete(ctx context.Context, code str
 	}
 
 	result := new(domain.Session)
-	s.Populate(result)
+	if err = s.Populate([]byte(s.Data), result); err != nil {
+		return nil, fmt.Errorf("cannot decode session data from store: %w", err)
+	}
 
 	return result, nil
 }
 
 func (repo *sqlite3SessionRepository) GC() {}
 
-func NewSession(src *domain.Session) *Session {
+func NewSession(src *domain.Session) (*Session, error) {
+	data, err := json.Marshal(src)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Session{
 		CreatedAt: sql.NullTime{
 			Time:  time.Now().UTC(),
 			Valid: true,
 		},
-		ClientID:            src.ClientID.String(),
-		Code:                src.Code,
-		CodeChallenge:       src.CodeChallenge,
-		CodeChallengeMethod: src.CodeChallengeMethod.String(),
-		Me:                  src.Me.String(),
-		RedirectURI:         src.RedirectURI.String(),
-		Scope:               src.Scope.String(),
-	}
+		Code: src.Code,
+		Data: base64.StdEncoding.EncodeToString(data),
+	}, nil
 }
 
-func (t *Session) Populate(dst *domain.Session) {
-	dst.ClientID, _ = domain.ParseClientID(t.ClientID)
-	dst.Code = t.Code
-	dst.CodeChallenge = t.CodeChallenge
-	dst.CodeChallengeMethod, _ = domain.ParseCodeChallengeMethod(t.CodeChallengeMethod)
-	dst.Me, _ = domain.ParseMe(t.Me)
-	dst.RedirectURI, _ = domain.ParseURL(t.RedirectURI)
+func (t *Session) Populate(src []byte, dst *domain.Session) error {
+	tmp := make([]byte, base64.StdEncoding.DecodedLen(len(src)))
 
-	for _, scope := range strings.Fields(t.Scope) {
-		s, err := domain.ParseScope(scope)
-		if err != nil {
-			continue
-		}
-
-		dst.Scope = append(dst.Scope, s)
+	n, err := base64.StdEncoding.Decode(tmp, src)
+	if err != nil {
+		return err
 	}
+
+	if err = json.Unmarshal(tmp[:n], dst); err != nil {
+		return err
+	}
+
+	return nil
 }
