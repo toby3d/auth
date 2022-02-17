@@ -6,15 +6,16 @@ import (
 	"source.toby3d.me/website/indieauth/internal/random"
 )
 
+//nolint: tagliatelle
 type Session struct {
-	ClientID            *ClientID
-	RedirectURI         *URL
-	Me                  *Me
-	Profile             *Profile
-	Scope               Scopes
-	CodeChallengeMethod CodeChallengeMethod
-	CodeChallenge       string
-	Code                string
+	ClientID            *ClientID           `json:"client_id"`
+	RedirectURI         *URL                `json:"redirect_uri"`
+	Me                  *Me                 `json:"me"`
+	Profile             *Profile            `json:"profile,omitempty"`
+	Scope               Scopes              `json:"scope"`
+	CodeChallengeMethod CodeChallengeMethod `json:"code_challenge_method,omitempty"`
+	CodeChallenge       string              `json:"code_challenge,omitempty"`
+	Code                string              `json:"-"`
 }
 
 // TestSession returns valid random generated session for tests.

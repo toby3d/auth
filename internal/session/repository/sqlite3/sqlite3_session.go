@@ -124,7 +124,7 @@ func (repo *sqlite3SessionRepository) GC() {}
 func NewSession(src *domain.Session) (*Session, error) {
 	data, err := json.Marshal(src)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot encode data to JSON: %w", err)
 	}
 
 	return &Session{
@@ -142,11 +142,11 @@ func (t *Session) Populate(src []byte, dst *domain.Session) error {
 
 	n, err := base64.StdEncoding.Decode(tmp, src)
 	if err != nil {
-		return err
+		return fmt.Errorf("cannot decode base64 data: %w", err)
 	}
 
 	if err = json.Unmarshal(tmp[:n], dst); err != nil {
-		return err
+		return fmt.Errorf("cannot decode JSON data: %w", err)
 	}
 
 	return nil
