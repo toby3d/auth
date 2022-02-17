@@ -63,11 +63,12 @@ var ErrCodeChallengeMethodUnknown error = NewError(
 
 //nolint: gochecknoglobals // maps cannot be constants
 var uidsMethods = map[string]CodeChallengeMethod{
-	CodeChallengeMethodMD5.uid:   CodeChallengeMethodMD5,
-	CodeChallengeMethodPLAIN.uid: CodeChallengeMethodPLAIN,
-	CodeChallengeMethodS1.uid:    CodeChallengeMethodS1,
-	CodeChallengeMethodS256.uid:  CodeChallengeMethodS256,
-	CodeChallengeMethodS512.uid:  CodeChallengeMethodS512,
+	CodeChallengeMethodMD5.uid:       CodeChallengeMethodMD5,
+	CodeChallengeMethodPLAIN.uid:     CodeChallengeMethodPLAIN,
+	CodeChallengeMethodS1.uid:        CodeChallengeMethodS1,
+	CodeChallengeMethodS256.uid:      CodeChallengeMethodS256,
+	CodeChallengeMethodS512.uid:      CodeChallengeMethodS512,
+	CodeChallengeMethodUndefined.uid: CodeChallengeMethodUndefined,
 }
 
 // ParseCodeChallengeMethod parse string identifier of code challenge method
@@ -99,12 +100,9 @@ func (ccm *CodeChallengeMethod) UnmarshalJSON(v []byte) error {
 		return fmt.Errorf("CodeChallengeMethod: UnmarshalJSON: %w", err)
 	}
 
-	method, err := ParseCodeChallengeMethod(src)
-	if err != nil {
+	if *ccm, err = ParseCodeChallengeMethod(src); err != nil {
 		return fmt.Errorf("CodeChallengeMethod: UnmarshalJSON: %w", err)
 	}
-
-	*ccm = method
 
 	return nil
 }
