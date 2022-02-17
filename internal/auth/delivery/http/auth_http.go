@@ -240,6 +240,7 @@ func (h *RequestHandler) handleAuthorize(ctx *http.RequestCtx) {
 func (h *RequestHandler) handleVerify(ctx *http.RequestCtx) {
 	ctx.Response.Header.Set(http.HeaderAccessControlAllowOrigin, h.config.Server.Domain)
 	ctx.SetContentType(common.MIMEApplicationJSONCharsetUTF8)
+	ctx.Request.Header.DelCookie("__Secure-csrf")
 
 	encoder := json.NewEncoder(ctx)
 
