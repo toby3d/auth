@@ -10,8 +10,9 @@ type Session struct {
 	ClientID            *ClientID
 	RedirectURI         *URL
 	Me                  *Me
-	CodeChallengeMethod CodeChallengeMethod
+	Profile             *Profile
 	Scope               Scopes
+	CodeChallengeMethod CodeChallengeMethod
 	CodeChallenge       string
 	Code                string
 }
@@ -31,6 +32,7 @@ func TestSession(tb testing.TB) *Session {
 		Code:                code,
 		CodeChallenge:       "hackme",
 		CodeChallengeMethod: CodeChallengeMethodPLAIN,
+		Profile:             TestProfile(tb),
 		Me:                  TestMe(tb, "https://user.example.net/"),
 		RedirectURI:         TestURL(tb, "https://example.com/callback"),
 		Scope: Scopes{

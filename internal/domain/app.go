@@ -1,9 +1,9 @@
 package domain
 
 type App struct {
-	Name []string
 	Logo []*URL
 	URL  []*URL
+	Name []string
 }
 
 // GetName safe returns first name, if any.
@@ -12,16 +12,16 @@ func (a App) GetName() string {
 		return ""
 	}
 
-	return a.Name[len(a.Name)-1]
+	return a.Name[0]
 }
 
-// GetURL safe returns first uRL, if any.
+// GetURL safe returns first URL, if any.
 func (a App) GetURL() *URL {
 	if len(a.URL) == 0 {
 		return nil
 	}
 
-	return a.URL[len(a.URL)-1]
+	return a.URL[0]
 }
 
 // GetLogo safe returns first logo, if any.
@@ -30,5 +30,5 @@ func (a App) GetLogo() *URL {
 		return nil
 	}
 
-	return a.Logo[len(a.Logo)-1]
+	return a.Logo[0]
 }

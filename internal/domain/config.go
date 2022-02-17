@@ -48,16 +48,16 @@ type (
 	}
 
 	ConfigJWT struct {
-		Expiry      time.Duration `yaml:"expiry"` // 1h
+		Expiry      time.Duration `yaml:"expiry"`    // 1h
+		Algorithm   string        `yaml:"algorithm"` // HS256
 		Secret      string        `yaml:"secret"`
-		Algorithm   string        `yaml:"algorithm"`   // HS256
 		NonceLength int           `yaml:"nonceLength"` // 22
 	}
 
 	ConfigIndieAuth struct {
-		Enabled  bool   `yaml:"enabled"` // true
-		Username string `yaml:"username"`
 		Password string `yaml:"password"`
+		Username string `yaml:"username"`
+		Enabled  bool   `yaml:"enabled"` // true
 	}
 
 	ConfigTicketAuth struct {
@@ -66,14 +66,14 @@ type (
 	}
 
 	ConfigRelMeAuth struct {
-		Enabled   bool                      `yaml:"enabled"` // true
 		Providers []ConfigRelMeAuthProvider `yaml:"providers"`
+		Enabled   bool                      `yaml:"enabled"` // true
 	}
 
 	ConfigRelMeAuthProvider struct {
-		Type   string `yaml:"type"`
 		ID     string `yaml:"id"`
 		Secret string `yaml:"secret"`
+		Type   string `yaml:"type"`
 	}
 )
 

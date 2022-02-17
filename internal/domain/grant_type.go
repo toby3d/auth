@@ -1,4 +1,3 @@
-//nolint: dupl
 package domain
 
 import (
@@ -19,6 +18,7 @@ type GrantType struct {
 var (
 	GrantTypeUndefined         = GrantType{uid: ""}
 	GrantTypeAuthorizationCode = GrantType{uid: "authorization_code"}
+	GrantTypeRefreshToken      = GrantType{uid: "refresh_token"}
 
 	// TicketAuth extension.
 	GrantTypeTicket = GrantType{uid: "ticket"}
@@ -30,13 +30,17 @@ var ErrGrantTypeUnknown error = NewError(
 	"",
 )
 
+//nolint: gochecknoglobals // maps cannot be constants
+var uidsGrantTypes = map[string]GrantType{
+	GrantTypeAuthorizationCode.uid: GrantTypeAuthorizationCode,
+	GrantTypeRefreshToken.uid:      GrantTypeRefreshToken,
+	GrantTypeTicket.uid:            GrantTypeTicket,
+}
+
 // ParseGrantType parse grant_type value as GrantType struct enum.
 func ParseGrantType(uid string) (GrantType, error) {
-	switch strings.ToLower(uid) {
-	case GrantTypeAuthorizationCode.uid:
-		return GrantTypeAuthorizationCode, nil
-	case GrantTypeTicket.uid:
-		return GrantTypeTicket, nil
+	if grantType, ok := uidsGrantTypes[strings.ToLower(uid)]; ok {
+		return grantType, nil
 	}
 
 	return GrantTypeUndefined, fmt.Errorf("%w: %s", ErrGrantTypeUnknown, uid)

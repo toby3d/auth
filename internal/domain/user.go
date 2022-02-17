@@ -20,8 +20,8 @@ func TestUser(tb testing.TB) *User {
 	tb.Helper()
 
 	return &User{
-		Me:                    TestMe(tb, "https://user.example.net/"),
 		Profile:               TestProfile(tb),
+		Me:                    TestMe(tb, "https://user.example.net/"),
 		AuthorizationEndpoint: TestURL(tb, "https://example.org/auth"),
 		IndieAuthMetadata:     TestURL(tb, "https://example.org/.well-known/oauth-authorization-server"),
 		Micropub:              TestURL(tb, "https://microsub.example.org/"),

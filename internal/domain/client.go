@@ -96,7 +96,7 @@ func (c Client) GetName() string {
 	return c.Name[0]
 }
 
-// GetURL safe returns first uRL, if any.
+// GetURL safe returns first URL, if any.
 func (c Client) GetURL() *URL {
 	if len(c.URL) == 0 {
 		return nil
