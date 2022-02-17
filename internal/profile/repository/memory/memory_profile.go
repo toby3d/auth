@@ -6,8 +6,6 @@ import (
 	"path"
 	"sync"
 
-	"golang.org/x/oauth2"
-
 	"source.toby3d.me/website/indieauth/internal/domain"
 	"source.toby3d.me/website/indieauth/internal/profile"
 )
@@ -27,8 +25,8 @@ func NewMemoryProfileRepository(store *sync.Map) profile.Repository {
 	}
 }
 
-func (repo *memoryProfileRepository) Get(_ context.Context, token *oauth2.Token) (*domain.Profile, error) {
-	src, ok := repo.store.Load(path.Join(DefaultPathPrefix, token.AccessToken))
+func (repo *memoryProfileRepository) Get(_ context.Context, me *domain.Me) (*domain.Profile, error) {
+	src, ok := repo.store.Load(path.Join(DefaultPathPrefix, me.String()))
 	if !ok {
 		return nil, fmt.Errorf("%s: cannot find profile in store: %w", ErrPrefix, profile.ErrNotExist)
 	}
