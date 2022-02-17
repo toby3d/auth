@@ -1,17 +1,22 @@
-[Unit]
-Description=IndieAuth
-
 [Service]
 ExecStart=%h/indieauth/indieauth
-Group=%u
+ExitType=main
+Group=ubuntu
 PermissionsStartOnly=true
 Restart=always
-RestartSec=5s
+RestartSec=1
 StandardError=syslog
 StandardOutput=syslog
 SyslogIdentifier=indieauth
 Type=simple
 WorkingDirectory=%h/indieauth
 
+[Unit]
+Description=Personal IndieAuth server instance
+Documentation=https://indieauth.net/source/
+StartLimitBurst=5
+StartLimitIntervalSec=0
+
 [Install]
+Alias=indieauth
 WantedBy=multi-user.target
