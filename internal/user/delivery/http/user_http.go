@@ -16,10 +16,10 @@ import (
 
 type (
 	UserInformationResponse struct {
-		Name  string        `json:"name,omitempty"`
-		URL   *domain.URL   `json:"url,omitempty"`
-		Photo *domain.URL   `json:"photo,omitempty"`
-		Email *domain.Email `json:"email,omitempty"`
+		Name  string `json:"name,omitempty"`
+		URL   string `json:"url,omitempty"`
+		Photo string `json:"photo,omitempty"`
+		Email string `json:"email,omitempty"`
 	}
 
 	RequestHandler struct {
@@ -75,21 +75,32 @@ func (h *RequestHandler) handleUserInformation(ctx *http.RequestCtx) {
 		return
 	}
 
-	if !tkn.Scope.Has(domain.ScopeProfile) && !tkn.Scope.Has(domain.ScopeEmail) {
+	if !tkn.Scope.Has(domain.ScopeProfile) {
 		ctx.SetStatusCode(http.StatusForbidden)
+
 		_ = encoder.Encode(domain.NewError(
 			domain.ErrorCodeInsufficientScope,
-			"token with 'profile' and/or 'email' scopes is required to view profile data",
+			"token with 'profile' scope is required to view profile data",
 			"https://indieauth.net/source/#user-information",
 		))
 
 		return
 	}
 
-	_ = encoder.Encode(&UserInformationResponse{
-		Name:  "",
-		URL:   &domain.URL{},
-		Photo: &domain.URL{},
-		Email: &domain.Email{},
-	})
+	resp := new(UserInformationResponse)
+	if tkn.Extra == nil {
+		_ = encoder.Encode(resp)
+
+		return
+	}
+
+	resp.Name, _ = tkn.Extra["name"].(string)
+	resp.URL, _ = tkn.Extra["url"].(string)
+	resp.Photo, _ = tkn.Extra["photo"].(string)
+
+	if tkn.Scope.Has(domain.ScopeEmail) {
+		resp.Email, _ = tkn.Extra["email"].(string)
+	}
+
+	_ = encoder.Encode(resp)
 }
