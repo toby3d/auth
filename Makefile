@@ -1,7 +1,7 @@
 SHELL:=/bin/bash
 PROJECT_NAME=indieauth
 VERSION=$(shell cat VERSION)
-GO_BUILD_ENV=CGO_ENABLED=0 GOOS=linux GOARCH=amd64
+GO_BUILD_ENV=GOOS=linux GOARCH=amd64
 GO_FILES=$(shell go list ./... | grep -v /vendor/)
 
 build:
