@@ -77,6 +77,8 @@ func (repo *sqlite3SessionRepository) Get(ctx context.Context, code string) (*do
 		return nil, fmt.Errorf("cannot decode session data from store: %w", err)
 	}
 
+	result.Code = code
+
 	return result, nil
 }
 
@@ -115,6 +117,8 @@ func (repo *sqlite3SessionRepository) GetAndDelete(ctx context.Context, code str
 	if err = s.Populate([]byte(s.Data), result); err != nil {
 		return nil, fmt.Errorf("cannot decode session data from store: %w", err)
 	}
+
+	result.Code = code
 
 	return result, nil
 }

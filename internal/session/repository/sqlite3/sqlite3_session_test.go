@@ -19,6 +19,7 @@ func TestCreate(t *testing.T) {
 	t.Parallel()
 
 	session := domain.TestSession(t)
+	session.Profile = nil
 
 	model, err := repository.NewSession(session)
 	if err != nil {
@@ -47,6 +48,7 @@ func TestGet(t *testing.T) {
 	t.Parallel()
 
 	session := domain.TestSession(t)
+	session.Profile = nil
 
 	model, err := repository.NewSession(session)
 	if err != nil {
@@ -81,6 +83,7 @@ func TestGetAndDelete(t *testing.T) {
 	t.Parallel()
 
 	session := domain.TestSession(t)
+	session.Profile = nil
 
 	model, err := repository.NewSession(session)
 	if err != nil {
