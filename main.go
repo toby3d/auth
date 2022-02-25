@@ -23,12 +23,12 @@ import (
 
 	"github.com/fasthttp/router"
 	"github.com/jmoiron/sqlx"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/spf13/viper"
 	http "github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/pprofhandler"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
+	_ "modernc.org/sqlite"
 
 	"source.toby3d.me/website/indieauth/internal/auth"
 	authhttpdelivery "source.toby3d.me/website/indieauth/internal/auth/delivery/http"
