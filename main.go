@@ -277,7 +277,12 @@ func NewApp(opts NewAppOptions) *App {
 		matcher:  language.NewMatcher(message.DefaultCatalog.Languages()),
 		sessions: sessionucase.NewSessionUseCase(opts.Sessions),
 		tickets:  ticketucase.NewTicketUseCase(opts.Tickets, opts.Client, config),
-		tokens:   tokenucase.NewTokenUseCase(opts.Tokens, opts.Sessions, config),
+		tokens: tokenucase.NewTokenUseCase(tokenucase.Config{
+			Config:   config,
+			Profiles: opts.Profiles,
+			Sessions: opts.Sessions,
+			Tokens:   opts.Tokens,
+		}),
 	}
 }
 
