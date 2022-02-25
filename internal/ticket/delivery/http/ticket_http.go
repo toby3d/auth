@@ -88,8 +88,8 @@ func (h *RequestHandler) Register(r *router.Router) {
 			SigningMethod:           jwa.SignatureAlgorithm(h.config.JWT.Algorithm),
 			Skipper:                 middleware.DefaultSkipper,
 			SuccessHandler:          nil,
-			TokenLookup: middleware.SourceHeader + ":" + http.HeaderAuthorization +
-				"," + middleware.SourceCookie + ":" + "__Secure-auth-token",
+			TokenLookup: "header:" + http.HeaderAuthorization +
+				"," + "cookie:" + "__Secure-auth-token",
 		}),
 		middleware.LogFmt(),
 	}

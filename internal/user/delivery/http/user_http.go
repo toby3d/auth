@@ -38,20 +38,12 @@ func NewRequestHandler(tokens token.UseCase, config *domain.Config) *RequestHand
 func (h *RequestHandler) Register(r *router.Router) {
 	chain := middleware.Chain{
 		middleware.JWTWithConfig(middleware.JWTConfig{
-			AuthScheme:              "Bearer",
-			BeforeFunc:              nil,
-			Claims:                  nil,
-			ContextKey:              "token",
-			ErrorHandler:            nil,
-			ErrorHandlerWithContext: nil,
-			ParseTokenFunc:          nil,
-			SigningKey:              []byte(h.config.JWT.Secret),
-			SigningKeys:             nil,
-			SigningMethod:           jwa.SignatureAlgorithm(h.config.JWT.Algorithm),
-			Skipper:                 middleware.DefaultSkipper,
-			SuccessHandler:          nil,
-			TokenLookup: middleware.SourceHeader + ":" + http.HeaderAuthorization +
-				"," + middleware.SourceCookie + ":" + "__Secure-auth-token",
+			AuthScheme:    "Bearer",
+			ContextKey:    "token",
+			SigningKey:    []byte(h.config.JWT.Secret),
+			SigningMethod: jwa.SignatureAlgorithm(h.config.JWT.Algorithm),
+			Skipper:       middleware.DefaultSkipper,
+			TokenLookup:   "header:" + http.HeaderAuthorization + ":Bearer ",
 		}),
 		middleware.LogFmt(),
 	}

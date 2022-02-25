@@ -149,8 +149,8 @@ func (h *RequestHandler) Register(r *router.Router) {
 				return matched
 			},
 			SuccessHandler: nil,
-			TokenLookup: middleware.SourceHeader + ":" + http.HeaderAuthorization +
-				"," + middleware.SourceParam + ":" + "token",
+			TokenLookup: "header:" + http.HeaderAuthorization + ":Bearer " +
+				",param:token",
 		}),
 		middleware.LogFmt(),
 	}

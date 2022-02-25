@@ -5,10 +5,9 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/fasthttp/router"
 	"github.com/goccy/go-json"
 	http "github.com/valyala/fasthttp"
-
-	"github.com/fasthttp/router"
 
 	"source.toby3d.me/website/indieauth/internal/domain"
 	"source.toby3d.me/website/indieauth/internal/profile"
