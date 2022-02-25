@@ -19,7 +19,6 @@ type (
 		Expiry       time.Time
 		ClientID     *ClientID
 		Me           *Me
-		Profile      *Profile
 		Scope        Scopes
 		AccessToken  string
 		RefreshToken string
@@ -29,7 +28,6 @@ type (
 	NewTokenOptions struct {
 		Expiration  time.Duration
 		Issuer      *ClientID
-		Profile     *Profile
 		Subject     *Me
 		Scope       Scopes
 		Secret      []byte
@@ -48,7 +46,6 @@ var DefaultNewTokenOptions = NewTokenOptions{
 	Secret:      nil,
 	Algorithm:   "HS256",
 	NonceLength: 32,
-	Profile:     nil,
 }
 
 // NewToken create a new token by provided options.
@@ -83,23 +80,6 @@ func NewToken(opts NewTokenOptions) (*Token, error) {
 		}
 	}
 
-	if opts.Profile != nil {
-		for key, val := range map[string]interface{}{
-			"name":  opts.Profile.GetName(),
-			"url":   opts.Profile.GetURL(),
-			"photo": opts.Profile.GetPhoto(),
-			"email": opts.Profile.GetEmail(),
-		} {
-			if val == nil {
-				continue
-			}
-
-			if err = tkn.Set(key, val); err != nil {
-				return nil, fmt.Errorf("failed to set JWT token claim: %w", err)
-			}
-		}
-	}
-
 	if opts.Issuer != nil {
 		if err = tkn.Set(jwt.IssuerKey, opts.Issuer.String()); err != nil {
 			return nil, fmt.Errorf("failed to set JWT token field: %w", err)
@@ -123,7 +103,6 @@ func NewToken(opts NewTokenOptions) (*Token, error) {
 		CreatedAt:    now,
 		Expiry:       now.Add(opts.Expiration),
 		Me:           opts.Subject,
-		Profile:      opts.Profile,
 		RefreshToken: "", // TODO(toby3d)
 		Scope:        opts.Scope,
 	}, nil
@@ -147,6 +126,8 @@ func TestToken(tb testing.TB) *Token {
 		ScopeCreate,
 		ScopeDelete,
 		ScopeUpdate,
+		ScopeProfile,
+		ScopeEmail,
 	}
 
 	for key, val := range map[string]interface{}{
@@ -176,7 +157,6 @@ func TestToken(tb testing.TB) *Token {
 		ClientID:     cid,
 		Me:           me,
 		Scope:        scope,
-		Profile:      TestProfile(tb),
 		AccessToken:  string(accessToken),
 		RefreshToken: "", // TODO(toby3d)
 	}

@@ -9,32 +9,41 @@ import (
 	"github.com/lestrrat-go/jwx/jwt"
 
 	"source.toby3d.me/website/indieauth/internal/domain"
+	"source.toby3d.me/website/indieauth/internal/profile"
 	"source.toby3d.me/website/indieauth/internal/session"
 	"source.toby3d.me/website/indieauth/internal/token"
 )
 
-type tokenUseCase struct {
-	sessions session.Repository
-	tokens   token.Repository
-	config   *domain.Config
-}
+type (
+	Config struct {
+		Config   *domain.Config
+		Profiles profile.Repository
+		Sessions session.Repository
+		Tokens   token.Repository
+	}
 
-func NewTokenUseCase(tokens token.Repository, sessions session.Repository, config *domain.Config) token.UseCase {
-	jwt.RegisterCustomField("email", new(domain.Email))
-	jwt.RegisterCustomField("photo", new(domain.URL))
+	tokenUseCase struct {
+		config   *domain.Config
+		profiles profile.Repository
+		sessions session.Repository
+		tokens   token.Repository
+	}
+)
+
+func NewTokenUseCase(config Config) token.UseCase {
 	jwt.RegisterCustomField("scope", make(domain.Scopes, 0))
-	jwt.RegisterCustomField("url", new(domain.URL))
 
 	return &tokenUseCase{
-		config:   config,
-		sessions: sessions,
-		tokens:   tokens,
+		config:   config.Config,
+		profiles: config.Profiles,
+		sessions: config.Sessions,
+		tokens:   config.Tokens,
 	}
 }
 
-func (useCase *tokenUseCase) Exchange(ctx context.Context, opts token.ExchangeOptions) (*domain.Token, *domain.Profile,
+func (uc *tokenUseCase) Exchange(ctx context.Context, opts token.ExchangeOptions) (*domain.Token, *domain.Profile,
 	error) {
-	session, err := useCase.sessions.GetAndDelete(ctx, opts.Code)
+	session, err := uc.sessions.GetAndDelete(ctx, opts.Code)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot get session from store: %w", err)
 	}
@@ -66,14 +75,13 @@ func (useCase *tokenUseCase) Exchange(ctx context.Context, opts token.ExchangeOp
 	}
 
 	tkn, err := domain.NewToken(domain.NewTokenOptions{
-		Expiration:  useCase.config.JWT.Expiry,
+		Expiration:  uc.config.JWT.Expiry,
 		Issuer:      session.ClientID,
 		Subject:     session.Me,
 		Scope:       session.Scope,
-		Secret:      []byte(useCase.config.JWT.Secret),
-		Profile:     session.Profile,
-		Algorithm:   useCase.config.JWT.Algorithm,
-		NonceLength: useCase.config.JWT.NonceLength,
+		Secret:      []byte(uc.config.JWT.Secret),
+		Algorithm:   uc.config.JWT.Algorithm,
+		NonceLength: uc.config.JWT.NonceLength,
 	})
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot generate a new access token: %w", err)
@@ -82,24 +90,24 @@ func (useCase *tokenUseCase) Exchange(ctx context.Context, opts token.ExchangeOp
 	return tkn, session.Profile, nil
 }
 
-func (useCase *tokenUseCase) Verify(ctx context.Context, accessToken string) (*domain.Token, error) {
-	find, err := useCase.tokens.Get(ctx, accessToken)
+func (uc *tokenUseCase) Verify(ctx context.Context, accessToken string) (*domain.Token, *domain.Profile, error) {
+	find, err := uc.tokens.Get(ctx, accessToken)
 	if err != nil && !errors.Is(err, token.ErrNotExist) {
-		return nil, fmt.Errorf("cannot check token in store: %w", err)
+		return nil, nil, fmt.Errorf("cannot check token in store: %w", err)
 	}
 
 	if find != nil {
-		return nil, token.ErrRevoke
+		return nil, nil, token.ErrRevoke
 	}
 
-	tkn, err := jwt.ParseString(accessToken, jwt.WithVerify(jwa.SignatureAlgorithm(useCase.config.JWT.Algorithm),
-		[]byte(useCase.config.JWT.Secret)))
+	tkn, err := jwt.ParseString(accessToken, jwt.WithVerify(jwa.SignatureAlgorithm(uc.config.JWT.Algorithm),
+		[]byte(uc.config.JWT.Secret)))
 	if err != nil {
-		return nil, fmt.Errorf("cannot parse JWT token: %w", err)
+		return nil, nil, fmt.Errorf("cannot parse JWT token: %w", err)
 	}
 
 	if err = jwt.Validate(tkn); err != nil {
-		return nil, fmt.Errorf("cannot validate JWT token: %w", err)
+		return nil, nil, fmt.Errorf("cannot validate JWT token: %w", err)
 	}
 
 	result := &domain.Token{
@@ -107,7 +115,6 @@ func (useCase *tokenUseCase) Verify(ctx context.Context, accessToken string) (*d
 		Expiry:       tkn.Expiration(),
 		ClientID:     nil,
 		Me:           nil,
-		Profile:      nil,
 		Scope:        nil,
 		AccessToken:  accessToken,
 		RefreshToken: "", // TODO(toby3d)
@@ -120,49 +127,28 @@ func (useCase *tokenUseCase) Verify(ctx context.Context, accessToken string) (*d
 	}
 
 	if !result.Scope.Has(domain.ScopeProfile) {
-		return result, nil
+		return result, nil, nil
 	}
 
-	result.Profile = domain.NewProfile()
-
-	if name, ok := tkn.Get("name"); ok {
-		if n, ok := name.(string); ok {
-			result.Profile.Name = append(result.Profile.Name, n)
-		}
+	profile, err := uc.profiles.Get(ctx, result.Me)
+	if err != nil {
+		return result, nil, nil
 	}
 
-	if url, ok := tkn.Get("url"); ok {
-		if u, ok := url.(*domain.URL); ok {
-			result.Profile.URL = append(result.Profile.URL, u)
-		}
+	if !result.Scope.Has(domain.ScopeEmail) && len(profile.Email) > 0 {
+		profile.Email = nil
 	}
 
-	if photo, ok := tkn.Get("photo"); ok {
-		if p, ok := photo.(*domain.URL); ok {
-			result.Profile.Photo = append(result.Profile.Photo, p)
-		}
-	}
-
-	if !result.Scope.Has(domain.ScopeEmail) {
-		return result, nil
-	}
-
-	if email, ok := tkn.Get("email"); ok {
-		if e, ok := email.(*domain.Email); ok {
-			result.Profile.Email = append(result.Profile.Email, e)
-		}
-	}
-
-	return result, nil
+	return result, profile, nil
 }
 
-func (useCase *tokenUseCase) Revoke(ctx context.Context, accessToken string) error {
-	tkn, err := useCase.Verify(ctx, accessToken)
+func (uc *tokenUseCase) Revoke(ctx context.Context, accessToken string) error {
+	tkn, _, err := uc.Verify(ctx, accessToken)
 	if err != nil {
 		return fmt.Errorf("cannot verify token: %w", err)
 	}
 
-	if err = useCase.tokens.Create(ctx, tkn); err != nil {
+	if err = uc.tokens.Create(ctx, tkn); err != nil {
 		return fmt.Errorf("cannot save token in database: %w", err)
 	}
 

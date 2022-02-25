@@ -18,7 +18,7 @@ type (
 		Exchange(ctx context.Context, opts ExchangeOptions) (*domain.Token, *domain.Profile, error)
 
 		// Verify checks the AccessToken and returns the associated information.
-		Verify(ctx context.Context, accessToken string) (*domain.Token, error)
+		Verify(ctx context.Context, accessToken string) (*domain.Token, *domain.Profile, error)
 
 		// Revoke revokes the AccessToken and blocks its further use.
 		Revoke(ctx context.Context, accessToken string) error

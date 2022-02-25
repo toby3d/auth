@@ -65,8 +65,8 @@ func (h *RequestHandler) handleUserInformation(ctx *http.RequestCtx) {
 
 	encoder := json.NewEncoder(ctx)
 
-	tkn, err := h.tokens.Verify(ctx, strings.TrimPrefix(string(ctx.Request.Header.Peek(http.HeaderAuthorization)),
-		"Bearer "))
+	tkn, userInfo, err := h.tokens.Verify(ctx, strings.TrimPrefix(string(ctx.Request.Header.Peek(
+		http.HeaderAuthorization)), "Bearer "))
 	if err != nil || tkn == nil {
 		// WARN(toby3d): If the token is not valid, the endpoint still
 		// MUST return a 200 Response.
@@ -88,24 +88,26 @@ func (h *RequestHandler) handleUserInformation(ctx *http.RequestCtx) {
 	}
 
 	resp := new(UserInformationResponse)
-	if tkn.Profile == nil {
+	if userInfo == nil {
 		_ = encoder.Encode(resp)
 
 		return
 	}
 
-	resp.Name = tkn.Profile.GetName()
-
-	if url := tkn.Profile.GetURL(); url != nil {
-		resp.URL = url.String()
+	if userInfo.HasName() {
+		resp.Name = userInfo.GetName()
 	}
 
-	if photo := tkn.Profile.GetPhoto(); photo != nil {
-		resp.Photo = photo.String()
+	if userInfo.HasURL() {
+		resp.URL = userInfo.GetURL().String()
 	}
 
-	if email := tkn.Profile.GetEmail(); email != nil && tkn.Scope.Has(domain.ScopeEmail) {
-		resp.Email = email.String()
+	if userInfo.HasPhoto() {
+		resp.Photo = userInfo.GetPhoto().String()
+	}
+
+	if tkn.Scope.Has(domain.ScopeEmail) && userInfo.HasEmail() {
+		resp.Email = userInfo.GetEmail().String()
 	}
 
 	_ = encoder.Encode(resp)

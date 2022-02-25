@@ -33,6 +33,10 @@ func TestProfile(tb testing.TB) *Profile {
 	}
 }
 
+func (p Profile) HasName() bool {
+	return len(p.Name) > 0
+}
+
 // GetName safe returns first name, if any.
 func (p Profile) GetName() string {
 	if len(p.Name) == 0 {
@@ -40,6 +44,10 @@ func (p Profile) GetName() string {
 	}
 
 	return p.Name[0]
+}
+
+func (p Profile) HasURL() bool {
+	return len(p.URL) > 0
 }
 
 // GetURL safe returns first URL, if any.
@@ -51,6 +59,10 @@ func (p Profile) GetURL() *URL {
 	return p.URL[0]
 }
 
+func (p Profile) HasPhoto() bool {
+	return len(p.Photo) > 0
+}
+
 // GetPhoto safe returns first photo, if any.
 func (p Profile) GetPhoto() *URL {
 	if len(p.Photo) == 0 {
@@ -58,6 +70,10 @@ func (p Profile) GetPhoto() *URL {
 	}
 
 	return p.Photo[0]
+}
+
+func (p Profile) HasEmail() bool {
+	return len(p.Email) > 0
 }
 
 // GetEmail safe returns first email, if any.

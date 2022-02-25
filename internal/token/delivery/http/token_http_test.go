@@ -12,6 +12,8 @@ import (
 
 	"source.toby3d.me/website/indieauth/internal/common"
 	"source.toby3d.me/website/indieauth/internal/domain"
+	"source.toby3d.me/website/indieauth/internal/profile"
+	profilerepo "source.toby3d.me/website/indieauth/internal/profile/repository/memory"
 	"source.toby3d.me/website/indieauth/internal/session"
 	sessionrepo "source.toby3d.me/website/indieauth/internal/session/repository/memory"
 	"source.toby3d.me/website/indieauth/internal/testing/httptest"
@@ -27,6 +29,7 @@ import (
 type Dependencies struct {
 	client        *http.Client
 	config        *domain.Config
+	profiles      profile.Repository
 	sessions      session.Repository
 	store         *sync.Map
 	tickets       ticket.Repository
@@ -135,19 +138,26 @@ func TestRevocation(t *testing.T) {
 func NewDependencies(tb testing.TB) Dependencies {
 	tb.Helper()
 
+	store := new(sync.Map)
 	client := new(http.Client)
 	config := domain.TestConfig(tb)
-	store := new(sync.Map)
 	token := domain.TestToken(tb)
+	profiles := profilerepo.NewMemoryProfileRepository(store)
 	sessions := sessionrepo.NewMemorySessionRepository(store, config)
 	tickets := ticketrepo.NewMemoryTicketRepository(store, config)
 	tokens := tokenrepo.NewMemoryTokenRepository(store)
 	ticketService := ticketucase.NewTicketUseCase(tickets, client, config)
-	tokenService := tokenucase.NewTokenUseCase(tokens, sessions, config)
+	tokenService := tokenucase.NewTokenUseCase(tokenucase.Config{
+		Config:   config,
+		Profiles: profiles,
+		Sessions: sessions,
+		Tokens:   tokens,
+	})
 
 	return Dependencies{
 		client:        client,
 		config:        config,
+		profiles:      profiles,
 		sessions:      sessions,
 		store:         store,
 		tickets:       tickets,

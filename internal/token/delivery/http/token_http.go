@@ -175,7 +175,7 @@ func (h *RequestHandler) handleIntrospect(ctx *http.RequestCtx) {
 		return
 	}
 
-	tkn, err := h.tokens.Verify(ctx, req.Token)
+	tkn, _, err := h.tokens.Verify(ctx, req.Token)
 	if err != nil || tkn == nil {
 		// WARN(toby3d): If the token is not valid, the endpoint still
 		// MUST return a 200 Response.

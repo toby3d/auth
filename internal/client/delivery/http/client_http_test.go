@@ -11,6 +11,8 @@ import (
 
 	delivery "source.toby3d.me/website/indieauth/internal/client/delivery/http"
 	"source.toby3d.me/website/indieauth/internal/domain"
+	"source.toby3d.me/website/indieauth/internal/profile"
+	profilerepo "source.toby3d.me/website/indieauth/internal/profile/repository/memory"
 	"source.toby3d.me/website/indieauth/internal/session"
 	sessionrepo "source.toby3d.me/website/indieauth/internal/session/repository/memory"
 	"source.toby3d.me/website/indieauth/internal/testing/httptest"
@@ -20,6 +22,7 @@ import (
 )
 
 type Dependencies struct {
+	profiles     profile.Repository
 	client       *domain.Client
 	config       *domain.Config
 	matcher      language.Matcher
@@ -65,13 +68,19 @@ func TestRead(t *testing.T) {
 func NewDependencies(tb testing.TB) Dependencies {
 	tb.Helper()
 
+	store := new(sync.Map)
 	client := domain.TestClient(tb)
 	config := domain.TestConfig(tb)
 	matcher := language.NewMatcher(message.DefaultCatalog.Languages())
-	store := new(sync.Map)
 	sessions := sessionrepo.NewMemorySessionRepository(store, config)
 	tokens := tokenrepo.NewMemoryTokenRepository(store)
-	tokenService := tokenucase.NewTokenUseCase(tokens, sessions, config)
+	profiles := profilerepo.NewMemoryProfileRepository(store)
+	tokenService := tokenucase.NewTokenUseCase(tokenucase.Config{
+		Config:   config,
+		Profiles: profiles,
+		Sessions: sessions,
+		Tokens:   tokens,
+	})
 
 	return Dependencies{
 		client:       client,
@@ -79,6 +88,7 @@ func NewDependencies(tb testing.TB) Dependencies {
 		matcher:      matcher,
 		sessions:     sessions,
 		store:        store,
+		profiles:     profiles,
 		tokens:       tokens,
 		tokenService: tokenService,
 	}
