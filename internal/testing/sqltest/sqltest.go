@@ -27,7 +27,7 @@ func Open(tb testing.TB) (*sqlx.DB, sqlmock.Sqlmock, func()) {
 		tb.Fatal(err)
 	}
 
-	xdb := sqlx.NewDb(db, "sqlite3")
+	xdb := sqlx.NewDb(db, "sqlite")
 	if err = xdb.Ping(); err != nil {
 		_ = db.Close()
 

@@ -143,7 +143,7 @@ func (h *RequestHandler) Register(r *router.Router) {
 			CookieDomain:   h.config.Server.Domain,
 			CookieName:     "__Secure-csrf",
 			CookiePath:     "",
-			TokenLookup:    "form:_csrf",
+			TokenLookup:    "param:_csrf",
 			TokenLength:    0,
 			CookieSecure:   true,
 			CookieHTTPOnly: true,
