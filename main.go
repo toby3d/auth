@@ -161,13 +161,13 @@ func main() {
 
 	switch strings.ToLower(config.Database.Type) {
 	case "sqlite3":
-		store, err := sqlx.Open(config.Database.Type, config.Database.Path)
+		store, err := sqlx.Open("sqlite", config.Database.Path)
 		if err != nil {
 			panic(err)
 		}
 
 		if err = store.Ping(); err != nil {
-			logger.Fatalf("cannot ping %s database: %v", config.Database.Type, err)
+			logger.Fatalf("cannot ping %s database: %v", "sqlite3", err)
 		}
 
 		opts.Tokens = tokensqlite3repo.NewSQLite3TokenRepository(store)
