@@ -26,11 +26,12 @@ var (
 	ScopeUndefined = Scope{uid: ""}
 
 	// https://indieweb.org/scope#Micropub_Scopes
-	ScopeCreate = Scope{uid: "create"}
-	ScopeDelete = Scope{uid: "delete"}
-	ScopeDraft  = Scope{uid: "draft"}
-	ScopeMedia  = Scope{uid: "media"}
-	ScopeUpdate = Scope{uid: "update"}
+	ScopeCreate   = Scope{uid: "create"}
+	ScopeDelete   = Scope{uid: "delete"}
+	ScopeDraft    = Scope{uid: "draft"}
+	ScopeMedia    = Scope{uid: "media"}
+	ScopeUndelete = Scope{uid: "undelete"}
+	ScopeUpdate   = Scope{uid: "update"}
 
 	// https://indieweb.org/scope#Microsub_Scopes
 	ScopeBlock    = Scope{uid: "block"}
@@ -69,6 +70,7 @@ var uidsScopes = map[string]Scope{
 	ScopeMute.uid:     ScopeMute,
 	ScopeProfile.uid:  ScopeProfile,
 	ScopeRead.uid:     ScopeRead,
+	ScopeUndelete.uid: ScopeUndelete,
 	ScopeUpdate.uid:   ScopeUpdate,
 }
 
