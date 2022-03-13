@@ -9,7 +9,7 @@ import (
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 
-	"source.toby3d.me/website/indieauth/internal/domain"
+	"source.toby3d.me/toby3d/auth/internal/domain"
 )
 
 //line web/baseof.qtpl:8

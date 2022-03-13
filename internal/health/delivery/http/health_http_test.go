@@ -6,8 +6,8 @@ import (
 	"github.com/fasthttp/router"
 	http "github.com/valyala/fasthttp"
 
-	delivery "source.toby3d.me/website/indieauth/internal/health/delivery/http"
-	"source.toby3d.me/website/indieauth/internal/testing/httptest"
+	delivery "source.toby3d.me/toby3d/auth/internal/health/delivery/http"
+	"source.toby3d.me/toby3d/auth/internal/testing/httptest"
 )
 
 func TestRequestHandler(t *testing.T) {

@@ -6,9 +6,9 @@ import (
 
 	http "github.com/valyala/fasthttp"
 
-	"source.toby3d.me/website/indieauth/internal/client"
-	"source.toby3d.me/website/indieauth/internal/domain"
-	"source.toby3d.me/website/indieauth/internal/util"
+	"source.toby3d.me/toby3d/auth/internal/client"
+	"source.toby3d.me/toby3d/auth/internal/domain"
+	"source.toby3d.me/toby3d/auth/internal/util"
 )
 
 type httpClientRepository struct {

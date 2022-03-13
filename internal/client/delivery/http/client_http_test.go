@@ -9,16 +9,16 @@ import (
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 
-	delivery "source.toby3d.me/website/indieauth/internal/client/delivery/http"
-	"source.toby3d.me/website/indieauth/internal/domain"
-	"source.toby3d.me/website/indieauth/internal/profile"
-	profilerepo "source.toby3d.me/website/indieauth/internal/profile/repository/memory"
-	"source.toby3d.me/website/indieauth/internal/session"
-	sessionrepo "source.toby3d.me/website/indieauth/internal/session/repository/memory"
-	"source.toby3d.me/website/indieauth/internal/testing/httptest"
-	"source.toby3d.me/website/indieauth/internal/token"
-	tokenrepo "source.toby3d.me/website/indieauth/internal/token/repository/memory"
-	tokenucase "source.toby3d.me/website/indieauth/internal/token/usecase"
+	delivery "source.toby3d.me/toby3d/auth/internal/client/delivery/http"
+	"source.toby3d.me/toby3d/auth/internal/domain"
+	"source.toby3d.me/toby3d/auth/internal/profile"
+	profilerepo "source.toby3d.me/toby3d/auth/internal/profile/repository/memory"
+	"source.toby3d.me/toby3d/auth/internal/session"
+	sessionrepo "source.toby3d.me/toby3d/auth/internal/session/repository/memory"
+	"source.toby3d.me/toby3d/auth/internal/testing/httptest"
+	"source.toby3d.me/toby3d/auth/internal/token"
+	tokenrepo "source.toby3d.me/toby3d/auth/internal/token/repository/memory"
+	tokenucase "source.toby3d.me/toby3d/auth/internal/token/usecase"
 )
 
 type Dependencies struct {

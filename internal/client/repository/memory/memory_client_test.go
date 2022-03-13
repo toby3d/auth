@@ -7,8 +7,8 @@ import (
 	"sync"
 	"testing"
 
-	repository "source.toby3d.me/website/indieauth/internal/client/repository/memory"
-	"source.toby3d.me/website/indieauth/internal/domain"
+	repository "source.toby3d.me/toby3d/auth/internal/client/repository/memory"
+	"source.toby3d.me/toby3d/auth/internal/domain"
 )
 
 func TestGet(t *testing.T) {

@@ -8,10 +8,10 @@ import (
 	"github.com/fasthttp/router"
 	http "github.com/valyala/fasthttp"
 
-	"source.toby3d.me/website/indieauth/internal/common"
-	"source.toby3d.me/website/indieauth/internal/domain"
-	"source.toby3d.me/website/indieauth/internal/testing/httptest"
-	ucase "source.toby3d.me/website/indieauth/internal/ticket/usecase"
+	"source.toby3d.me/toby3d/auth/internal/common"
+	"source.toby3d.me/toby3d/auth/internal/domain"
+	"source.toby3d.me/toby3d/auth/internal/testing/httptest"
+	ucase "source.toby3d.me/toby3d/auth/internal/ticket/usecase"
 )
 
 func TestRedeem(t *testing.T) {

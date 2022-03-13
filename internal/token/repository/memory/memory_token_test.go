@@ -8,9 +8,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"source.toby3d.me/website/indieauth/internal/domain"
-	"source.toby3d.me/website/indieauth/internal/token"
-	repository "source.toby3d.me/website/indieauth/internal/token/repository/memory"
+	"source.toby3d.me/toby3d/auth/internal/domain"
+	"source.toby3d.me/toby3d/auth/internal/token"
+	repository "source.toby3d.me/toby3d/auth/internal/token/repository/memory"
 )
 
 func TestCreate(t *testing.T) {

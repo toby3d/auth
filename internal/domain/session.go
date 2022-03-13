@@ -3,7 +3,7 @@ package domain
 import (
 	"testing"
 
-	"source.toby3d.me/website/indieauth/internal/random"
+	"source.toby3d.me/toby3d/auth/internal/random"
 )
 
 //nolint: tagliatelle

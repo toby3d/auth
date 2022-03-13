@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"source.toby3d.me/website/indieauth/internal/domain"
-	"source.toby3d.me/website/indieauth/internal/session"
+	"source.toby3d.me/toby3d/auth/internal/domain"
+	"source.toby3d.me/toby3d/auth/internal/session"
 )
 
 type (

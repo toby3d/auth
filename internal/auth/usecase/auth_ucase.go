@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"source.toby3d.me/website/indieauth/internal/auth"
-	"source.toby3d.me/website/indieauth/internal/domain"
-	"source.toby3d.me/website/indieauth/internal/profile"
-	"source.toby3d.me/website/indieauth/internal/random"
-	"source.toby3d.me/website/indieauth/internal/session"
+	"source.toby3d.me/toby3d/auth/internal/auth"
+	"source.toby3d.me/toby3d/auth/internal/domain"
+	"source.toby3d.me/toby3d/auth/internal/profile"
+	"source.toby3d.me/toby3d/auth/internal/random"
+	"source.toby3d.me/toby3d/auth/internal/session"
 )
 
 type authUseCase struct {

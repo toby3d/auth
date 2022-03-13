@@ -3,7 +3,7 @@ package domain_test
 import (
 	"testing"
 
-	"source.toby3d.me/website/indieauth/internal/domain"
+	"source.toby3d.me/toby3d/auth/internal/domain"
 )
 
 func TestConfigServer_GetAddress(t *testing.T) {

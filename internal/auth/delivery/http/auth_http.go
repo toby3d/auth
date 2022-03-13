@@ -15,12 +15,12 @@ import (
 
 	"source.toby3d.me/toby3d/form"
 	"source.toby3d.me/toby3d/middleware"
-	"source.toby3d.me/website/indieauth/internal/auth"
-	"source.toby3d.me/website/indieauth/internal/client"
-	"source.toby3d.me/website/indieauth/internal/common"
-	"source.toby3d.me/website/indieauth/internal/domain"
-	"source.toby3d.me/website/indieauth/internal/profile"
-	"source.toby3d.me/website/indieauth/web"
+	"source.toby3d.me/toby3d/auth/internal/auth"
+	"source.toby3d.me/toby3d/auth/internal/client"
+	"source.toby3d.me/toby3d/auth/internal/common"
+	"source.toby3d.me/toby3d/auth/internal/domain"
+	"source.toby3d.me/toby3d/auth/internal/profile"
+	"source.toby3d.me/toby3d/auth/web"
 )
 
 type (

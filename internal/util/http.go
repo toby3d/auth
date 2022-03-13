@@ -11,7 +11,7 @@ import (
 	http "github.com/valyala/fasthttp"
 	"willnorris.com/go/microformats"
 
-	"source.toby3d.me/website/indieauth/internal/domain"
+	"source.toby3d.me/toby3d/auth/internal/domain"
 )
 
 var ErrEndpointNotExist = domain.NewError(

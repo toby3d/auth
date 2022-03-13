@@ -9,14 +9,14 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"source.toby3d.me/website/indieauth/internal/domain"
-	"source.toby3d.me/website/indieauth/internal/profile"
-	profilerepo "source.toby3d.me/website/indieauth/internal/profile/repository/memory"
-	"source.toby3d.me/website/indieauth/internal/session"
-	sessionrepo "source.toby3d.me/website/indieauth/internal/session/repository/memory"
-	"source.toby3d.me/website/indieauth/internal/token"
-	tokenrepo "source.toby3d.me/website/indieauth/internal/token/repository/memory"
-	usecase "source.toby3d.me/website/indieauth/internal/token/usecase"
+	"source.toby3d.me/toby3d/auth/internal/domain"
+	"source.toby3d.me/toby3d/auth/internal/profile"
+	profilerepo "source.toby3d.me/toby3d/auth/internal/profile/repository/memory"
+	"source.toby3d.me/toby3d/auth/internal/session"
+	sessionrepo "source.toby3d.me/toby3d/auth/internal/session/repository/memory"
+	"source.toby3d.me/toby3d/auth/internal/token"
+	tokenrepo "source.toby3d.me/toby3d/auth/internal/token/repository/memory"
+	usecase "source.toby3d.me/toby3d/auth/internal/token/usecase"
 )
 
 type Dependencies struct {

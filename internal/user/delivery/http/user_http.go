@@ -9,9 +9,9 @@ import (
 	http "github.com/valyala/fasthttp"
 
 	"source.toby3d.me/toby3d/middleware"
-	"source.toby3d.me/website/indieauth/internal/common"
-	"source.toby3d.me/website/indieauth/internal/domain"
-	"source.toby3d.me/website/indieauth/internal/token"
+	"source.toby3d.me/toby3d/auth/internal/common"
+	"source.toby3d.me/toby3d/auth/internal/domain"
+	"source.toby3d.me/toby3d/auth/internal/token"
 )
 
 type (

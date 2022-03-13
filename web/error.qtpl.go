@@ -8,7 +8,7 @@ package web
 import (
 	"errors"
 
-	"source.toby3d.me/website/indieauth/internal/domain"
+	"source.toby3d.me/toby3d/auth/internal/domain"
 )
 
 //line web/error.qtpl:7

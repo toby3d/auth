@@ -9,7 +9,7 @@ import (
 	"github.com/lestrrat-go/jwx/jwt"
 	http "github.com/valyala/fasthttp"
 
-	"source.toby3d.me/website/indieauth/internal/random"
+	"source.toby3d.me/toby3d/auth/internal/random"
 )
 
 type (

@@ -9,13 +9,13 @@ import (
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 
-	"source.toby3d.me/website/indieauth/internal/common"
-	"source.toby3d.me/website/indieauth/internal/domain"
-	"source.toby3d.me/website/indieauth/internal/testing/httptest"
-	"source.toby3d.me/website/indieauth/internal/ticket"
-	delivery "source.toby3d.me/website/indieauth/internal/ticket/delivery/http"
-	ticketrepo "source.toby3d.me/website/indieauth/internal/ticket/repository/memory"
-	ucase "source.toby3d.me/website/indieauth/internal/ticket/usecase"
+	"source.toby3d.me/toby3d/auth/internal/common"
+	"source.toby3d.me/toby3d/auth/internal/domain"
+	"source.toby3d.me/toby3d/auth/internal/testing/httptest"
+	"source.toby3d.me/toby3d/auth/internal/ticket"
+	delivery "source.toby3d.me/toby3d/auth/internal/ticket/delivery/http"
+	ticketrepo "source.toby3d.me/toby3d/auth/internal/ticket/repository/memory"
+	ucase "source.toby3d.me/toby3d/auth/internal/ticket/usecase"
 )
 
 type Dependencies struct {

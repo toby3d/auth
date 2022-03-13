@@ -5,7 +5,7 @@
 package web
 
 //line web/authorize.qtpl:1
-import "source.toby3d.me/website/indieauth/internal/domain"
+import "source.toby3d.me/toby3d/auth/internal/domain"
 
 //line web/authorize.qtpl:3
 import (

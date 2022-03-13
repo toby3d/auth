@@ -5,7 +5,7 @@ import (
 
 	http "github.com/valyala/fasthttp"
 
-	"source.toby3d.me/website/indieauth/internal/util"
+	"source.toby3d.me/toby3d/auth/internal/util"
 )
 
 const testBody = `<html>

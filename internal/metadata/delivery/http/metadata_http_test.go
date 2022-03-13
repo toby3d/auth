@@ -7,9 +7,9 @@ import (
 	"github.com/goccy/go-json"
 	http "github.com/valyala/fasthttp"
 
-	"source.toby3d.me/website/indieauth/internal/domain"
-	delivery "source.toby3d.me/website/indieauth/internal/metadata/delivery/http"
-	"source.toby3d.me/website/indieauth/internal/testing/httptest"
+	"source.toby3d.me/toby3d/auth/internal/domain"
+	delivery "source.toby3d.me/toby3d/auth/internal/metadata/delivery/http"
+	"source.toby3d.me/toby3d/auth/internal/testing/httptest"
 )
 
 func TestMetadata(t *testing.T) {

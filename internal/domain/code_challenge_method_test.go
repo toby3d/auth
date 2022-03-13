@@ -12,8 +12,8 @@ import (
 
 	"github.com/brianvoe/gofakeit/v6"
 
-	"source.toby3d.me/website/indieauth/internal/domain"
-	"source.toby3d.me/website/indieauth/internal/random"
+	"source.toby3d.me/toby3d/auth/internal/domain"
+	"source.toby3d.me/toby3d/auth/internal/random"
 )
 
 func TestParseCodeChallengeMethod(t *testing.T) {

@@ -5,7 +5,7 @@
 package web
 
 //line web/callback.qtpl:1
-import "source.toby3d.me/website/indieauth/internal/domain"
+import "source.toby3d.me/toby3d/auth/internal/domain"
 
 //line web/callback.qtpl:3
 import (

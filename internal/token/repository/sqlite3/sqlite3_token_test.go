@@ -7,9 +7,9 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 
-	"source.toby3d.me/website/indieauth/internal/domain"
-	"source.toby3d.me/website/indieauth/internal/testing/sqltest"
-	repository "source.toby3d.me/website/indieauth/internal/token/repository/sqlite3"
+	"source.toby3d.me/toby3d/auth/internal/domain"
+	"source.toby3d.me/toby3d/auth/internal/testing/sqltest"
+	repository "source.toby3d.me/toby3d/auth/internal/token/repository/sqlite3"
 )
 
 //nolint: gochecknoglobals // slices cannot be contants

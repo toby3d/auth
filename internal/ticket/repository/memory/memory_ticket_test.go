@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"source.toby3d.me/website/indieauth/internal/domain"
-	repository "source.toby3d.me/website/indieauth/internal/ticket/repository/memory"
+	"source.toby3d.me/toby3d/auth/internal/domain"
+	repository "source.toby3d.me/toby3d/auth/internal/ticket/repository/memory"
 )
 
 func TestCreate(t *testing.T) {

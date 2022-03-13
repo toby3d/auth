@@ -5,8 +5,8 @@ import (
 	"path"
 	"sync"
 
-	"source.toby3d.me/website/indieauth/internal/domain"
-	"source.toby3d.me/website/indieauth/internal/user"
+	"source.toby3d.me/toby3d/auth/internal/domain"
+	"source.toby3d.me/toby3d/auth/internal/user"
 )
 
 type memoryUserRepository struct {

@@ -1,4 +1,4 @@
-module source.toby3d.me/website/indieauth
+module source.toby3d.me/toby3d/auth
 
 go 1.16
 

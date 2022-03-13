@@ -5,8 +5,8 @@ import (
 	"path"
 	"sync"
 
-	"source.toby3d.me/website/indieauth/internal/domain"
-	"source.toby3d.me/website/indieauth/internal/metadata"
+	"source.toby3d.me/toby3d/auth/internal/domain"
+	"source.toby3d.me/toby3d/auth/internal/metadata"
 )
 
 type memoryMetadataRepository struct {

@@ -8,10 +8,10 @@ import (
 	"github.com/lestrrat-go/jwx/jwa"
 	"github.com/lestrrat-go/jwx/jwt"
 
-	"source.toby3d.me/website/indieauth/internal/domain"
-	"source.toby3d.me/website/indieauth/internal/profile"
-	"source.toby3d.me/website/indieauth/internal/session"
-	"source.toby3d.me/website/indieauth/internal/token"
+	"source.toby3d.me/toby3d/auth/internal/domain"
+	"source.toby3d.me/toby3d/auth/internal/profile"
+	"source.toby3d.me/toby3d/auth/internal/session"
+	"source.toby3d.me/toby3d/auth/internal/token"
 )
 
 type (
@@ -91,13 +91,12 @@ func (uc *tokenUseCase) Exchange(ctx context.Context, opts token.ExchangeOptions
 }
 
 func (uc *tokenUseCase) Verify(ctx context.Context, accessToken string) (*domain.Token, *domain.Profile, error) {
-	find, err := uc.tokens.Get(ctx, accessToken)
-	if err != nil && !errors.Is(err, token.ErrNotExist) {
-		return nil, nil, fmt.Errorf("cannot check token in store: %w", err)
-	}
+	if _, err := uc.tokens.Get(ctx, accessToken); err != nil {
+		if errors.Is(err, token.ErrNotExist) {
+			return nil, nil, token.ErrRevoke
+		}
 
-	if find != nil {
-		return nil, nil, token.ErrRevoke
+		return nil, nil, fmt.Errorf("cannot check token in store: %w", err)
 	}
 
 	tkn, err := jwt.ParseString(accessToken, jwt.WithVerify(jwa.SignatureAlgorithm(uc.config.JWT.Algorithm),

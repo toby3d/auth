@@ -8,7 +8,7 @@ import (
 
 	http "github.com/valyala/fasthttp"
 
-	"source.toby3d.me/website/indieauth/internal/domain"
+	"source.toby3d.me/toby3d/auth/internal/domain"
 )
 
 func TestNewToken(t *testing.T) {
