@@ -5,7 +5,7 @@ name: default
 
 steps:
   - name: init
-    image: golang
+    image: golang:1.18.0-alpine3.14
     volumes:
       - name: deps
         path: /go
@@ -14,7 +14,7 @@ steps:
       - make gen
 
   - name: test
-    image: golang
+    image: golang:1.18.0-alpine3.14
     volumes:
       - name: deps
         path: /go
@@ -24,7 +24,7 @@ steps:
       - init
 
   - name: build
-    image: golang
+    image: golang:1.18.0-alpine3.14
     volumes:
       - name: deps
         path: /go
