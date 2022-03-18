@@ -19,7 +19,7 @@ steps:
       - name: deps
         path: /go
     commands:
-      - go test -buildvcs=false -v -race -cover ./...
+      - go test -buildvcs=false -v -cover ./...
     depends_on:
       - init
 
