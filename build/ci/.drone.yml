@@ -1,8 +1,18 @@
 ---
-name: default
-type: docker
 kind: pipeline
+type: docker
+name: default
+
 steps:
+  - name: init
+    image: golang
+    volumes:
+      - name: deps
+        path: /go
+    commands:
+      - make dep
+      - make gen
+
   - name: test
     image: golang
     volumes:
@@ -10,6 +20,9 @@ steps:
         path: /go
     commands:
       - make test
+    depends_on:
+      - init
+
   - name: build
     image: golang
     volumes:
@@ -18,7 +31,9 @@ steps:
     commands:
       - make build
     depends_on:
+      - init
       - test
+
 volumes:
   - name: deps
     temp: {}
