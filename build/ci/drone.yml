@@ -10,8 +10,8 @@ steps:
       - name: deps
         path: /go
     commands:
-      - make dep
-      - make gen
+      - go mod download
+      - go generate ./internal/...
 
   - name: test
     image: golang:1.18.0-alpine3.14
@@ -19,7 +19,7 @@ steps:
       - name: deps
         path: /go
     commands:
-      - make test
+      - go test -v -race -cover ./...
     depends_on:
       - init
 
@@ -29,7 +29,7 @@ steps:
       - name: deps
         path: /go
     commands:
-      - make build
+      - go build
     depends_on:
       - init
       - test
