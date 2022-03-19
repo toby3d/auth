@@ -18,6 +18,8 @@ steps:
     volumes:
       - name: deps
         path: /go
+    environment:
+      CGO_ENABLED: 0
     commands:
       - go test -buildvcs=false -v -cover ./...
     depends_on:
@@ -28,6 +30,8 @@ steps:
     volumes:
       - name: deps
         path: /go
+    environment:
+      CGO_ENABLED: 0
     commands:
       - go build
     depends_on:
