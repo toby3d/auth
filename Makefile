@@ -19,7 +19,10 @@ test:
 dep:
 	go mod download
 
+gen:
+	go generate ./...
+
 lint:
 	golangci-lint run
 
-.PHONY: build run clean test dep lint
+.PHONY: build run clean test dep gen lint

@@ -1,0 +1,43 @@
+---
+kind: pipeline
+type: docker
+name: default
+
+steps:
+  - name: init
+    image: golang:1.18.0-alpine3.14
+    volumes:
+      - name: deps
+        path: /go
+    commands:
+      - go mod download
+      - go generate ./internal/...
+
+  - name: test
+    image: golang:1.18.0-alpine3.14
+    volumes:
+      - name: deps
+        path: /go
+    environment:
+      CGO_ENABLED: 0
+    commands:
+      - go test -buildvcs=false -v -cover ./...
+    depends_on:
+      - init
+
+  - name: build
+    image: golang:1.18.0-alpine3.14
+    volumes:
+      - name: deps
+        path: /go
+    environment:
+      CGO_ENABLED: 0
+    commands:
+      - go build -buildvcs=false
+    depends_on:
+      - init
+      - test
+
+volumes:
+  - name: deps
+    temp: {}
