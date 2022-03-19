@@ -91,11 +91,7 @@ func (uc *tokenUseCase) Exchange(ctx context.Context, opts token.ExchangeOptions
 }
 
 func (uc *tokenUseCase) Verify(ctx context.Context, accessToken string) (*domain.Token, *domain.Profile, error) {
-	if _, err := uc.tokens.Get(ctx, accessToken); err != nil {
-		if errors.Is(err, token.ErrNotExist) {
-			return nil, nil, token.ErrRevoke
-		}
-
+	if _, err := uc.tokens.Get(ctx, accessToken); err == nil || !errors.Is(err, token.ErrNotExist) {
 		return nil, nil, fmt.Errorf("cannot check token in store: %w", err)
 	}
 
@@ -144,10 +140,14 @@ func (uc *tokenUseCase) Verify(ctx context.Context, accessToken string) (*domain
 func (uc *tokenUseCase) Revoke(ctx context.Context, accessToken string) error {
 	tkn, _, err := uc.Verify(ctx, accessToken)
 	if err != nil {
+		if errors.Is(err, token.ErrNotExist) {
+			return nil
+		}
+
 		return fmt.Errorf("cannot verify token: %w", err)
 	}
 
-	if err = uc.tokens.Create(ctx, tkn); err != nil {
+	if err = uc.tokens.Create(ctx, tkn); err != nil && !errors.Is(err, token.ErrExist) {
 		return fmt.Errorf("cannot save token in database: %w", err)
 	}
 

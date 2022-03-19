@@ -2,12 +2,9 @@ package usecase_test
 
 import (
 	"context"
-	"errors"
 	"path"
 	"sync"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 
 	"source.toby3d.me/toby3d/auth/internal/domain"
 	"source.toby3d.me/toby3d/auth/internal/profile"
@@ -36,7 +33,7 @@ func TestExchange(t *testing.T) {
 	deps := NewDependencies(t)
 	deps.store.Store(path.Join(profilerepo.DefaultPathPrefix, deps.session.Me.String()), deps.profile)
 
-	if err := deps.sessions.Create(context.TODO(), deps.session); err != nil {
+	if err := deps.sessions.Create(context.Background(), deps.session); err != nil {
 		t.Fatal(err)
 	}
 
@@ -52,7 +49,7 @@ func TestExchange(t *testing.T) {
 		Profiles: deps.profiles,
 		Sessions: deps.sessions,
 		Tokens:   deps.tokens,
-	}).Exchange(context.TODO(), opts)
+	}).Exchange(context.Background(), opts)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,7 +68,7 @@ func TestVerify(t *testing.T) {
 
 	deps := NewDependencies(t)
 	ucase := usecase.NewTokenUseCase(usecase.Config{
-		Config:   domain.TestConfig(t),
+		Config:   deps.config,
 		Profiles: deps.profiles,
 		Sessions: deps.sessions,
 		Tokens:   deps.tokens,
@@ -80,34 +77,35 @@ func TestVerify(t *testing.T) {
 	t.Run("valid", func(t *testing.T) {
 		t.Parallel()
 
-		accessToken := domain.TestToken(t)
-
-		result, _, err := ucase.Verify(context.TODO(), accessToken.AccessToken)
+		testToken := domain.TestToken(t)
+		result, _, err := ucase.Verify(context.Background(), testToken.AccessToken)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		assert.Equal(t, accessToken.AccessToken, result.AccessToken)
-		assert.Equal(t, accessToken.Scope, result.Scope)
-		assert.Equal(t, accessToken.ClientID.String(), result.ClientID.String())
-		assert.Equal(t, accessToken.Me.String(), result.Me.String())
+		if testToken.AccessToken != result.AccessToken ||
+			testToken.Scope.String() != result.Scope.String() ||
+			testToken.ClientID.String() != result.ClientID.String() ||
+			testToken.Me.String() != result.Me.String() {
+			t.Errorf("Verify(%s) = %v, want %v", testToken.AccessToken, result, testToken)
+		}
 	})
 
 	t.Run("revoked", func(t *testing.T) {
 		t.Parallel()
 
-		accessToken := domain.TestToken(t)
-		if err := deps.tokens.Create(context.TODO(), accessToken); err != nil {
+		testToken := domain.TestToken(t)
+		if err := deps.tokens.Create(context.Background(), testToken); err != nil {
 			t.Fatal(err)
 		}
 
-		result, _, err := ucase.Verify(context.TODO(), accessToken.AccessToken)
-		if !errors.Is(err, token.ErrRevoke) {
-			t.Errorf("Verify(%s) = %v, want %v", accessToken.AccessToken, err, token.ErrRevoke)
+		result, _, err := ucase.Verify(context.Background(), testToken.AccessToken)
+		if err == nil {
+			t.Errorf("Verify(%s) = %v, want error", testToken.AccessToken, err)
 		}
 
 		if result != nil {
-			t.Errorf("Verify(%s) = %v, want %v", accessToken.AccessToken, result, nil)
+			t.Errorf("Verify(%s) = %v, want nil", testToken.AccessToken, result)
 		}
 	})
 }
@@ -116,17 +114,16 @@ func TestRevoke(t *testing.T) {
 	t.Parallel()
 
 	deps := NewDependencies(t)
-
 	if err := usecase.NewTokenUseCase(usecase.Config{
 		Config:   deps.config,
 		Profiles: deps.profiles,
 		Sessions: deps.sessions,
 		Tokens:   deps.tokens,
-	}).Revoke(context.TODO(), deps.token.AccessToken); err != nil {
+	}).Revoke(context.Background(), deps.token.AccessToken); err != nil {
 		t.Fatal(err)
 	}
 
-	result, err := deps.tokens.Get(context.TODO(), deps.token.AccessToken)
+	result, err := deps.tokens.Get(context.Background(), deps.token.AccessToken)
 	if err != nil {
 		t.Error(err)
 	}
