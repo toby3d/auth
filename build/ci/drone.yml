@@ -33,7 +33,7 @@ steps:
     environment:
       CGO_ENABLED: 0
     commands:
-      - go build
+      - go build -buildvcs=false
     depends_on:
       - init
       - test
