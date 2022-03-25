@@ -1,28 +1,27 @@
-SHELL:=/bin/bash
-PROJECT_NAME=indieauth
-VERSION=$(shell cat VERSION)
-GO_BUILD_ENV=CGO_ENABLED=0 GOOS=linux GOARCH=amd64
-GO_FILES=$(shell go list ./... | grep -v /vendor/)
+#!/usr/bin/make -f
+SHELL = /bin/sh
 
-build:
-	$(GO_BUILD_ENV) go build .
+#### Start of system configuration section. ####
 
-run:
-	go run .
+srcdir = .
 
-clean:
-	go clean
+GO ?= go
+GOFLAGS ?=
+EXECUTABLE ?= indieauth
 
-test:
-	go test -race -cover ./...
+#### End of system configuration section. ####
 
-dep:
-	go mod download
+.PHONY: all clean check help
 
-gen:
-	go generate ./...
+all: main.go
+	$(GO) build -v $(GOFLAGS) -o $(EXECUTABLE) $<
 
-lint:
-	golangci-lint run
+clean: ## Delete all files in the current directory that are normally created by building the program
+	$(GO) clean
 
-.PHONY: build run clean test dep gen lint
+check: ## Perform self-tests
+	$(GO) test -v -cover -failfast -short -shuffle=on $(GOFLAGS) $(srcdir)/...
+
+.PHONY: help
+help: ## Display this help screen
+	@grep -h -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
