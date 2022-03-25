@@ -3,9 +3,7 @@ package httptest
 
 import (
 	"crypto/tls"
-
-	// used for running tests.
-	_ "embed"
+	_ "embed" // used for running tests without same import in "god object"
 	"net"
 	"testing"
 	"time"

@@ -37,7 +37,7 @@ func TestRead(t *testing.T) {
 
 	deps := NewDependencies(t)
 
-	r := router.New() //nolint: varnamelen
+	r := router.New()
 	delivery.NewRequestHandler(delivery.NewRequestHandlerOptions{
 		Client:  deps.client,
 		Config:  deps.config,

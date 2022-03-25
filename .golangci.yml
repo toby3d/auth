@@ -12,14 +12,20 @@ output:
   sort-results: true
 linters-settings:
   gci:
-    local-prefixes: source.toby3d.me
+    sections:
+      - standard
+      - default
+      - prefix(source.toby3d.me)
+    section-separators:
+      - newLine
   goimports:
     local-prefixes: source.toby3d.me
   ireturn:
     allow:
-      - "(Repository|UseCase)$"
       - error
       - stdlib
+      - "(Repository|UseCase)$"
+      - "sqlmock.Sqlmock"
   lll:
     tab-width: 8
   varnamelen:
@@ -31,7 +37,9 @@ linters-settings:
       - db # dataBase
       - err # error
       - i # index
+      - id
       - ip
+      - j # alt index
       - ln # listener
       - me
       - ok

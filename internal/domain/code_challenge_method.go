@@ -127,12 +127,12 @@ func (ccm CodeChallengeMethod) Validate(codeChallenge, verifier string) bool {
 		return codeChallenge == verifier
 	}
 
-	h := ccm.hash
-	h.Reset() // WARN(toby3d): even hash.New contains something.
+	hash := ccm.hash
+	hash.Reset() // WARN(toby3d): even hash.New contains something.
 
-	if _, err := h.Write([]byte(verifier)); err != nil {
+	if _, err := hash.Write([]byte(verifier)); err != nil {
 		return false
 	}
 
-	return codeChallenge == base64.RawURLEncoding.EncodeToString(h.Sum(nil))
+	return codeChallenge == base64.RawURLEncoding.EncodeToString(hash.Sum(nil))
 }

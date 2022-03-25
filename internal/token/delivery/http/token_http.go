@@ -9,12 +9,12 @@ import (
 	"github.com/lestrrat-go/jwx/jwa"
 	http "github.com/valyala/fasthttp"
 
-	"source.toby3d.me/toby3d/form"
-	"source.toby3d.me/toby3d/middleware"
 	"source.toby3d.me/toby3d/auth/internal/common"
 	"source.toby3d.me/toby3d/auth/internal/domain"
 	"source.toby3d.me/toby3d/auth/internal/ticket"
 	"source.toby3d.me/toby3d/auth/internal/token"
+	"source.toby3d.me/toby3d/form"
+	"source.toby3d.me/toby3d/middleware"
 )
 
 type (
@@ -138,6 +138,7 @@ func NewRequestHandler(tokens token.UseCase, tickets ticket.UseCase, config *dom
 
 func (h *RequestHandler) Register(r *router.Router) {
 	chain := middleware.Chain{
+		//nolint: exhaustivestruct
 		middleware.JWTWithConfig(middleware.JWTConfig{
 			AuthScheme:    "Bearer",
 			ContextKey:    "token",
@@ -227,6 +228,7 @@ func (h *RequestHandler) handleAction(ctx *http.RequestCtx) {
 	}
 }
 
+//nolint: funlen
 func (h *RequestHandler) handleExchange(ctx *http.RequestCtx) {
 	ctx.SetContentType(common.MIMEApplicationJSONCharsetUTF8)
 

@@ -7,7 +7,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/jmoiron/sqlx"
-	_ "modernc.org/sqlite"
+	_ "modernc.org/sqlite" // used for running tests without same import in "god object"
 )
 
 type Time struct{}

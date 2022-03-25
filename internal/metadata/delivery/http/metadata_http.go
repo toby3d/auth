@@ -5,9 +5,9 @@ import (
 	"github.com/goccy/go-json"
 	http "github.com/valyala/fasthttp"
 
-	"source.toby3d.me/toby3d/middleware"
 	"source.toby3d.me/toby3d/auth/internal/common"
 	"source.toby3d.me/toby3d/auth/internal/domain"
+	"source.toby3d.me/toby3d/middleware"
 )
 
 type (

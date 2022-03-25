@@ -42,6 +42,7 @@ import (
 	metadatahttpdelivery "source.toby3d.me/toby3d/auth/internal/metadata/delivery/http"
 	"source.toby3d.me/toby3d/auth/internal/profile"
 	profilehttprepo "source.toby3d.me/toby3d/auth/internal/profile/repository/http"
+	profileucase "source.toby3d.me/toby3d/auth/internal/profile/usecase"
 	"source.toby3d.me/toby3d/auth/internal/session"
 	sessionmemoryrepo "source.toby3d.me/toby3d/auth/internal/session/repository/memory"
 	sessionsqlite3repo "source.toby3d.me/toby3d/auth/internal/session/repository/sqlite3"
@@ -66,6 +67,7 @@ type (
 		matcher  language.Matcher
 		sessions session.UseCase
 		tickets  ticket.UseCase
+		profiles profile.UseCase
 		tokens   token.UseCase
 	}
 
@@ -193,7 +195,7 @@ func main() {
 	opts.Clients = clienthttprepo.NewHTTPClientRepository(opts.Client)
 	opts.Profiles = profilehttprepo.NewHTPPClientRepository(opts.Client)
 
-	r := router.New() //nolint: varnamelen
+	r := router.New()
 	NewApp(opts).Register(r)
 	//nolint: exhaustivestruct// too many options
 	r.ServeFilesCustom(path.Join(config.Server.StaticURLPrefix, "{filepath:*}"), &http.FS{
@@ -275,6 +277,7 @@ func NewApp(opts NewAppOptions) *App {
 		auth:     authucase.NewAuthUseCase(opts.Sessions, opts.Profiles, config),
 		clients:  clientucase.NewClientUseCase(opts.Clients),
 		matcher:  language.NewMatcher(message.DefaultCatalog.Languages()),
+		profiles: profileucase.NewProfileUseCase(opts.Profiles),
 		sessions: sessionucase.NewSessionUseCase(opts.Sessions),
 		tickets:  ticketucase.NewTicketUseCase(opts.Tickets, opts.Client, config),
 		tokens: tokenucase.NewTokenUseCase(tokenucase.Config{
@@ -316,14 +319,8 @@ func (app *App) Register(r *router.Router) {
 			domain.ScopeRead,
 			domain.ScopeUpdate,
 		},
-		ResponseTypesSupported: []domain.ResponseType{
-			domain.ResponseTypeCode,
-			domain.ResponseTypeID,
-		},
-		GrantTypesSupported: []domain.GrantType{
-			domain.GrantTypeAuthorizationCode,
-			domain.GrantTypeTicket,
-		},
+		ResponseTypesSupported: []domain.ResponseType{domain.ResponseTypeCode, domain.ResponseTypeID},
+		GrantTypesSupported:    []domain.GrantType{domain.GrantTypeAuthorizationCode, domain.GrantTypeTicket},
 		CodeChallengeMethodsSupported: []domain.CodeChallengeMethod{
 			domain.CodeChallengeMethodMD5,
 			domain.CodeChallengeMethodPLAIN,
@@ -341,10 +338,11 @@ func (app *App) Register(r *router.Router) {
 		Tokens:  app.tokens,
 	}).Register(r)
 	authhttpdelivery.NewRequestHandler(authhttpdelivery.NewRequestHandlerOptions{
-		Auth:    app.auth,
-		Clients: app.clients,
-		Config:  config,
-		Matcher: app.matcher,
+		Auth:     app.auth,
+		Clients:  app.clients,
+		Config:   config,
+		Matcher:  app.matcher,
+		Profiles: app.profiles,
 	}).Register(r)
 	userhttpdelivery.NewRequestHandler(app.tokens, config).Register(r)
 }

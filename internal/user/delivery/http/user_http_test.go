@@ -78,11 +78,13 @@ func NewDependencies(tb testing.TB) Dependencies {
 	config := domain.TestConfig(tb)
 
 	return Dependencies{
-		profile: domain.TestProfile(tb),
-		token:   domain.TestToken(tb),
-		config:  config,
-		store:   store,
-		tokens:  tokenrepo.NewMemoryTokenRepository(store),
+		config:   config,
+		profile:  domain.TestProfile(tb),
+		profiles: profilerepo.NewMemoryProfileRepository(store),
+		sessions: sessionrepo.NewMemorySessionRepository(store, config),
+		store:    store,
+		token:    domain.TestToken(tb),
+		tokens:   tokenrepo.NewMemoryTokenRepository(store),
 		tokenService: tokenucase.NewTokenUseCase(tokenucase.Config{
 			Config:   config,
 			Profiles: profilerepo.NewMemoryProfileRepository(store),

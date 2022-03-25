@@ -12,13 +12,13 @@ import (
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 
-	"source.toby3d.me/toby3d/form"
-	"source.toby3d.me/toby3d/middleware"
 	"source.toby3d.me/toby3d/auth/internal/common"
 	"source.toby3d.me/toby3d/auth/internal/domain"
 	"source.toby3d.me/toby3d/auth/internal/random"
 	"source.toby3d.me/toby3d/auth/internal/ticket"
 	"source.toby3d.me/toby3d/auth/web"
+	"source.toby3d.me/toby3d/form"
+	"source.toby3d.me/toby3d/middleware"
 )
 
 type (
@@ -57,6 +57,7 @@ func NewRequestHandler(tickets ticket.UseCase, matcher language.Matcher, config 
 }
 
 func (h *RequestHandler) Register(r *router.Router) {
+	//nolint: exhaustivestruct
 	chain := middleware.Chain{
 		middleware.CSRFWithConfig(middleware.CSRFConfig{
 			Skipper: func(ctx *http.RequestCtx) bool {

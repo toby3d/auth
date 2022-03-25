@@ -76,9 +76,6 @@ func TestIntrospection(t *testing.T) {
 
 	result := new(delivery.TokenIntrospectResponse)
 	if err := json.Unmarshal(resp.Body(), result); err != nil {
-		e := err.(*json.SyntaxError)
-
-		t.Logf("%s\noffset: %d", resp.Body(), e.Offset)
 		t.Fatal(err)
 	}
 

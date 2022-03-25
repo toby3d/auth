@@ -144,14 +144,14 @@ func TestCodeChallengeMethod_Validate(t *testing.T) {
 			case domain.CodeChallengeMethodUndefined, domain.CodeChallengeMethodPLAIN:
 				codeChallenge = verifier
 			default:
-				h := tc.hash
-				h.Reset()
+				hash := tc.hash
+				hash.Reset()
 
-				if _, err := h.Write([]byte(verifier)); err != nil {
+				if _, err := hash.Write([]byte(verifier)); err != nil {
 					t.Error(err)
 				}
 
-				codeChallenge = base64.RawURLEncoding.EncodeToString(h.Sum(nil))
+				codeChallenge = base64.RawURLEncoding.EncodeToString(hash.Sum(nil))
 			}
 
 			if result := tc.in.Validate(codeChallenge, verifier); result != !tc.expError {
@@ -169,7 +169,7 @@ func TestCodeChallengeMethod_Validate_IndieAuth(t *testing.T) {
 		"6f535c952339f0670311b4bbec5c41c00805e83291fc7eb15ca4963f82a4d57595787dcc6ee90571fb7789cbd521fe0178ed",
 	); !ok {
 		t.Errorf("Validate(%s, %s) = %t, want %t", "ALiMNf5FvF_LIWLhSkd9tjPKh3PEmai2OrdDBzrVZ3M",
-			"6f535c952339f0670311b4bbec5c41c00805e83291fc7eb15ca4963f82a4d57595787dcc6ee90571fb7789cbd521fe0178ed", ok, true,
-		)
+			"6f535c952339f0670311b4bbec5c41c00805e83291fc7eb15ca4963f82a4d57595787dcc6ee90571fb7789cbd521"+
+				"fe0178ed", ok, true)
 	}
 }

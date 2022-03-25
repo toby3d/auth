@@ -79,7 +79,7 @@ func NewDependencies(tb testing.TB) Dependencies {
 	ticket := domain.TestTicket(tb)
 	token := domain.TestToken(tb)
 
-	r := router.New() //nolint: varnamelen
+	r := router.New()
 	// NOTE(toby3d): private resource
 	r.GET(ticket.Resource.URL().EscapedPath(), func(ctx *http.RequestCtx) {
 		ctx.SuccessString(common.MIMETextHTMLCharsetUTF8,

@@ -13,14 +13,14 @@ import (
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 
-	"source.toby3d.me/toby3d/form"
-	"source.toby3d.me/toby3d/middleware"
 	"source.toby3d.me/toby3d/auth/internal/auth"
 	"source.toby3d.me/toby3d/auth/internal/client"
 	"source.toby3d.me/toby3d/auth/internal/common"
 	"source.toby3d.me/toby3d/auth/internal/domain"
 	"source.toby3d.me/toby3d/auth/internal/profile"
 	"source.toby3d.me/toby3d/auth/web"
+	"source.toby3d.me/toby3d/form"
+	"source.toby3d.me/toby3d/middleware"
 )
 
 type (
@@ -349,6 +349,7 @@ func NewAuthAuthorizationRequest() *AuthAuthorizationRequest {
 	}
 }
 
+//nolint: cyclop
 func (r *AuthAuthorizationRequest) bind(ctx *http.RequestCtx) error {
 	indieAuthError := new(domain.Error)
 	if err := form.Unmarshal(ctx.QueryArgs(), r); err != nil {
@@ -424,7 +425,7 @@ func NewAuthVerifyRequest() *AuthVerifyRequest {
 	}
 }
 
-//nolint: funlen
+//nolint: funlen,cyclop
 func (r *AuthVerifyRequest) bind(ctx *http.RequestCtx) error {
 	indieAuthError := new(domain.Error)
 

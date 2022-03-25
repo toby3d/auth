@@ -49,7 +49,7 @@ var DefaultNewTokenOptions = NewTokenOptions{
 }
 
 // NewToken create a new token by provided options.
-//nolint: funlen,cyclop
+//nolint: cyclop
 func NewToken(opts NewTokenOptions) (*Token, error) {
 	if opts.NonceLength == 0 {
 		opts.NonceLength = DefaultNewTokenOptions.NonceLength

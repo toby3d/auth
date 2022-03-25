@@ -72,6 +72,7 @@ func (repo *httpMetadataRepository) Get(ctx context.Context, me *domain.Me) (*do
 		return nil, fmt.Errorf("cannot unmarshal metadata configuration: %w", err)
 	}
 
+	//nolint: exhaustivestruct // TODO(toby3d)
 	return &domain.Metadata{
 		AuthorizationEndpoint:                      data.AuthorizationEndpoint,
 		AuthorizationResponseIssParameterSupported: data.AuthorizationResponseIssParameterSupported,
