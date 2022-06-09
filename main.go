@@ -1,6 +1,6 @@
 //go:generate go install github.com/valyala/quicktemplate/qtc@latest
 //go:generate qtc -dir=./web
-//go:generate go install golang.org/x/text/cmd/gotext@latest
+//go:generate go install golang.org/x/text/cmd/gotext@master
 //go:generate gotext -srclang=en update -out=catalog_gen.go -lang=en,ru
 package main
 
