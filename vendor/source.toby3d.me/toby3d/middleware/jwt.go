@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/lestrrat-go/jwx/jwa"
-	"github.com/lestrrat-go/jwx/jwt"
+	"github.com/lestrrat-go/jwx/v2/jwa"
+	"github.com/lestrrat-go/jwx/v2/jwt"
 	http "github.com/valyala/fasthttp"
 )
 
@@ -292,9 +292,7 @@ func JWTWithConfig(config JWTConfig) Interceptor {
 }
 
 func (config *JWTConfig) defaultParseToken(auth []byte, ctx *http.RequestCtx) (interface{}, error) {
-	token, err := jwt.Parse(
-		auth, jwt.WithVerify(config.SigningMethod, config.SigningKey), jwt.WithValidate(true),
-	)
+	token, err := jwt.Parse(auth, jwt.WithKey(config.SigningMethod, config.SigningKey), jwt.WithVerify(true))
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse JWT token: %w", err)
 	}

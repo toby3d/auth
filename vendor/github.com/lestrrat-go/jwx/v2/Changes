@@ -1,0 +1,75 @@
+Changes
+=======
+
+v2 has many incompatibilities with v1. To see the full list of differences between
+v1 and v2, please read the Changes-v2.md file (https://github.com/lestrrat-go/jwx/blob/develop/v2/Changes-v2.md)
+
+v2.0.2 - 23 May 2022
+[Bug Fixes][Security]
+  * [jwe] An old bug from at least 7 years ago existed in handling AES-CBC unpadding,
+    where the unpad operation might remove more bytes than necessary (#744)
+    This affects all jwx code that is available before v2.0.2 and v1.2.25.
+
+[New Features]
+  * [jwt] RFC3339 timestamps are also accepted for Numeric Date types in JWT tokens.
+    This allows users to parse servers that errnously use RFC3339 timestamps in
+    some pre-defined fields. You can change this behavior by setting 
+    `jwt.WithNumericDateParsePedantic` to `false`
+  * [jwt] `jwt.WithNumericDateParsePedantic` has been added. This is a global
+    option that is set using `jwt.Settings`
+
+v2.0.1 - 06 May 2022
+  * [jwk] `jwk.Set` had erronously been documented as not returning an error
+    when the same key already exists in the set. This is a behavior change
+    since v2, and it was missing in the docs (#730)
+  * [jwt] `jwt.ErrMissingRequiredClaim` has been deprecated. Please use
+    `jwt.ErrRequiredClaim` instead.
+  * [jwt] `jwt.WithNumericDateParsePrecision` and `jwt.WithNumericDateFormatPrecision`
+    have been added to parse and format fractional seconds. These options can be
+    passed to `jwt.Settings`.
+    The default precision is set to 0, and fractional portions are not parsed nor
+    formatted. The precision may be set up to 9.
+  * `golang.org/x/crypto` has been upgraded (#724)
+  * `io/ioutil` has been removed from the source code.
+
+v2.0.0 - 24 Apr 2022
+  * This i the first v2 release, which represents a set of design changes
+    that were learnt over the previous 2 years. As a result the v2 API
+    should be much more consistent and uniform across packages, and
+    should be much more flexible to accomodate real-world needs.
+    
+    For a complete list of changes, please see the Changes-v2.md file,
+    or check the diff at https://github.com/lestrrat-go/jwx/compare/v1...v2
+
+[Miscellaneous]
+  * Minor house cleaning on code generation tools
+
+[jwt]
+  * `jwt.ErrMissingRequiredClaim()` has been added
+
+v2.0.0-beta2 - 16 Apr 2022
+[jwk]
+  * Updated `jwk.Set` API and reflected pending changes from v1 which were
+    left over. Please see Changes-v2.md file for details.
+
+  * Added `jwk.CachedSet`, a shim over `jwk.Cache` that allows you to
+    have to write wrappers around `jwk.Cache` that retrieves a particular
+    `jwk.Set` out of it. You can use it to, for example, pass `jwk.CachedSet`
+    to a `jws.Verify`
+
+      cache := jwk.NewCache(ctx)
+      cache.Register(ctx, jwksURL)
+      cachedSet := jwk.NewCachedSet(cache, jwksURL)
+      jws.Verify(signed, jws.WithKeySet(cachedSet))
+
+v2.0.0-beta1 - 09 Apr 2022
+[Miscellaneous]
+  * Renamed Changes.v2 to Changes-v2.md
+  * Housecleaning for lint action.
+  * While v2 was not affected, ported over equivalent test for #681 to catch
+    regressions in the future.
+  * Please note that there is no stability guarantees on pre-releases.
+
+v2.0.0-alpha1 - 04 Apr 2022
+  * Initial pre-release of v2 line. Please note that there is no stability guarantees
+    on pre-releases.
