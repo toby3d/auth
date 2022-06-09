@@ -25,10 +25,65 @@ steps:
     depends_on:
       - test
 
-  - name: finish
-    image: alpine
+  - name: stop-service
+    image: appleboy/drone-ssh
+    settings:
+      host:
+        from_secret: SSH_HOST
+      username: root
+      key:
+        from_secret: SSH_PRIVATE_KEY
+      script:
+        - "systemctl stop indieauth"
     depends_on:
       - build
+    when:
+      event:
+        - promote
+      target:
+        - production
+
+  - name: delivery
+    image: appleboy/drone-scp
+    settings:
+      host:
+        from_secret: SSH_HOST
+      username: root
+      password: ""
+      key:
+        from_secret: SSH_PRIVATE_KEY
+      target: "/root/indieauth"
+      source:
+        - "indieauth"
+        - "assets/*"
+      overwrite: true
+    # NOTE(toby3d): Just run a previous version of the instance if it failed to deliver the current one.
+    failure: ignore
+    depends_on:
+      - stop-service
+    when:
+      event:
+        - promote
+      target:
+        - production
+
+  - name: start-service
+    image: appleboy/drone-ssh
+    settings:
+      host:
+        from_secret: SSH_HOST
+      username: root
+      key:
+        from_secret: SSH_PRIVATE_KEY
+      script:
+        - "systemctl start indieauth"
+    depends_on:
+      - delivery
+    when:
+      event:
+        - promote
+      target:
+        - production
 
 volumes:
   - name: modules
