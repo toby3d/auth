@@ -39,7 +39,7 @@ func TestGet(t *testing.T) {
 	httpClient, _, cleanup := httptest.New(t, testHandler(t, client))
 	t.Cleanup(cleanup)
 
-	result, err := repository.NewHTTPClientRepository(httpClient).Get(context.TODO(), client.ID)
+	result, err := repository.NewHTTPClientRepository(httpClient).Get(context.Background(), client.ID)
 	if err != nil {
 		t.Fatal(err)
 	}

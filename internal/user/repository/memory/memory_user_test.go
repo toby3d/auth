@@ -19,7 +19,7 @@ func TestGet(t *testing.T) {
 	store := new(sync.Map)
 	store.Store(path.Join(repository.DefaultPathPrefix, user.Me.String()), user)
 
-	result, err := repository.NewMemoryUserRepository(store).Get(context.TODO(), user.Me)
+	result, err := repository.NewMemoryUserRepository(store).Get(context.Background(), user.Me)
 	if err != nil {
 		t.Error(err)
 	}

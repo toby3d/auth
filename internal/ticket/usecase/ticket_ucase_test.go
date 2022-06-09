@@ -38,7 +38,7 @@ func TestRedeem(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	result, err := ucase.NewTicketUseCase(nil, client, domain.TestConfig(t)).
-		Redeem(context.TODO(), ticket)
+		Redeem(context.Background(), ticket)
 	if err != nil {
 		t.Fatal(err)
 	}

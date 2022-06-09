@@ -20,7 +20,7 @@ func TestCreate(t *testing.T) {
 	accessToken := domain.TestToken(t)
 
 	repo := repository.NewMemoryTokenRepository(store)
-	if err := repo.Create(context.TODO(), accessToken); err != nil {
+	if err := repo.Create(context.Background(), accessToken); err != nil {
 		t.Fatal(err)
 	}
 
@@ -28,7 +28,7 @@ func TestCreate(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, accessToken, result)
 
-	assert.ErrorIs(t, repo.Create(context.TODO(), accessToken), token.ErrExist)
+	assert.ErrorIs(t, repo.Create(context.Background(), accessToken), token.ErrExist)
 }
 
 func TestGet(t *testing.T) {
@@ -39,7 +39,7 @@ func TestGet(t *testing.T) {
 
 	store.Store(path.Join(repository.DefaultPathPrefix, accessToken.AccessToken), accessToken)
 
-	result, err := repository.NewMemoryTokenRepository(store).Get(context.TODO(), accessToken.AccessToken)
+	result, err := repository.NewMemoryTokenRepository(store).Get(context.Background(), accessToken.AccessToken)
 	assert.NoError(t, err)
 	assert.Equal(t, accessToken, result)
 }

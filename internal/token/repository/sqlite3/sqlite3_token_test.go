@@ -35,7 +35,7 @@ func TestCreate(t *testing.T) {
 		).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	if err := repository.NewSQLite3TokenRepository(db).Create(context.TODO(), token); err != nil {
+	if err := repository.NewSQLite3TokenRepository(db).Create(context.Background(), token); err != nil {
 		t.Error(err)
 	}
 }
@@ -61,7 +61,7 @@ func TestGet(t *testing.T) {
 				model.Scope,
 			))
 
-	result, err := repository.NewSQLite3TokenRepository(db).Get(context.TODO(), token.AccessToken)
+	result, err := repository.NewSQLite3TokenRepository(db).Get(context.Background(), token.AccessToken)
 	if err != nil {
 		t.Fatal(err)
 	}

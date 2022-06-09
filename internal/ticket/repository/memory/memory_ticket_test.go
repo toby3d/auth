@@ -19,7 +19,7 @@ func TestCreate(t *testing.T) {
 	ticket := domain.TestTicket(t)
 
 	if err := repository.NewMemoryTicketRepository(store, domain.TestConfig(t)).
-		Create(context.TODO(), ticket); err != nil {
+		Create(context.Background(), ticket); err != nil {
 		t.Fatal(err)
 	}
 
@@ -47,7 +47,7 @@ func TestGetAndDelete(t *testing.T) {
 	})
 
 	result, err := repository.NewMemoryTicketRepository(store, domain.TestConfig(t)).
-		GetAndDelete(context.TODO(), ticket.Ticket)
+		GetAndDelete(context.Background(), ticket.Ticket)
 	if err != nil {
 		t.Fatal(err)
 	}

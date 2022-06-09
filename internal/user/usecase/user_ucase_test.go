@@ -22,7 +22,7 @@ func TestFetch(t *testing.T) {
 	store.Store(path.Join(repository.DefaultPathPrefix, me.String()), user)
 
 	result, err := ucase.NewUserUseCase(repository.NewMemoryUserRepository(store)).
-		Fetch(context.TODO(), me)
+		Fetch(context.Background(), me)
 	if err != nil {
 		t.Error(err)
 	}

@@ -39,7 +39,7 @@ func TestCreate(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	if err := repository.NewSQLite3SessionRepository(db).
-		Create(context.TODO(), session); err != nil {
+		Create(context.Background(), session); err != nil {
 		t.Error(err)
 	}
 }
@@ -69,7 +69,7 @@ func TestGet(t *testing.T) {
 			))
 
 	result, err := repository.NewSQLite3SessionRepository(db).
-		Get(context.TODO(), session.Code)
+		Get(context.Background(), session.Code)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -109,7 +109,7 @@ func TestGetAndDelete(t *testing.T) {
 	mock.ExpectCommit()
 
 	result, err := repository.NewSQLite3SessionRepository(db).
-		GetAndDelete(context.TODO(), session.Code)
+		GetAndDelete(context.Background(), session.Code)
 	if err != nil {
 		t.Fatal(err)
 	}

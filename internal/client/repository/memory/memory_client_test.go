@@ -20,7 +20,7 @@ func TestGet(t *testing.T) {
 	store.Store(path.Join(repository.DefaultPathPrefix, client.ID.String()), client)
 
 	result, err := repository.NewMemoryClientRepository(store).
-		Get(context.TODO(), client.ID)
+		Get(context.Background(), client.ID)
 	if err != nil {
 		t.Fatal(err)
 	}

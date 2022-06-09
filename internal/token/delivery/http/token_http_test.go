@@ -122,7 +122,7 @@ func TestRevocation(t *testing.T) {
 		t.Errorf("POST %s = %s, want %s", requestURL, result, expBody)
 	}
 
-	result, err := deps.tokens.Get(context.TODO(), deps.token.AccessToken)
+	result, err := deps.tokens.Get(context.Background(), deps.token.AccessToken)
 	if err != nil {
 		t.Fatal(err)
 	}
