@@ -8,8 +8,8 @@ import (
 	http "github.com/valyala/fasthttp"
 
 	"source.toby3d.me/toby3d/auth/internal/domain"
+	"source.toby3d.me/toby3d/auth/internal/httputil"
 	"source.toby3d.me/toby3d/auth/internal/metadata"
-	"source.toby3d.me/toby3d/auth/internal/util"
 )
 
 type (
@@ -57,7 +57,7 @@ func (repo *httpMetadataRepository) Get(ctx context.Context, me *domain.Me) (*do
 		return nil, fmt.Errorf("failed to make a request to the client: %w", err)
 	}
 
-	endpoints := util.ExtractEndpoints(resp, "indieauth-metadata")
+	endpoints := httputil.ExtractEndpoints(resp, "indieauth-metadata")
 	if len(endpoints) == 0 {
 		return nil, metadata.ErrNotExist
 	}

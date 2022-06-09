@@ -10,8 +10,8 @@ import (
 
 	"source.toby3d.me/toby3d/auth/internal/common"
 	"source.toby3d.me/toby3d/auth/internal/domain"
+	"source.toby3d.me/toby3d/auth/internal/httputil"
 	"source.toby3d.me/toby3d/auth/internal/ticket"
-	"source.toby3d.me/toby3d/auth/internal/util"
 )
 
 type (
@@ -62,10 +62,10 @@ func (useCase *ticketUseCase) Generate(ctx context.Context, tkt *domain.Ticket) 
 	var ticketEndpoint *domain.URL
 
 	// NOTE(toby3d): find metadata first
-	if metadata, err := util.ExtractMetadata(resp, useCase.client); err == nil && metadata != nil {
+	if metadata, err := httputil.ExtractMetadata(resp, useCase.client); err == nil && metadata != nil {
 		ticketEndpoint = metadata.TicketEndpoint
 	} else { // NOTE(toby3d): fallback to old links searching
-		if endpoints := util.ExtractEndpoints(resp, "ticket_endpoint"); len(endpoints) > 0 {
+		if endpoints := httputil.ExtractEndpoints(resp, "ticket_endpoint"); len(endpoints) > 0 {
 			ticketEndpoint = endpoints[len(endpoints)-1]
 		}
 	}
@@ -110,10 +110,10 @@ func (useCase *ticketUseCase) Redeem(ctx context.Context, tkt *domain.Ticket) (*
 	var tokenEndpoint *domain.URL
 
 	// NOTE(toby3d): find metadata first
-	if metadata, err := util.ExtractMetadata(resp, useCase.client); err == nil && metadata != nil {
+	if metadata, err := httputil.ExtractMetadata(resp, useCase.client); err == nil && metadata != nil {
 		tokenEndpoint = metadata.TokenEndpoint
 	} else { // NOTE(toby3d): fallback to old links searching
-		if endpoints := util.ExtractEndpoints(resp, "token_endpoint"); len(endpoints) > 0 {
+		if endpoints := httputil.ExtractEndpoints(resp, "token_endpoint"); len(endpoints) > 0 {
 			tokenEndpoint = endpoints[len(endpoints)-1]
 		}
 	}

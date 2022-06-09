@@ -8,7 +8,7 @@ import (
 
 	"source.toby3d.me/toby3d/auth/internal/client"
 	"source.toby3d.me/toby3d/auth/internal/domain"
-	"source.toby3d.me/toby3d/auth/internal/util"
+	"source.toby3d.me/toby3d/auth/internal/httputil"
 )
 
 type httpClientRepository struct {
@@ -64,20 +64,20 @@ func (repo *httpClientRepository) Get(ctx context.Context, cid *domain.ClientID)
 
 //nolint: gocognit, cyclop
 func extract(dst *domain.Client, src *http.Response) {
-	for _, endpoint := range util.ExtractEndpoints(src, relRedirectURI) {
+	for _, endpoint := range httputil.ExtractEndpoints(src, relRedirectURI) {
 		if !containsURL(dst.RedirectURI, endpoint) {
 			dst.RedirectURI = append(dst.RedirectURI, endpoint)
 		}
 	}
 
 	for _, itemType := range []string{hXApp, hApp} {
-		for _, name := range util.ExtractProperty(src, itemType, propertyName) {
+		for _, name := range httputil.ExtractProperty(src, itemType, propertyName) {
 			if n, ok := name.(string); ok && !containsString(dst.Name, n) {
 				dst.Name = append(dst.Name, n)
 			}
 		}
 
-		for _, logo := range util.ExtractProperty(src, itemType, propertyLogo) {
+		for _, logo := range httputil.ExtractProperty(src, itemType, propertyLogo) {
 			var (
 				uri *domain.URL
 				err error
@@ -99,7 +99,7 @@ func extract(dst *domain.Client, src *http.Response) {
 			dst.Logo = append(dst.Logo, uri)
 		}
 
-		for _, property := range util.ExtractProperty(src, itemType, propertyURL) {
+		for _, property := range httputil.ExtractProperty(src, itemType, propertyURL) {
 			prop, ok := property.(string)
 			if !ok {
 				continue

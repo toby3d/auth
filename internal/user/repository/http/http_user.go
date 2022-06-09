@@ -7,8 +7,8 @@ import (
 	http "github.com/valyala/fasthttp"
 
 	"source.toby3d.me/toby3d/auth/internal/domain"
+	"source.toby3d.me/toby3d/auth/internal/httputil"
 	"source.toby3d.me/toby3d/auth/internal/user"
-	"source.toby3d.me/toby3d/auth/internal/util"
 )
 
 type httpUserRepository struct {
@@ -64,7 +64,7 @@ func (repo *httpUserRepository) Get(ctx context.Context, me *domain.Me) (*domain
 		TokenEndpoint:         nil,
 	}
 
-	if metadata, err := util.ExtractMetadata(resp, repo.client); err == nil {
+	if metadata, err := httputil.ExtractMetadata(resp, repo.client); err == nil {
 		user.AuthorizationEndpoint = metadata.AuthorizationEndpoint
 		user.Micropub = metadata.MicropubEndpoint
 		user.Microsub = metadata.MicrosubEndpoint
@@ -81,37 +81,37 @@ func (repo *httpUserRepository) Get(ctx context.Context, me *domain.Me) (*domain
 //nolint: cyclop
 func extractUser(dst *domain.User, src *http.Response) {
 	if dst.IndieAuthMetadata != nil {
-		if endpoints := util.ExtractEndpoints(src, relIndieAuthMetadata); len(endpoints) > 0 {
+		if endpoints := httputil.ExtractEndpoints(src, relIndieAuthMetadata); len(endpoints) > 0 {
 			dst.IndieAuthMetadata = endpoints[len(endpoints)-1]
 		}
 	}
 
 	if dst.AuthorizationEndpoint == nil {
-		if endpoints := util.ExtractEndpoints(src, relAuthorizationEndpoint); len(endpoints) > 0 {
+		if endpoints := httputil.ExtractEndpoints(src, relAuthorizationEndpoint); len(endpoints) > 0 {
 			dst.AuthorizationEndpoint = endpoints[len(endpoints)-1]
 		}
 	}
 
 	if dst.Micropub == nil {
-		if endpoints := util.ExtractEndpoints(src, relMicropub); len(endpoints) > 0 {
+		if endpoints := httputil.ExtractEndpoints(src, relMicropub); len(endpoints) > 0 {
 			dst.Micropub = endpoints[len(endpoints)-1]
 		}
 	}
 
 	if dst.Microsub == nil {
-		if endpoints := util.ExtractEndpoints(src, relMicrosub); len(endpoints) > 0 {
+		if endpoints := httputil.ExtractEndpoints(src, relMicrosub); len(endpoints) > 0 {
 			dst.Microsub = endpoints[len(endpoints)-1]
 		}
 	}
 
 	if dst.TicketEndpoint == nil {
-		if endpoints := util.ExtractEndpoints(src, relTicketEndpoint); len(endpoints) > 0 {
+		if endpoints := httputil.ExtractEndpoints(src, relTicketEndpoint); len(endpoints) > 0 {
 			dst.TicketEndpoint = endpoints[len(endpoints)-1]
 		}
 	}
 
 	if dst.TokenEndpoint == nil {
-		if endpoints := util.ExtractEndpoints(src, relTokenEndpoint); len(endpoints) > 0 {
+		if endpoints := httputil.ExtractEndpoints(src, relTokenEndpoint); len(endpoints) > 0 {
 			dst.TokenEndpoint = endpoints[len(endpoints)-1]
 		}
 	}
@@ -119,13 +119,13 @@ func extractUser(dst *domain.User, src *http.Response) {
 
 //nolint: cyclop
 func extractProfile(dst *domain.Profile, src *http.Response) {
-	for _, name := range util.ExtractProperty(src, hCard, propertyName) {
+	for _, name := range httputil.ExtractProperty(src, hCard, propertyName) {
 		if n, ok := name.(string); ok {
 			dst.Name = append(dst.Name, n)
 		}
 	}
 
-	for _, rawEmail := range util.ExtractProperty(src, hCard, propertyEmail) {
+	for _, rawEmail := range httputil.ExtractProperty(src, hCard, propertyEmail) {
 		email, ok := rawEmail.(string)
 		if !ok {
 			continue
@@ -136,7 +136,7 @@ func extractProfile(dst *domain.Profile, src *http.Response) {
 		}
 	}
 
-	for _, rawURL := range util.ExtractProperty(src, hCard, propertyURL) {
+	for _, rawURL := range httputil.ExtractProperty(src, hCard, propertyURL) {
 		url, ok := rawURL.(string)
 		if !ok {
 			continue
@@ -147,7 +147,7 @@ func extractProfile(dst *domain.Profile, src *http.Response) {
 		}
 	}
 
-	for _, rawPhoto := range util.ExtractProperty(src, hCard, propertyPhoto) {
+	for _, rawPhoto := range httputil.ExtractProperty(src, hCard, propertyPhoto) {
 		photo, ok := rawPhoto.(string)
 		if !ok {
 			continue

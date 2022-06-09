@@ -7,8 +7,8 @@ import (
 	http "github.com/valyala/fasthttp"
 
 	"source.toby3d.me/toby3d/auth/internal/domain"
+	"source.toby3d.me/toby3d/auth/internal/httputil"
 	"source.toby3d.me/toby3d/auth/internal/profile"
-	"source.toby3d.me/toby3d/auth/internal/util"
 )
 
 type httpProfileRepository struct {
@@ -48,13 +48,13 @@ func (repo *httpProfileRepository) Get(ctx context.Context, me *domain.Me) (*dom
 
 	result := domain.NewProfile()
 
-	for _, name := range util.ExtractProperty(resp, hCard, propertyName) {
+	for _, name := range httputil.ExtractProperty(resp, hCard, propertyName) {
 		if n, ok := name.(string); ok {
 			result.Name = append(result.Name, n)
 		}
 	}
 
-	for _, rawEmail := range util.ExtractProperty(resp, hCard, propertyEmail) {
+	for _, rawEmail := range httputil.ExtractProperty(resp, hCard, propertyEmail) {
 		email, ok := rawEmail.(string)
 		if !ok {
 			continue
@@ -65,7 +65,7 @@ func (repo *httpProfileRepository) Get(ctx context.Context, me *domain.Me) (*dom
 		}
 	}
 
-	for _, rawURL := range util.ExtractProperty(resp, hCard, propertyURL) {
+	for _, rawURL := range httputil.ExtractProperty(resp, hCard, propertyURL) {
 		url, ok := rawURL.(string)
 		if !ok {
 			continue
@@ -76,7 +76,7 @@ func (repo *httpProfileRepository) Get(ctx context.Context, me *domain.Me) (*dom
 		}
 	}
 
-	for _, rawPhoto := range util.ExtractProperty(resp, hCard, propertyPhoto) {
+	for _, rawPhoto := range httputil.ExtractProperty(resp, hCard, propertyPhoto) {
 		photo, ok := rawPhoto.(string)
 		if !ok {
 			continue

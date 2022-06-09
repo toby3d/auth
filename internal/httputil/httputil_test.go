@@ -1,11 +1,11 @@
-package util_test
+package httputil_test
 
 import (
 	"testing"
 
 	http "github.com/valyala/fasthttp"
 
-	"source.toby3d.me/toby3d/auth/internal/util"
+	"source.toby3d.me/toby3d/auth/internal/httputil"
 )
 
 const testBody = `<html>
@@ -23,7 +23,7 @@ func TestExtractProperty(t *testing.T) {
 	defer http.ReleaseResponse(resp)
 	resp.SetBodyString(testBody)
 
-	results := util.ExtractProperty(resp, "h-card", "name")
+	results := httputil.ExtractProperty(resp, "h-card", "name")
 	if results == nil || results[0] != "Sample Name" {
 		t.Errorf(`ExtractProperty(resp, "h-card", "name") = %+s, want %+s`, results, []string{"Sample Name"})
 	}
