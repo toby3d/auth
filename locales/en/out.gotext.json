@@ -47,6 +47,13 @@
             "fuzzy": true
         },
         {
+            "id": "version",
+            "message": "version",
+            "translation": "version",
+            "translatorComment": "Copied from source.",
+            "fuzzy": true
+        },
+        {
             "id": "Error",
             "message": "Error",
             "translation": "Error",

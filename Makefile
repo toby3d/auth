@@ -6,14 +6,14 @@ SHELL = /bin/sh
 srcdir = .
 
 GO ?= go
-GOFLAGS ?=
+GOFLAGS ?= -buildvcs=true
 EXECUTABLE ?= indieauth
 
 #### End of system configuration section. ####
 
 .PHONY: all clean check help
 
-all: main.go
+all:
 	$(GO) build -v $(GOFLAGS) -o $(EXECUTABLE) $<
 
 clean: ## Delete all files in the current directory that are normally created by building the program

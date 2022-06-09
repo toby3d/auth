@@ -1,4 +1,6 @@
 {% import (
+  "runtime/debug"
+
   "golang.org/x/text/language"
   "golang.org/x/text/message"
 
@@ -75,6 +77,33 @@
     </head>
     <body class="page__body body">
       {%= p.Body() %}
+
+      {% code
+        var path, vcsRevision string
+
+        if bi, ok := debug.ReadBuildInfo(); ok {
+          path = bi.Path
+
+          for i := range bi.Settings {
+            if bi.Settings[i].Key != "vcs.revision" {
+              continue
+            }
+
+            vcsRevision = bi.Settings[i].Value
+          }
+        }
+      %}
+
+      {% if vcsRevision != "" %}
+        <footer>
+          <small>
+            {%= p.T("version") %}
+            <a href="https://{%s path %}/commit/{%s vcsRevision %}" target="_blank">
+              {%s vcsRevision[:7] -%}
+            </a>
+          </small>
+        </footer>
+      {% endif %}
     </body>
   </html>
 {% endfunc %}

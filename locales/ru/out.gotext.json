@@ -41,6 +41,11 @@
             "translatorComment": "Название кнопки продолжения процесса авторизациии приложения"
         },
         {
+            "id": "version",
+            "message": "version",
+            "translation": "версия"
+        },
+        {
             "id": "Error",
             "message": "Error",
             "translation": "Ошибка",

@@ -44,37 +44,38 @@ var messageKeyToIndex = map[string]int{
 	"Authorize application": 1,
 	"Choose your scopes":    2,
 	"Deny":                  3,
-	"Error":                 5,
-	"How do I fix it?":      6,
-	"Recipient":             9,
-	"Resource":              10,
-	"Send":                  11,
-	"Sign In":               7,
-	"TicketAuth":            8,
+	"Error":                 6,
+	"How do I fix it?":      7,
+	"Recipient":             10,
+	"Resource":              11,
+	"Send":                  12,
+	"Sign In":               8,
+	"TicketAuth":            9,
+	"version":               5,
 }
 
-var enIndex = []uint32{ // 13 elements
+var enIndex = []uint32{ // 14 elements
 	0x00000000, 0x00000010, 0x00000026, 0x00000039,
-	0x0000003e, 0x00000044, 0x0000004a, 0x0000005b,
-	0x00000063, 0x0000006e, 0x00000078, 0x00000081,
-	0x00000086,
-} // Size: 76 bytes
+	0x0000003e, 0x00000044, 0x0000004c, 0x00000052,
+	0x00000063, 0x0000006b, 0x00000076, 0x00000080,
+	0x00000089, 0x0000008e,
+} // Size: 80 bytes
 
-const enData string = "" + // Size: 134 bytes
+const enData string = "" + // Size: 142 bytes
 	"\x02Authorize %[1]s\x02Authorize application\x02Choose your scopes\x02De" +
-	"ny\x02Allow\x02Error\x02How do I fix it?\x02Sign In\x02TicketAuth\x02Rec" +
-	"ipient\x02Resource\x02Send"
+	"ny\x02Allow\x02version\x02Error\x02How do I fix it?\x02Sign In\x02Ticket" +
+	"Auth\x02Recipient\x02Resource\x02Send"
 
-var ruIndex = []uint32{ // 13 elements
+var ruIndex = []uint32{ // 14 elements
 	0x00000000, 0x0000001f, 0x0000004d, 0x0000008e,
-	0x0000009f, 0x000000b2, 0x000000bf, 0x000000e1,
-	0x000000ec, 0x000000f7, 0x0000010c, 0x00000119,
-	0x0000012c,
-} // Size: 76 bytes
+	0x0000009f, 0x000000b2, 0x000000bf, 0x000000cc,
+	0x000000ee, 0x000000f9, 0x00000104, 0x00000119,
+	0x00000126, 0x00000139,
+} // Size: 80 bytes
 
-const ruData string = "" + // Size: 300 bytes
+const ruData string = "" + // Size: 313 bytes
 	"\x02Авторизовать %[1]s\x02Авторизовать приложение\x02Выбери предоставляе" +
-	"мые разрешения\x02Отказать\x02Разрешить\x02Ошибка\x02Как исправить это?" +
-	"\x02Войти\x02TicketAuth\x02Получатель\x02Ресурс\x02Отправить"
+	"мые разрешения\x02Отказать\x02Разрешить\x02версия\x02Ошибка\x02Как испр" +
+	"авить это?\x02Войти\x02TicketAuth\x02Получатель\x02Ресурс\x02Отправить"
 
-	// Total table size 586 bytes (0KiB); checksum: D0ACA2B7
+	// Total table size 615 bytes (0KiB); checksum: 66FB60EC
