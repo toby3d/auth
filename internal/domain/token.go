@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lestrrat-go/jwx/jwa"
-	"github.com/lestrrat-go/jwx/jwt"
+	"github.com/lestrrat-go/jwx/v2/jwa"
+	"github.com/lestrrat-go/jwx/v2/jwt"
 	http "github.com/valyala/fasthttp"
 
 	"source.toby3d.me/toby3d/auth/internal/random"
@@ -92,7 +92,7 @@ func NewToken(opts NewTokenOptions) (*Token, error) {
 		}
 	}
 
-	accessToken, err := jwt.Sign(tkn, jwa.SignatureAlgorithm(opts.Algorithm), opts.Secret)
+	accessToken, err := jwt.Sign(tkn, jwt.WithKey(jwa.SignatureAlgorithm(opts.Algorithm), opts.Secret))
 	if err != nil {
 		return nil, fmt.Errorf("cannot sign a new access token: %w", err)
 	}
@@ -146,7 +146,7 @@ func TestToken(tb testing.TB) *Token {
 		_ = tkn.Set(key, val)
 	}
 
-	accessToken, err := jwt.Sign(tkn, jwa.HS256, []byte("hackme"))
+	accessToken, err := jwt.Sign(tkn, jwt.WithKey(jwa.HS256, []byte("hackme")))
 	if err != nil {
 		tb.Fatal(err)
 	}

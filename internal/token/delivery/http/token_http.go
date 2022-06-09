@@ -6,7 +6,7 @@ import (
 
 	"github.com/fasthttp/router"
 	json "github.com/goccy/go-json"
-	"github.com/lestrrat-go/jwx/jwa"
+	"github.com/lestrrat-go/jwx/v2/jwa"
 	http "github.com/valyala/fasthttp"
 
 	"source.toby3d.me/toby3d/auth/internal/common"
@@ -38,11 +38,11 @@ type (
 		// The client may request a token with the same or fewer scopes
 		// than the original access token. If omitted, is treated as
 		// equal to the original scopes granted.
-		Scope domain.Scopes `form:"scope,omitempty"`
+		Scope domain.Scopes `form:"scope"`
 	}
 
 	TokenRevocationRequest struct {
-		Action domain.Action `form:"action"`
+		Action domain.Action `form:"action,omitempty"`
 		Token  string        `form:"token"`
 	}
 
@@ -150,8 +150,7 @@ func (h *RequestHandler) Register(r *router.Router) {
 				return matched
 			},
 			SuccessHandler: nil,
-			TokenLookup: "header:" + http.HeaderAuthorization + ":Bearer " +
-				",param:token",
+			TokenLookup:    "param:token,header:" + http.HeaderAuthorization + ":Bearer ",
 		}),
 		middleware.LogFmt(),
 	}
@@ -303,7 +302,7 @@ func (h *RequestHandler) handleRevokation(ctx *http.RequestCtx) {
 
 	encoder := json.NewEncoder(ctx)
 
-	req := new(TokenRevocationRequest)
+	req := NewTokenRevocationRequest()
 	if err := req.bind(ctx); err != nil {
 		ctx.SetStatusCode(http.StatusBadRequest)
 
@@ -366,7 +365,7 @@ func (h *RequestHandler) handleTicket(ctx *http.RequestCtx) {
 
 func (r *TokenExchangeRequest) bind(ctx *http.RequestCtx) error {
 	indieAuthError := new(domain.Error)
-	if err := form.Unmarshal(ctx.PostArgs(), r); err != nil {
+	if err := form.Unmarshal(ctx.QueryArgs().QueryString(), r); err != nil {
 		if errors.As(err, indieAuthError) {
 			return indieAuthError
 		}
@@ -381,9 +380,18 @@ func (r *TokenExchangeRequest) bind(ctx *http.RequestCtx) error {
 	return nil
 }
 
+func NewTokenRevocationRequest() *TokenRevocationRequest {
+	return &TokenRevocationRequest{
+		Action: domain.ActionRevoke,
+		Token:  "",
+	}
+}
+
 func (r *TokenRevocationRequest) bind(ctx *http.RequestCtx) error {
 	indieAuthError := new(domain.Error)
-	if err := form.Unmarshal(ctx.PostArgs(), r); err != nil {
+
+	err := form.Unmarshal(ctx.PostArgs().QueryString(), r)
+	if err != nil {
 		if errors.As(err, indieAuthError) {
 			return indieAuthError
 		}
@@ -400,7 +408,7 @@ func (r *TokenRevocationRequest) bind(ctx *http.RequestCtx) error {
 
 func (r *TokenTicketRequest) bind(ctx *http.RequestCtx) error {
 	indieAuthError := new(domain.Error)
-	if err := form.Unmarshal(ctx.PostArgs(), r); err != nil {
+	if err := form.Unmarshal(ctx.QueryArgs().QueryString(), r); err != nil {
 		if errors.As(err, indieAuthError) {
 			return indieAuthError
 		}
@@ -417,7 +425,7 @@ func (r *TokenTicketRequest) bind(ctx *http.RequestCtx) error {
 
 func (r *TokenIntrospectRequest) bind(ctx *http.RequestCtx) error {
 	indieAuthError := new(domain.Error)
-	if err := form.Unmarshal(ctx.PostArgs(), r); err != nil {
+	if err := form.Unmarshal(ctx.PostArgs().QueryString(), r); err != nil {
 		if errors.As(err, indieAuthError) {
 			return indieAuthError
 		}

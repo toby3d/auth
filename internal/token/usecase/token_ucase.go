@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/lestrrat-go/jwx/jwa"
-	"github.com/lestrrat-go/jwx/jwt"
+	"github.com/lestrrat-go/jwx/v2/jwa"
+	"github.com/lestrrat-go/jwx/v2/jwt"
 
 	"source.toby3d.me/toby3d/auth/internal/domain"
 	"source.toby3d.me/toby3d/auth/internal/profile"
@@ -97,8 +97,8 @@ func (uc *tokenUseCase) Verify(ctx context.Context, accessToken string) (*domain
 		return nil, nil, fmt.Errorf("cannot check token in store: %w", err)
 	}
 
-	tkn, err := jwt.ParseString(accessToken, jwt.WithVerify(jwa.SignatureAlgorithm(uc.config.JWT.Algorithm),
-		[]byte(uc.config.JWT.Secret)))
+	tkn, err := jwt.ParseString(accessToken, jwt.WithKey(jwa.SignatureAlgorithm(uc.config.JWT.Algorithm),
+		[]byte(uc.config.JWT.Secret)), jwt.WithVerify(true))
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot parse JWT token: %w", err)
 	}

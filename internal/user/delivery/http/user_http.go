@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/fasthttp/router"
-	"github.com/lestrrat-go/jwx/jwa"
+	"github.com/lestrrat-go/jwx/v2/jwa"
 	http "github.com/valyala/fasthttp"
 
 	"source.toby3d.me/toby3d/auth/internal/common"

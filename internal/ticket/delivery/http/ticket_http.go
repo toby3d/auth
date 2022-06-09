@@ -7,7 +7,7 @@ import (
 
 	"github.com/fasthttp/router"
 	"github.com/goccy/go-json"
-	"github.com/lestrrat-go/jwx/jwa"
+	"github.com/lestrrat-go/jwx/v2/jwa"
 	http "github.com/valyala/fasthttp"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
@@ -200,7 +200,7 @@ func (h *RequestHandler) handleRedeem(ctx *http.RequestCtx) {
 
 func (req *TicketGenerateRequest) bind(ctx *http.RequestCtx) (err error) {
 	indieAuthError := new(domain.Error)
-	if err = form.Unmarshal(ctx.Request.PostArgs(), req); err != nil {
+	if err = form.Unmarshal(ctx.Request.PostArgs().QueryString(), req); err != nil {
 		if errors.As(err, indieAuthError) {
 			return indieAuthError
 		}
@@ -231,9 +231,9 @@ func (req *TicketGenerateRequest) bind(ctx *http.RequestCtx) (err error) {
 	return nil
 }
 
-func (req *TicketExchangeRequest) bind(ctx *http.RequestCtx) (err error) {
+func (req *TicketExchangeRequest) bind(ctx *http.RequestCtx) error {
 	indieAuthError := new(domain.Error)
-	if err = form.Unmarshal(ctx.Request.PostArgs(), req); err != nil {
+	if err := form.Unmarshal(ctx.Request.PostArgs().QueryString(), req); err != nil {
 		if errors.As(err, indieAuthError) {
 			return indieAuthError
 		}

@@ -1,7 +1,6 @@
 package http
 
 import (
-	"bytes"
 	"crypto/subtle"
 	"errors"
 	"path"
@@ -65,7 +64,7 @@ type (
 		RedirectURI         *domain.URL                `form:"redirect_uri"`
 		CodeChallengeMethod domain.CodeChallengeMethod `form:"code_challenge_method"`
 		ResponseType        domain.ResponseType        `form:"response_type"`
-		Scope               domain.Scopes              `form:"scope[]"` // TODO(toby3d): fix parsing in form pkg
+		Scope               domain.Scopes              `form:"scope[]"`
 		Authorize           string                     `form:"authorize"`
 		CodeChallenge       string                     `form:"code_challenge"`
 		State               string                     `form:"state"`
@@ -352,7 +351,7 @@ func NewAuthAuthorizationRequest() *AuthAuthorizationRequest {
 //nolint: cyclop
 func (r *AuthAuthorizationRequest) bind(ctx *http.RequestCtx) error {
 	indieAuthError := new(domain.Error)
-	if err := form.Unmarshal(ctx.QueryArgs(), r); err != nil {
+	if err := form.Unmarshal(ctx.QueryArgs().QueryString(), r); err != nil {
 		if errors.As(err, indieAuthError) {
 			return indieAuthError
 		}
@@ -361,45 +360,6 @@ func (r *AuthAuthorizationRequest) bind(ctx *http.RequestCtx) error {
 			domain.ErrorCodeInvalidRequest,
 			err.Error(),
 			"https://indieauth.net/source/#authorization-request",
-		)
-	}
-
-	if err := r.Scope.UnmarshalForm(ctx.QueryArgs().Peek("scope")); err != nil {
-		if errors.As(err, indieAuthError) {
-			return indieAuthError
-		}
-
-		return domain.NewError(
-			domain.ErrorCodeInvalidScope,
-			err.Error(),
-			"https://indieweb.org/scope",
-		)
-	}
-
-	if ctx.QueryArgs().Has("code_challenge") {
-		err := r.CodeChallengeMethod.UnmarshalForm(ctx.QueryArgs().Peek("code_challenge_method"))
-		if err != nil {
-			if errors.As(err, indieAuthError) {
-				return indieAuthError
-			}
-
-			return domain.NewError(
-				domain.ErrorCodeInvalidRequest,
-				err.Error(),
-				"",
-			)
-		}
-	}
-
-	if err := r.ResponseType.UnmarshalForm(ctx.QueryArgs().Peek("response_type")); err != nil {
-		if errors.As(err, indieAuthError) {
-			return indieAuthError
-		}
-
-		return domain.NewError(
-			domain.ErrorCodeUnsupportedResponseType,
-			err.Error(),
-			"",
 		)
 	}
 
@@ -429,7 +389,7 @@ func NewAuthVerifyRequest() *AuthVerifyRequest {
 func (r *AuthVerifyRequest) bind(ctx *http.RequestCtx) error {
 	indieAuthError := new(domain.Error)
 
-	if err := form.Unmarshal(ctx.PostArgs(), r); err != nil {
+	if err := form.Unmarshal(ctx.PostArgs().QueryString(), r); err != nil {
 		if errors.As(err, indieAuthError) {
 			return indieAuthError
 		}
@@ -438,45 +398,6 @@ func (r *AuthVerifyRequest) bind(ctx *http.RequestCtx) error {
 			domain.ErrorCodeInvalidRequest,
 			err.Error(),
 			"https://indieauth.net/source/#authorization-request",
-		)
-	}
-
-	if err := r.Scope.UnmarshalForm(bytes.Join(ctx.PostArgs().PeekMulti("scope[]"), []byte(" "))); err != nil {
-		if errors.As(err, indieAuthError) {
-			return indieAuthError
-		}
-
-		return domain.NewError(
-			domain.ErrorCodeInvalidScope,
-			err.Error(),
-			"https://indieweb.org/scope",
-		)
-	}
-
-	if ctx.PostArgs().Has("code_challenge") {
-		err := r.CodeChallengeMethod.UnmarshalForm(ctx.PostArgs().Peek("code_challenge_method"))
-		if err != nil {
-			if errors.As(err, indieAuthError) {
-				return indieAuthError
-			}
-
-			return domain.NewError(
-				domain.ErrorCodeInvalidRequest,
-				err.Error(),
-				"",
-			)
-		}
-	}
-
-	if err := r.ResponseType.UnmarshalForm(ctx.PostArgs().Peek("response_type")); err != nil {
-		if errors.As(err, indieAuthError) {
-			return indieAuthError
-		}
-
-		return domain.NewError(
-			domain.ErrorCodeUnsupportedResponseType,
-			err.Error(),
-			"",
 		)
 	}
 
@@ -501,7 +422,7 @@ func (r *AuthVerifyRequest) bind(ctx *http.RequestCtx) error {
 
 func (r *AuthExchangeRequest) bind(ctx *http.RequestCtx) error {
 	indieAuthError := new(domain.Error)
-	if err := form.Unmarshal(ctx.PostArgs(), r); err != nil {
+	if err := form.Unmarshal(ctx.PostArgs().QueryString(), r); err != nil {
 		if errors.As(err, indieAuthError) {
 			return indieAuthError
 		}

@@ -168,23 +168,12 @@ func (h *RequestHandler) handleCallback(ctx *http.RequestCtx) {
 func (req *ClientCallbackRequest) bind(ctx *http.RequestCtx) error {
 	indieAuthError := new(domain.Error)
 
-	if err := form.Unmarshal(ctx.QueryArgs(), req); err != nil {
+	if err := form.Unmarshal(ctx.QueryArgs().QueryString(), req); err != nil {
 		if errors.As(err, indieAuthError) {
 			return indieAuthError
 		}
 
 		return domain.NewError(domain.ErrorCodeInvalidRequest, err.Error(), "")
-	}
-
-	// TODO(toby3d): fix this in form package logic.
-	if ctx.QueryArgs().Has("error") {
-		if err := req.Error.UnmarshalForm(ctx.QueryArgs().Peek("error")); err != nil {
-			if errors.As(err, indieAuthError) {
-				return indieAuthError
-			}
-
-			return domain.NewError(domain.ErrorCodeInvalidRequest, err.Error(), "")
-		}
 	}
 
 	return nil
