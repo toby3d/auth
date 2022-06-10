@@ -1,0 +1,65 @@
+---
+run:
+  tests: true
+  skip-dirs:
+    - locales
+    - testdata
+    - web
+  skip-dirs-use-default: true
+  skip-files:
+    - ".*_gen\\.go$"
+output:
+  sort-results: true
+linters-settings:
+  gci:
+    sections:
+      - standard
+      - default
+      - prefix(source.toby3d.me)
+    section-separators:
+      - newLine
+  goimports:
+    local-prefixes: source.toby3d.me
+  ireturn:
+    allow:
+      - error
+      - stdlib
+      - "(Repository|UseCase)$"
+      - "sqlmock.Sqlmock"
+  lll:
+    tab-width: 8
+  varnamelen:
+    ignore-type-assert-ok: true
+    ignore-map-index-ok: true
+    ignore-chan-recv-ok: true
+    ignore-names:
+      - ctx # context
+      - db # dataBase
+      - err # error
+      - i # index
+      - id
+      - ip
+      - j # alt index
+      - ln # listener
+      - me
+      - ok
+      - tc # testCase
+      - ts # timeStamp
+      - tx # transaction
+    ignore-decls:
+      - "cid *domain.ClientID"
+      - "ctx *fasthttp.RequestCtx"
+      - "ctx context.Context"
+      - "i int"
+      - "me *domain.Me"
+      - "r *router.Router"
+linters:
+  enable-all: true
+  disable:
+    - godox
+issues:
+  exclude-rules:
+    - source: "^//go:generate "
+      linters:
+        - lll
+  fix: true

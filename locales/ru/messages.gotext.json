@@ -1,0 +1,91 @@
+{
+    "language": "ru",
+    "messages": [
+        {
+            "id": "Authorize {Name}",
+            "message": "Authorize {Name}",
+            "translation": "Авторизовать {Name}",
+            "translatorComment": "Заголовок страницы авторизации приложения с известным именем",
+            "placeholders": [
+                {
+                    "id": "Name",
+                    "string": "%[1]s",
+                    "type": "string",
+                    "underlyingType": "string",
+                    "argNum": 1,
+                    "expr": "p.Client.GetName()"
+                }
+            ]
+        },
+        {
+            "id": "Authorize application",
+            "message": "Authorize application",
+            "translation": "Авторизовать приложение",
+            "translatorComment": "Заголовок страницы авторизации безымянного приложения"
+        },
+        {
+            "id": "Choose your scopes",
+            "message": "Choose your scopes",
+            "translation": "Выбери предоставляемые разрешения"
+        },
+        {
+            "id": "Deny",
+            "message": "Deny",
+            "translation": "Отказать",
+            "translatorComment": "Название кнопки прерывания процесса авторизациии приложения"
+        },
+        {
+            "id": "Allow",
+            "message": "Allow",
+            "translation": "Разрешить",
+            "translatorComment": "Название кнопки продолжения процесса авторизациии приложения"
+        },
+        {
+            "id": "version",
+            "message": "version",
+            "translation": "версия"
+        },
+        {
+            "id": "Error",
+            "message": "Error",
+            "translation": "Ошибка",
+            "translatorComment": "Заголовок страницы с ошибкой"
+        },
+        {
+            "id": "How do I fix it?",
+            "message": "How do I fix it?",
+            "translation": "Как исправить это?",
+            "translatorComment": "Ссылка на документацию на странице ошибки"
+        },
+        {
+            "id": "Sign In",
+            "message": "Sign In",
+            "translation": "Войти",
+            "translatorComment": "Название кнопки в форме ввода адреса сайта для начала процесса входа"
+        },
+        {
+            "id": "TicketAuth",
+            "message": "TicketAuth",
+            "translation": "TicketAuth",
+            "translatorComment": "Название страницы отправки билетов"
+        },
+        {
+            "id": "Recipient",
+            "message": "Recipient",
+            "translation": "Получатель",
+            "translatorComment": "Название поля формы Subject отправки билета"
+        },
+        {
+            "id": "Resource",
+            "message": "Resource",
+            "translation": "Ресурс",
+            "translatorComment": "Название поля формы Resource отправки билета"
+        },
+        {
+            "id": "Send",
+            "message": "Send",
+            "translation": "Отправить",
+            "translatorComment": "Название кнопки формы отправки билета"
+        }
+    ]
+}

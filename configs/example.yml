@@ -1,0 +1,32 @@
+---
+name: "IndieAuth"
+runMode: "dev"
+server:
+  certFile: "https/cert.pem"
+  domain: "localhost"
+  enablePprof: false
+  host: "0.0.0.0"
+  keyFile: "https/key.pem"
+  port: 3000
+  protocol: "http"
+  rootUrl: "{{protocol}}://{{domain}}:{{port}}/"
+  staticRootPath: "assets/"
+  staticUrlPrefix: "/static"
+database:
+  type: "memory"
+  # path: "data/development.db"
+code:
+  expiry: "10m"
+  length: 32
+jwt:
+  algorithm: "RS256"
+  expiry: "1h"
+  nonceLength: 24
+  secret: "hackme"
+indieAuth:
+  enabled: true
+  username: user
+  password: hackme
+ticketAuth:
+  expiry: "1m"
+  length: 24

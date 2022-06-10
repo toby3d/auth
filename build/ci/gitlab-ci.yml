@@ -1,0 +1,49 @@
+---
+image: golang:latest
+
+variables:
+  REPO_NAME: gitlab.com/$CI_PROJECT_PATH
+  CGO_ENABLED: 0
+
+cache:
+  paths:
+    - .go/pkg/mod/
+
+before_script:
+  - mkdir -p $GOPATH/src/$(dirname $REPO_NAME)
+  - ln -svf $CI_PROJECT_DIR $GOPATH/src/$REPO_NAME
+  - cd $GOPATH/src/$REPO_NAME
+
+stages:
+  - test
+  - build
+
+test:
+  stage: test
+  before_script:
+    - go install gotest.tools/gotestsum@latest
+  script:
+    - gotestsum --junitfile report.xml --format testname
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
+
+cover:
+  stage: test
+  before_script:
+    - go install github.com/t-yuki/gocover-cobertura@latest
+  script:
+    - go test -coverprofile=coverage.txt -covermode count $REPO_NAME/...
+    - gocover-cobertura < coverage.txt > coverage.xml
+  artifacts:
+    reports:
+      cobertura: coverage.xml
+
+build:
+  stage: build
+  script:
+    - make build
+  artifacts:
+    paths:
+      - indieauth
