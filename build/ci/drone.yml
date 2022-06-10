@@ -38,10 +38,8 @@ steps:
     depends_on:
       - build
     when:
-      event:
-        - promote
-      target:
-        - production
+      branch:
+        - master
 
   - name: delivery
     image: appleboy/drone-scp
@@ -62,10 +60,8 @@ steps:
     depends_on:
       - stop-service
     when:
-      event:
-        - promote
-      target:
-        - production
+      branch:
+        - master
 
   - name: start-service
     image: appleboy/drone-ssh
@@ -80,10 +76,8 @@ steps:
     depends_on:
       - delivery
     when:
-      event:
-        - promote
-      target:
-        - production
+      branch:
+        - master
 
 volumes:
   - name: modules
