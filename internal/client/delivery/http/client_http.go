@@ -19,25 +19,25 @@ import (
 
 type (
 	ClientCallbackRequest struct {
+		Error            domain.ErrorCode `form:"error,omitempty"`
 		Iss              *domain.ClientID `form:"iss"`
 		Code             string           `form:"code"`
-		Error            domain.ErrorCode `form:"error"`
-		ErrorDescription string           `form:"error_description"`
+		ErrorDescription string           `form:"error_description,omitempty"`
 		State            string           `form:"state"`
 	}
 
 	NewRequestHandlerOptions struct {
-		Client  *domain.Client
-		Config  *domain.Config
 		Matcher language.Matcher
 		Tokens  token.UseCase
+		Client  *domain.Client
+		Config  *domain.Config
 	}
 
 	RequestHandler struct {
-		client  *domain.Client
-		config  *domain.Config
 		matcher language.Matcher
 		tokens  token.UseCase
+		client  *domain.Client
+		config  *domain.Config
 	}
 )
 
