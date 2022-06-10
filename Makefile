@@ -13,8 +13,8 @@ EXECUTABLE ?= indieauth
 
 .PHONY: all clean check help
 
-all:
-	$(GO) build -v $(GOFLAGS) -o $(EXECUTABLE) $<
+all: main.go
+	$(GO) build -v $(GOFLAGS) -o $(EXECUTABLE)
 
 clean: ## Delete all files in the current directory that are normally created by building the program
 	-rm $(srcdir)/internal/testing/httptest/{cert,key}.pem
