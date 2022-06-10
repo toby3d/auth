@@ -52,7 +52,7 @@ type (
 		// value, the authorization server MUST NOT issue an access
 		// token for this authorization code. Only the user's profile
 		// URL may be returned without any scope requested.
-		Scope domain.Scopes `form:"scope"`
+		Scope domain.Scopes `form:"scope,omitempty"`
 
 		// The URL that the user entered.
 		Me *domain.Me `form:"me"`
@@ -64,7 +64,7 @@ type (
 		RedirectURI         *domain.URL                `form:"redirect_uri"`
 		CodeChallengeMethod domain.CodeChallengeMethod `form:"code_challenge_method"`
 		ResponseType        domain.ResponseType        `form:"response_type"`
-		Scope               domain.Scopes              `form:"scope[]"`
+		Scope               domain.Scopes              `form:"scope[],omitempty"`
 		Authorize           string                     `form:"authorize"`
 		CodeChallenge       string                     `form:"code_challenge"`
 		State               string                     `form:"state"`
