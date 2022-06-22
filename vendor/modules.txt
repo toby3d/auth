@@ -71,14 +71,14 @@ github.com/lestrrat-go/blackmagic
 # github.com/lestrrat-go/httpcc v1.0.1
 ## explicit; go 1.16
 github.com/lestrrat-go/httpcc
-# github.com/lestrrat-go/httprc v1.0.1
+# github.com/lestrrat-go/httprc v1.0.2
 ## explicit; go 1.17
 github.com/lestrrat-go/httprc
 # github.com/lestrrat-go/iter v1.0.2
 ## explicit; go 1.13
 github.com/lestrrat-go/iter/arrayiter
 github.com/lestrrat-go/iter/mapiter
-# github.com/lestrrat-go/jwx/v2 v2.0.2
+# github.com/lestrrat-go/jwx/v2 v2.0.3
 ## explicit; go 1.16
 github.com/lestrrat-go/jwx/v2
 github.com/lestrrat-go/jwx/v2/cert
@@ -163,7 +163,7 @@ github.com/spf13/viper/internal/encoding/javaproperties
 github.com/spf13/viper/internal/encoding/json
 github.com/spf13/viper/internal/encoding/toml
 github.com/spf13/viper/internal/encoding/yaml
-# github.com/stretchr/testify v1.7.2
+# github.com/stretchr/testify v1.7.4
 ## explicit; go 1.13
 github.com/stretchr/testify/assert
 # github.com/subosito/gotenv v1.4.0
@@ -194,10 +194,10 @@ github.com/valyala/quicktemplate
 # go.etcd.io/bbolt v1.3.6
 ## explicit; go 1.12
 go.etcd.io/bbolt
-# go4.org/intern v0.0.0-20220301175310-a089fc204883
+# go4.org/intern v0.0.0-20220617035311-6925f38cc365
 ## explicit; go 1.13
 go4.org/intern
-# go4.org/unsafe/assume-no-moving-gc v0.0.0-20211027215541-db492cf91b37
+# go4.org/unsafe/assume-no-moving-gc v0.0.0-20220617031537-928513b29760
 ## explicit; go 1.11
 go4.org/unsafe/assume-no-moving-gc
 # golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
@@ -209,11 +209,11 @@ golang.org/x/crypto/pbkdf2
 # golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4
 ## explicit; go 1.17
 golang.org/x/mod/semver
-# golang.org/x/net v0.0.0-20220607020251-c690dde0001d
+# golang.org/x/net v0.0.0-20220621193019-9d032be2e588
 ## explicit; go 1.17
 golang.org/x/net/html
 golang.org/x/net/html/atom
-# golang.org/x/sys v0.0.0-20220608164250-635b8c9b7f68
+# golang.org/x/sys v0.0.0-20220615213510-4f61da869c0c
 ## explicit; go 1.17
 golang.org/x/sys/execabs
 golang.org/x/sys/internal/unsafeheader
@@ -261,7 +261,7 @@ gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
-# inet.af/netaddr v0.0.0-20211027220019-c74959edd3b6
+# inet.af/netaddr v0.0.0-20220617031823-097006376321
 ## explicit; go 1.12
 inet.af/netaddr
 # lukechampine.com/uint128 v1.2.0
@@ -273,7 +273,7 @@ modernc.org/cc/v3
 # modernc.org/ccgo/v3 v3.16.6
 ## explicit; go 1.16
 modernc.org/ccgo/v3/lib
-# modernc.org/libc v1.16.8
+# modernc.org/libc v1.16.10
 ## explicit; go 1.16
 modernc.org/libc
 modernc.org/libc/errno
