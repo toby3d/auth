@@ -141,7 +141,7 @@ func (h *RequestHandler) Register(r *router.Router) {
 			ContextKey:     "csrf",
 			CookieDomain:   h.config.Server.Domain,
 			CookieName:     "__Secure-csrf",
-			CookiePath:     "",
+			CookiePath:     "/authorize",
 			TokenLookup:    "param:_csrf",
 			TokenLength:    0,
 			CookieSecure:   true,
@@ -239,7 +239,6 @@ func (h *RequestHandler) handleAuthorize(ctx *http.RequestCtx) {
 func (h *RequestHandler) handleVerify(ctx *http.RequestCtx) {
 	ctx.Response.Header.Set(http.HeaderAccessControlAllowOrigin, h.config.Server.Domain)
 	ctx.SetContentType(common.MIMEApplicationJSONCharsetUTF8)
-	ctx.Request.Header.DelCookie("__Secure-csrf")
 
 	encoder := json.NewEncoder(ctx)
 

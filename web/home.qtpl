@@ -50,12 +50,21 @@
         "redirect_uri":  p.Client.RedirectURI[0].String(),
         "response_type": domain.ResponseTypeCode.String(),
         "state":         p.State,
-        "scope":         domain.Scopes{domain.ScopeProfile, domain.ScopeEmail}.String(),
       } %}
         <input
           type="hidden"
           name="{%s name %}"
           value="{%s value %}">
+      {% endfor %}
+      
+      {% for _, scope := domain.Scopes{
+        domain.ScopeProfile,
+        domain.ScopeEmail,
+      } %}
+        <input
+          type="hidden"
+          name="scope[]"
+          value="{%s scope.String() %}">
       {% endfor %}
 
       <input

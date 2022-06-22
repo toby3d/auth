@@ -70,7 +70,7 @@ func (h *RequestHandler) Register(r *router.Router) {
 			ContextKey:     "csrf",
 			CookieDomain:   h.config.Server.Domain,
 			CookieName:     "__Secure-csrf",
-			CookiePath:     "",
+			CookiePath:     "/ticket",
 			TokenLookup:    "form:_csrf",
 			TokenLength:    0,
 			CookieSecure:   true,
