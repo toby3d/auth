@@ -38,7 +38,7 @@ func TestAction_UnmarshalForm(t *testing.T) {
 	t.Parallel()
 
 	input := []byte("revoke")
-	result := domain.ActionUndefined
+	result := domain.ActionUnd
 
 	if err := result.UnmarshalForm(input); err != nil {
 		t.Fatalf("%+v", err)
@@ -53,7 +53,7 @@ func TestAction_UnmarshalJSON(t *testing.T) {
 	t.Parallel()
 
 	input := []byte(`"revoke"`)
-	result := domain.ActionUndefined
+	result := domain.ActionUnd
 
 	if err := result.UnmarshalJSON(input); err != nil {
 		t.Fatalf("%+v", err)

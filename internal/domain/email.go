@@ -79,3 +79,7 @@ func (e Email) String() string {
 
 	return e.user + "+" + e.subAddress + "@" + e.host
 }
+
+func (e Email) GoString() string {
+	return "domain.Email(" + e.String() + ")"
+}

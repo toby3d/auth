@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"source.toby3d.me/toby3d/auth/internal/common"
 )
 
 // GrantType represent fixed grant_type parameter.
@@ -16,9 +18,9 @@ type GrantType struct {
 
 //nolint: gochecknoglobals // structs cannot be constants
 var (
-	GrantTypeUndefined         = GrantType{uid: ""}
-	GrantTypeAuthorizationCode = GrantType{uid: "authorization_code"}
-	GrantTypeRefreshToken      = GrantType{uid: "refresh_token"}
+	GrantTypeUnd               = GrantType{uid: ""}                   // "und"
+	GrantTypeAuthorizationCode = GrantType{uid: "authorization_code"} // "authorization_code"
+	GrantTypeRefreshToken      = GrantType{uid: "refresh_token"}      // "refresh_token"
 
 	// TicketAuth extension.
 	GrantTypeTicket = GrantType{uid: "ticket"}
@@ -43,7 +45,7 @@ func ParseGrantType(uid string) (GrantType, error) {
 		return grantType, nil
 	}
 
-	return GrantTypeUndefined, fmt.Errorf("%w: %s", ErrGrantTypeUnknown, uid)
+	return GrantTypeUnd, fmt.Errorf("%w: %s", ErrGrantTypeUnknown, uid)
 }
 
 // UnmarshalForm implements custom unmarshler for form values.
@@ -81,5 +83,13 @@ func (gt GrantType) MarshalJSON() ([]byte, error) {
 
 // String returns string representation of grant type.
 func (gt GrantType) String() string {
-	return gt.uid
+	if gt.uid != "" {
+		return gt.uid
+	}
+
+	return common.Und
+}
+
+func (gt GrantType) GoString() string {
+	return "domain.GrantType(" + gt.String() + ")"
 }

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"source.toby3d.me/toby3d/auth/internal/common"
 )
 
 type (
@@ -23,28 +25,28 @@ var ErrScopeUnknown error = NewError(ErrorCodeInvalidRequest, "unknown scope", "
 
 //nolint: gochecknoglobals // structs cannot be constants
 var (
-	ScopeUndefined = Scope{uid: ""}
+	ScopeUnd = Scope{uid: ""} // "und"
 
 	// https://indieweb.org/scope#Micropub_Scopes
-	ScopeCreate   = Scope{uid: "create"}
-	ScopeDelete   = Scope{uid: "delete"}
-	ScopeDraft    = Scope{uid: "draft"}
-	ScopeMedia    = Scope{uid: "media"}
-	ScopeUndelete = Scope{uid: "undelete"}
-	ScopeUpdate   = Scope{uid: "update"}
+	ScopeCreate   = Scope{uid: "create"}   // "create"
+	ScopeDelete   = Scope{uid: "delete"}   // "delete"
+	ScopeDraft    = Scope{uid: "draft"}    // "draft"
+	ScopeMedia    = Scope{uid: "media"}    // "media"
+	ScopeUndelete = Scope{uid: "undelete"} // "undelete"
+	ScopeUpdate   = Scope{uid: "update"}   // "update"
 
 	// https://indieweb.org/scope#Microsub_Scopes
-	ScopeBlock    = Scope{uid: "block"}
-	ScopeChannels = Scope{uid: "channels"}
-	ScopeFollow   = Scope{uid: "follow"}
-	ScopeMute     = Scope{uid: "mute"}
-	ScopeRead     = Scope{uid: "read"}
+	ScopeBlock    = Scope{uid: "block"}    // "block"
+	ScopeChannels = Scope{uid: "channels"} // "channels"
+	ScopeFollow   = Scope{uid: "follow"}   // "follow"
+	ScopeMute     = Scope{uid: "mute"}     // "mute"
+	ScopeRead     = Scope{uid: "read"}     // "read"
 
 	// This scope requests access to the user's default profile information
 	// which include the following properties: name, photo, url.
 	//
 	// NOTE(toby3d): https://indieauth.net/source/#profile-information
-	ScopeProfile = Scope{uid: "profile"}
+	ScopeProfile = Scope{uid: "profile"} // "profile"
 
 	// This scope requests access to the user's email address in the
 	// following property: email.
@@ -54,7 +56,7 @@ var (
 	// and must be requested along with the profile scope if desired.
 	//
 	// NOTE(toby3d): https://indieauth.net/source/#profile-information
-	ScopeEmail = Scope{uid: "email"}
+	ScopeEmail = Scope{uid: "email"} // "email"
 )
 
 //nolint: gochecknoglobals // maps cannot be constants
@@ -80,7 +82,7 @@ func ParseScope(uid string) (Scope, error) {
 		return scope, nil
 	}
 
-	return ScopeUndefined, fmt.Errorf("%w: %s", ErrScopeUnknown, uid)
+	return ScopeUnd, fmt.Errorf("%w: %s", ErrScopeUnknown, uid)
 }
 
 func (s Scope) MarshalJSON() ([]byte, error) {
@@ -89,7 +91,15 @@ func (s Scope) MarshalJSON() ([]byte, error) {
 
 // String returns string representation of scope.
 func (s Scope) String() string {
-	return s.uid
+	if s.uid != "" {
+		return s.uid
+	}
+
+	return common.Und
+}
+
+func (s Scope) GoString() string {
+	return "domain.Scope(" + s.String() + ")"
 }
 
 // UnmarshalForm implements custom unmarshler for form values.
@@ -166,7 +176,7 @@ func (s Scopes) String() string {
 // IsEmpty returns true if the set does not contain valid scope.
 func (s Scopes) IsEmpty() bool {
 	for i := range s {
-		if s[i] == ScopeUndefined {
+		if s[i] == ScopeUnd {
 			continue
 		}
 

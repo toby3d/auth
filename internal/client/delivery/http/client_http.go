@@ -110,7 +110,7 @@ func (h *RequestHandler) handleCallback(ctx *http.RequestCtx) {
 		return
 	}
 
-	if req.Error != domain.ErrorCodeUndefined {
+	if req.Error != domain.ErrorCodeUnd {
 		ctx.SetStatusCode(http.StatusUnauthorized)
 		web.WriteTemplate(ctx, &web.ErrorPage{
 			BaseOf: baseOf,
