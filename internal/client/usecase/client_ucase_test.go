@@ -19,7 +19,7 @@ func TestDiscovery(t *testing.T) {
 
 	store := new(sync.Map)
 	testClient, localhostClient := domain.TestClient(t), domain.TestClient(t)
-	localhostClient.ID, _ = domain.ParseClientID("http://localhost.toby3d.me/")
+	localhostClient.ID, _ = domain.ParseClientID("http://localhost/")
 
 	for _, client := range []*domain.Client{testClient, localhostClient} {
 		store.Store(path.Join(repository.DefaultPathPrefix, client.ID.String()), client)
