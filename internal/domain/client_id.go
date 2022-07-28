@@ -107,7 +107,7 @@ func ParseClientID(src string) (*ClientID, error) {
 func TestClientID(tb testing.TB) *ClientID {
 	tb.Helper()
 
-	clientID, err := ParseClientID("https://indieauth.example.com/")
+	clientID, err := ParseClientID("https://example.com/")
 	if err != nil {
 		tb.Fatal(err)
 	}
