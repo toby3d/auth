@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"fmt"
+	"net"
 
 	http "github.com/valyala/fasthttp"
 
@@ -33,6 +34,19 @@ func NewHTTPClientRepository(c *http.Client) client.Repository {
 }
 
 func (repo *httpClientRepository) Get(ctx context.Context, cid *domain.ClientID) (*domain.Client, error) {
+	ips, err := net.LookupIP(cid.URL().Hostname())
+	if err != nil {
+		return nil, fmt.Errorf("cannot resolve client IP by id: %w", err)
+	}
+
+	for _, ip := range ips {
+		if !ip.IsLoopback() {
+			continue
+		}
+
+		return nil, client.ErrNotExist
+	}
+
 	req := http.AcquireRequest()
 	defer http.ReleaseRequest(req)
 	req.SetRequestURI(cid.String())
