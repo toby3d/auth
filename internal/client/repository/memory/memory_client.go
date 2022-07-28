@@ -3,6 +3,7 @@ package memory
 import (
 	"context"
 	"fmt"
+	"net"
 	"path"
 	"sync"
 
@@ -29,6 +30,18 @@ func (repo *memoryClientRepository) Create(ctx context.Context, client *domain.C
 }
 
 func (repo *memoryClientRepository) Get(ctx context.Context, id *domain.ClientID) (*domain.Client, error) {
+	// WARN(toby3d): more often than not, we will work from tests with
+	// non-existent clients, almost guaranteed to cause a resolution error.
+	ips, _ := net.LookupIP(id.URL().Hostname())
+
+	for _, ip := range ips {
+		if !ip.IsLoopback() {
+			continue
+		}
+
+		return nil, client.ErrNotExist
+	}
+
 	src, ok := repo.store.Load(path.Join(DefaultPathPrefix, id.String()))
 	if !ok {
 		return nil, fmt.Errorf("cannot find client in store: %w", client.ErrNotExist)
