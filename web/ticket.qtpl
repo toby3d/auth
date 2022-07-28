@@ -10,7 +10,7 @@
   </header>
 
   <main>
-    <form
+    <form class=""
       accept-charset="utf-8"
       action="/api/ticket"
       autocomplete="off"
@@ -19,16 +19,14 @@
       target="_self">
 
       {% if p.CSRF != nil %}
-        <input
-          type="hidden"
+        <input type="hidden"
           name="_csrf"
           value="{%z p.CSRF %}">
       {% endif %}
 
       <div>
         <label for="subject">{%= p.T("Recipient") %}</label>
-        <input
-          id="subject"
+        <input id="subject"
           type="url"
           name="subject"
           inputmode="url"
@@ -38,8 +36,7 @@
 
       <div>
         <label for="resource">{%= p.T("Resource") %}</label>
-        <input
-          id="resource"
+        <input id="resource"
           type="url"
           name="resource"
           inputmode="url"

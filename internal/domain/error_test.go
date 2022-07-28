@@ -16,7 +16,7 @@ func TestErrorCode_UnmarshalForm(t *testing.T) {
 	t.Parallel()
 
 	input := []byte("access_denied")
-	result := domain.ErrorCodeUndefined
+	result := domain.ErrorCodeUnd
 
 	if err := result.UnmarshalForm(input); err != nil {
 		t.Fatalf("%+v", err)

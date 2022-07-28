@@ -5,72 +5,74 @@
 package web
 
 //line web/callback.qtpl:1
-import "source.toby3d.me/toby3d/auth/internal/domain"
+import (
+	"source.toby3d.me/toby3d/auth/internal/domain"
+)
 
-//line web/callback.qtpl:3
+//line web/callback.qtpl:5
 import (
 	qtio422016 "io"
 
 	qt422016 "github.com/valyala/quicktemplate"
 )
 
-//line web/callback.qtpl:3
+//line web/callback.qtpl:5
 var (
 	_ = qtio422016.Copy
 	_ = qt422016.AcquireByteBuffer
 )
 
-//line web/callback.qtpl:3
+//line web/callback.qtpl:5
 type CallbackPage struct {
 	BaseOf
 	Token *domain.Token
 }
 
-//line web/callback.qtpl:9
+//line web/callback.qtpl:11
 func (p *CallbackPage) StreamBody(qw422016 *qt422016.Writer) {
-//line web/callback.qtpl:9
+//line web/callback.qtpl:11
 	qw422016.N().S(` `)
-//line web/callback.qtpl:10
+//line web/callback.qtpl:12
 	if p.Token != nil {
-//line web/callback.qtpl:10
+//line web/callback.qtpl:12
 		qw422016.N().S(` <h1>`)
-//line web/callback.qtpl:11
+//line web/callback.qtpl:13
 		qw422016.E().S(p.Token.Me.String())
-//line web/callback.qtpl:11
+//line web/callback.qtpl:13
 		qw422016.N().S(`</h1> <small>`)
-//line web/callback.qtpl:12
+//line web/callback.qtpl:14
 		qw422016.E().S(p.Token.AccessToken)
-//line web/callback.qtpl:12
+//line web/callback.qtpl:14
 		qw422016.N().S(`</small> `)
-//line web/callback.qtpl:13
+//line web/callback.qtpl:15
 	}
-//line web/callback.qtpl:13
+//line web/callback.qtpl:15
 	qw422016.N().S(` `)
-//line web/callback.qtpl:14
+//line web/callback.qtpl:16
 }
 
-//line web/callback.qtpl:14
+//line web/callback.qtpl:16
 func (p *CallbackPage) WriteBody(qq422016 qtio422016.Writer) {
-//line web/callback.qtpl:14
+//line web/callback.qtpl:16
 	qw422016 := qt422016.AcquireWriter(qq422016)
-//line web/callback.qtpl:14
+//line web/callback.qtpl:16
 	p.StreamBody(qw422016)
-//line web/callback.qtpl:14
+//line web/callback.qtpl:16
 	qt422016.ReleaseWriter(qw422016)
-//line web/callback.qtpl:14
+//line web/callback.qtpl:16
 }
 
-//line web/callback.qtpl:14
+//line web/callback.qtpl:16
 func (p *CallbackPage) Body() string {
-//line web/callback.qtpl:14
+//line web/callback.qtpl:16
 	qb422016 := qt422016.AcquireByteBuffer()
-//line web/callback.qtpl:14
+//line web/callback.qtpl:16
 	p.WriteBody(qb422016)
-//line web/callback.qtpl:14
+//line web/callback.qtpl:16
 	qs422016 := string(qb422016.B)
-//line web/callback.qtpl:14
+//line web/callback.qtpl:16
 	qt422016.ReleaseByteBuffer(qb422016)
-//line web/callback.qtpl:14
+//line web/callback.qtpl:16
 	return qs422016
-//line web/callback.qtpl:14
+//line web/callback.qtpl:16
 }

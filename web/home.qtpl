@@ -1,4 +1,6 @@
-{% import "source.toby3d.me/toby3d/auth/internal/domain" %}
+{% import (
+  "source.toby3d.me/toby3d/auth/internal/domain"
+) %}
 
 {% code type HomePage struct {
   BaseOf
@@ -16,8 +18,7 @@
 
 {% func (p *HomePage) Body() %}
   <header class="h-app h-x-app">
-    <img
-      class="u-logo"
+    <img class="u-logo"
       src="{%s p.Client.GetLogo().String() %}"
       alt="{%s p.Client.GetName() %}"
       crossorigin="anonymous"
@@ -28,8 +29,7 @@
       width="140">
 
     <h1>
-      <a
-        class="p-name u-url"
+      <a class="p-name u-url"
         href="{%s p.Client.GetURL().String() %}">
 
         {%s p.Client.GetName() %}
@@ -38,37 +38,34 @@
   </header>
 
   <main>
-    <form
+    <form class=""
       method="get"
       action="/authorize"
       enctype="application/x-www-form-urlencoded"
       accept-charset="utf-8"
       target="_self">
 
-      {% for name, value := range map[string]string {
+      {% for name, value := range map[string]string{
         "client_id":     p.Client.ID.String(),
         "redirect_uri":  p.Client.RedirectURI[0].String(),
         "response_type": domain.ResponseTypeCode.String(),
         "state":         p.State,
       } %}
-        <input
-          type="hidden"
+        <input type="hidden"
           name="{%s name %}"
           value="{%s value %}">
       {% endfor %}
       
-      {% for _, scope := domain.Scopes{
-        domain.ScopeProfile,
+      {% for _, scope := range []domain.Scope{
         domain.ScopeEmail,
+        domain.ScopeProfile,
       } %}
-        <input
-          type="hidden"
+        <input type="hidden"
           name="scope[]"
           value="{%s scope.String() %}">
       {% endfor %}
 
-      <input
-        type="url"
+      <input type="url"
         name="me"
         placeholder="https://example.com/"
         inputmode="url"

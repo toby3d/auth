@@ -137,7 +137,7 @@ func TestScopes_String(t *testing.T) {
 func TestScopes_IsEmpty(t *testing.T) {
 	t.Parallel()
 
-	scopes := domain.Scopes{domain.ScopeUndefined}
+	scopes := domain.Scopes{domain.ScopeUnd}
 	if result := scopes.IsEmpty(); !result {
 		t.Errorf("IsEmpty() = %t, want %t", result, true)
 	}

@@ -76,7 +76,7 @@ func (uc *authUseCase) Exchange(ctx context.Context, opts auth.ExchangeOptions) 
 	}
 
 	if session.CodeChallenge != "" &&
-		session.CodeChallengeMethod != domain.CodeChallengeMethodUndefined &&
+		session.CodeChallengeMethod != domain.CodeChallengeMethodUnd &&
 		!session.CodeChallengeMethod.Validate(session.CodeChallenge, opts.CodeVerifier) {
 		return nil, nil, auth.ErrMismatchPKCE
 	}

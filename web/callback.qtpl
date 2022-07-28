@@ -1,4 +1,6 @@
-{% import "source.toby3d.me/toby3d/auth/internal/domain" %}
+{% import (
+  "source.toby3d.me/toby3d/auth/internal/domain"
+) %}
 
 {% code type CallbackPage struct {
   BaseOf

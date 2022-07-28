@@ -338,10 +338,10 @@ func NewAuthAuthorizationRequest() *AuthAuthorizationRequest {
 	return &AuthAuthorizationRequest{
 		ClientID:            new(domain.ClientID),
 		CodeChallenge:       "",
-		CodeChallengeMethod: domain.CodeChallengeMethodUndefined,
+		CodeChallengeMethod: domain.CodeChallengeMethodUnd,
 		Me:                  new(domain.Me),
 		RedirectURI:         new(domain.URL),
-		ResponseType:        domain.ResponseTypeUndefined,
+		ResponseType:        domain.ResponseTypeUnd,
 		Scope:               make(domain.Scopes, 0),
 		State:               "",
 	}
@@ -374,11 +374,11 @@ func NewAuthVerifyRequest() *AuthVerifyRequest {
 		Authorize:           "",
 		ClientID:            new(domain.ClientID),
 		CodeChallenge:       "",
-		CodeChallengeMethod: domain.CodeChallengeMethodUndefined,
+		CodeChallengeMethod: domain.CodeChallengeMethodUnd,
 		Me:                  new(domain.Me),
 		Provider:            "",
 		RedirectURI:         new(domain.URL),
-		ResponseType:        domain.ResponseTypeUndefined,
+		ResponseType:        domain.ResponseTypeUnd,
 		Scope:               make(domain.Scopes, 0),
 		State:               "",
 	}

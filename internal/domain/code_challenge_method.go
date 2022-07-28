@@ -11,6 +11,8 @@ import (
 	"hash"
 	"strconv"
 	"strings"
+
+	"source.toby3d.me/toby3d/auth/internal/common"
 )
 
 // CodeChallengeMethod represent a PKCE challenge method for validate verifier.
@@ -18,41 +20,17 @@ import (
 // NOTE(toby3d): Encapsulate enums in structs for extra compile-time safety:
 // https://threedots.tech/post/safer-enums-in-go/#struct-based-enums
 type CodeChallengeMethod struct {
-	hash hash.Hash
-	uid  string
+	uid string
 }
 
 //nolint: gochecknoglobals // structs cannot be constants
 var (
-	CodeChallengeMethodUndefined = CodeChallengeMethod{
-		uid:  "",
-		hash: nil,
-	}
-
-	CodeChallengeMethodPLAIN = CodeChallengeMethod{
-		uid:  "PLAIN",
-		hash: nil,
-	}
-
-	CodeChallengeMethodMD5 = CodeChallengeMethod{
-		uid:  "MD5",
-		hash: md5.New(), //nolint: gosec // support old clients
-	}
-
-	CodeChallengeMethodS1 = CodeChallengeMethod{
-		uid:  "S1",
-		hash: sha1.New(), //nolint: gosec // support old clients
-	}
-
-	CodeChallengeMethodS256 = CodeChallengeMethod{
-		uid:  "S256",
-		hash: sha256.New(),
-	}
-
-	CodeChallengeMethodS512 = CodeChallengeMethod{
-		uid:  "S512",
-		hash: sha512.New(),
-	}
+	CodeChallengeMethodUnd   = CodeChallengeMethod{uid: ""}      // "und"
+	CodeChallengeMethodPLAIN = CodeChallengeMethod{uid: "plain"} // "PLAIN"
+	CodeChallengeMethodMD5   = CodeChallengeMethod{uid: "md5"}   // "MD5"
+	CodeChallengeMethodS1    = CodeChallengeMethod{uid: "s1"}    // "S1"
+	CodeChallengeMethodS256  = CodeChallengeMethod{uid: "s256"}  // "S256"
+	CodeChallengeMethodS512  = CodeChallengeMethod{uid: "s512"}  // "S512"
 )
 
 var ErrCodeChallengeMethodUnknown error = NewError(
@@ -63,22 +41,21 @@ var ErrCodeChallengeMethodUnknown error = NewError(
 
 //nolint: gochecknoglobals // maps cannot be constants
 var uidsMethods = map[string]CodeChallengeMethod{
-	CodeChallengeMethodMD5.uid:       CodeChallengeMethodMD5,
-	CodeChallengeMethodPLAIN.uid:     CodeChallengeMethodPLAIN,
-	CodeChallengeMethodS1.uid:        CodeChallengeMethodS1,
-	CodeChallengeMethodS256.uid:      CodeChallengeMethodS256,
-	CodeChallengeMethodS512.uid:      CodeChallengeMethodS512,
-	CodeChallengeMethodUndefined.uid: CodeChallengeMethodUndefined,
+	CodeChallengeMethodMD5.uid:   CodeChallengeMethodMD5,
+	CodeChallengeMethodPLAIN.uid: CodeChallengeMethodPLAIN,
+	CodeChallengeMethodS1.uid:    CodeChallengeMethodS1,
+	CodeChallengeMethodS256.uid:  CodeChallengeMethodS256,
+	CodeChallengeMethodS512.uid:  CodeChallengeMethodS512,
 }
 
 // ParseCodeChallengeMethod parse string identifier of code challenge method
 // into struct enum.
 func ParseCodeChallengeMethod(uid string) (CodeChallengeMethod, error) {
-	if method, ok := uidsMethods[strings.ToUpper(uid)]; ok {
+	if method, ok := uidsMethods[strings.ToLower(uid)]; ok {
 		return method, nil
 	}
 
-	return CodeChallengeMethodUndefined, fmt.Errorf("%w: %s", ErrCodeChallengeMethodUnknown, uid)
+	return CodeChallengeMethodUnd, fmt.Errorf("%w: %s", ErrCodeChallengeMethodUnknown, uid)
 }
 
 // UnmarshalForm implements custom unmarshler for form values.
@@ -113,26 +90,40 @@ func (ccm CodeChallengeMethod) MarshalJSON() ([]byte, error) {
 
 // String returns string representation of code challenge method.
 func (ccm CodeChallengeMethod) String() string {
-	return ccm.uid
+	if ccm.uid != "" {
+		return strings.ToUpper(ccm.uid)
+	}
+
+	return common.Und
+}
+
+func (ccm CodeChallengeMethod) GoString() string {
+	return "domain.CodeChallengeMethod(" + ccm.String() + ")"
 }
 
 // Validate checks for a match to the verifier with the hashed version of the
 // challenge via the chosen method.
 func (ccm CodeChallengeMethod) Validate(codeChallenge, verifier string) bool {
-	if ccm.uid == CodeChallengeMethodUndefined.uid {
-		return false
-	}
+	var h hash.Hash
 
-	if ccm.uid == CodeChallengeMethodPLAIN.uid {
+	switch ccm {
+	default:
+		return false
+	case CodeChallengeMethodPLAIN:
 		return codeChallenge == verifier
+	case CodeChallengeMethodMD5:
+		h = md5.New()
+	case CodeChallengeMethodS1:
+		h = sha1.New()
+	case CodeChallengeMethodS256:
+		h = sha256.New()
+	case CodeChallengeMethodS512:
+		h = sha512.New()
 	}
 
-	hash := ccm.hash
-	hash.Reset() // WARN(toby3d): even hash.New contains something.
-
-	if _, err := hash.Write([]byte(verifier)); err != nil {
+	if _, err := h.Write([]byte(verifier)); err != nil {
 		return false
 	}
 
-	return codeChallenge == base64.RawURLEncoding.EncodeToString(hash.Sum(nil))
+	return codeChallenge == base64.RawURLEncoding.EncodeToString(h.Sum(nil))
 }

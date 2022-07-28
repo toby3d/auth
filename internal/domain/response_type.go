@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"source.toby3d.me/toby3d/auth/internal/common"
 )
 
 // NOTE(toby3d): Encapsulate enums in structs for extra compile-time safety:
@@ -14,18 +16,18 @@ type ResponseType struct {
 
 //nolint: gochecknoglobals // structs cannot be constants
 var (
-	ResponseTypeUndefined = ResponseType{uid: ""}
+	ResponseTypeUnd = ResponseType{uid: ""} // "und"
 
 	// Deprecated(toby3d): Only accept response_type=code requests, and for
 	// backwards-compatible support, treat response_type=id requests as
 	// response_type=code requests:
 	// https://aaronparecki.com/2020/12/03/1/indieauth-2020#response-type
-	ResponseTypeID = ResponseType{uid: "id"}
+	ResponseTypeID = ResponseType{uid: "id"} // "id"
 
 	// Indicates to the authorization server that an authorization code
 	// should be returned as the response:
 	// https://indieauth.net/source/#authorization-request-li-1
-	ResponseTypeCode = ResponseType{uid: "code"}
+	ResponseTypeCode = ResponseType{uid: "code"} // "code"
 )
 
 var ErrResponseTypeUnknown error = NewError(
@@ -43,7 +45,7 @@ func ParseResponseType(uid string) (ResponseType, error) {
 		return ResponseTypeID, nil
 	}
 
-	return ResponseTypeUndefined, fmt.Errorf("%w: %s", ErrResponseTypeUnknown, uid)
+	return ResponseTypeUnd, fmt.Errorf("%w: %s", ErrResponseTypeUnknown, uid)
 }
 
 // UnmarshalForm implements custom unmarshler for form values.
@@ -81,5 +83,13 @@ func (rt ResponseType) MarshalJSON() ([]byte, error) {
 
 // String returns string representation of response type.
 func (rt ResponseType) String() string {
-	return rt.uid
+	if rt.uid != "" {
+		return rt.uid
+	}
+
+	return common.Und
+}
+
+func (rt ResponseType) GoString() string {
+	return "domain.ResponseType(" + rt.String() + ")"
 }

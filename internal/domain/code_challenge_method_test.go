@@ -25,11 +25,11 @@ func TestParseCodeChallengeMethod(t *testing.T) {
 		out      domain.CodeChallengeMethod
 		expError bool
 	}{
-		{name: "invalid", in: "und", out: domain.CodeChallengeMethodUndefined, expError: true},
+		{name: "invalid", in: "und", out: domain.CodeChallengeMethodUnd, expError: true},
 		{name: "PLAIN", in: "plain", out: domain.CodeChallengeMethodPLAIN, expError: false},
 		{name: "MD5", in: "Md5", out: domain.CodeChallengeMethodMD5, expError: false},
 		{name: "S1", in: "S1", out: domain.CodeChallengeMethodS1, expError: false},
-		{name: "S256", in: "S256", out: domain.CodeChallengeMethodS256, expError: false},
+		{name: "S256", in: "s256", out: domain.CodeChallengeMethodS256, expError: false},
 		{name: "S512", in: "S512", out: domain.CodeChallengeMethodS512, expError: false},
 	} {
 		tc := tc
@@ -57,7 +57,7 @@ func TestCodeChallengeMethod_UnmarshalForm(t *testing.T) {
 	t.Parallel()
 
 	input := []byte("S256")
-	result := domain.CodeChallengeMethodUndefined
+	result := domain.CodeChallengeMethodUnd
 
 	if err := result.UnmarshalForm(input); err != nil {
 		t.Fatalf("%+v", err)
@@ -72,7 +72,7 @@ func TestCodeChallengeMethod_UnmarshalJSON(t *testing.T) {
 	t.Parallel()
 
 	input := []byte(`"S256"`)
-	result := domain.CodeChallengeMethodUndefined
+	result := domain.CodeChallengeMethodUnd
 
 	if err := result.UnmarshalJSON(input); err != nil {
 		t.Fatalf("%+v", err)
@@ -131,7 +131,7 @@ func TestCodeChallengeMethod_Validate(t *testing.T) {
 		{name: "S1", in: domain.CodeChallengeMethodS1, hash: sha1.New(), expError: false},
 		{name: "S256", in: domain.CodeChallengeMethodS256, hash: sha256.New(), expError: false},
 		{name: "S512", in: domain.CodeChallengeMethodS512, hash: sha512.New(), expError: false},
-		{name: "undefined", in: domain.CodeChallengeMethodUndefined, hash: nil, expError: true},
+		{name: "Und", in: domain.CodeChallengeMethodUnd, hash: nil, expError: true},
 	} {
 		tc := tc
 
@@ -141,7 +141,7 @@ func TestCodeChallengeMethod_Validate(t *testing.T) {
 			var codeChallenge string
 
 			switch tc.in {
-			case domain.CodeChallengeMethodUndefined, domain.CodeChallengeMethodPLAIN:
+			case domain.CodeChallengeMethodUnd, domain.CodeChallengeMethodPLAIN:
 				codeChallenge = verifier
 			default:
 				hash := tc.hash

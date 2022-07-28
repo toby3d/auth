@@ -180,9 +180,13 @@ func (m Me) URL() *url.URL {
 
 // String returns string representation of me.
 func (m Me) String() string {
-	if m.id == nil {
-		return ""
+	if m.id != nil {
+		return m.id.String()
 	}
 
-	return m.id.String()
+	return ""
+}
+
+func (m Me) GoString() string {
+	return "domain.Me(" + m.String() + ")"
 }

@@ -11,3 +11,5 @@ const (
 	MIMETextPlain                  string = "text/plain"
 	MIMETextPlainCharsetUTF8       string = MIMETextPlain + "; " + charsetUTF8
 )
+
+const Und string = "und"

@@ -58,7 +58,7 @@ func (uc *tokenUseCase) Exchange(ctx context.Context, opts token.ExchangeOptions
 		return nil, nil, token.ErrMismatchRedirectURI
 	}
 
-	if session.CodeChallenge != "" && session.CodeChallengeMethod != domain.CodeChallengeMethodUndefined &&
+	if session.CodeChallenge != "" && session.CodeChallengeMethod != domain.CodeChallengeMethodUnd &&
 		!session.CodeChallengeMethod.Validate(session.CodeChallenge, opts.CodeVerifier) {
 		return nil, nil, token.ErrMismatchPKCE
 	}
