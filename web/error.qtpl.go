@@ -100,59 +100,59 @@ func (p *ErrorPage) StreamBody(qw422016 *qt422016.Writer) {
 		if err.URI != "" {
 //line web/error.qtpl:27
 			qw422016.N().S(` <a rel="noreferrer noopener" href="`)
-//line web/error.qtpl:30
+//line web/error.qtpl:29
 			qw422016.E().S(err.URI)
-//line web/error.qtpl:30
+//line web/error.qtpl:29
 			qw422016.N().S(`" target="_blank"> `)
-//line web/error.qtpl:33
+//line web/error.qtpl:32
 			qw422016.E().S(p.T("How do I fix it?"))
-//line web/error.qtpl:33
+//line web/error.qtpl:32
 			qw422016.N().S(` </a> `)
-//line web/error.qtpl:35
+//line web/error.qtpl:34
 		}
-//line web/error.qtpl:35
+//line web/error.qtpl:34
 		qw422016.N().S(` `)
-//line web/error.qtpl:36
+//line web/error.qtpl:35
 	} else {
-//line web/error.qtpl:36
+//line web/error.qtpl:35
 		qw422016.N().S(` <h1>`)
-//line web/error.qtpl:37
+//line web/error.qtpl:36
 		qw422016.E().S(p.T("Error"))
-//line web/error.qtpl:37
+//line web/error.qtpl:36
 		qw422016.N().S(`</h1> <p>`)
-//line web/error.qtpl:38
+//line web/error.qtpl:37
 		qw422016.E().S(p.Error.Error())
-//line web/error.qtpl:38
+//line web/error.qtpl:37
 		qw422016.N().S(`</p> `)
-//line web/error.qtpl:39
+//line web/error.qtpl:38
 	}
-//line web/error.qtpl:39
+//line web/error.qtpl:38
 	qw422016.N().S(` </main> `)
-//line web/error.qtpl:41
+//line web/error.qtpl:40
 }
 
-//line web/error.qtpl:41
+//line web/error.qtpl:40
 func (p *ErrorPage) WriteBody(qq422016 qtio422016.Writer) {
-//line web/error.qtpl:41
+//line web/error.qtpl:40
 	qw422016 := qt422016.AcquireWriter(qq422016)
-//line web/error.qtpl:41
+//line web/error.qtpl:40
 	p.StreamBody(qw422016)
-//line web/error.qtpl:41
+//line web/error.qtpl:40
 	qt422016.ReleaseWriter(qw422016)
-//line web/error.qtpl:41
+//line web/error.qtpl:40
 }
 
-//line web/error.qtpl:41
+//line web/error.qtpl:40
 func (p *ErrorPage) Body() string {
-//line web/error.qtpl:41
+//line web/error.qtpl:40
 	qb422016 := qt422016.AcquireByteBuffer()
-//line web/error.qtpl:41
+//line web/error.qtpl:40
 	p.WriteBody(qb422016)
-//line web/error.qtpl:41
+//line web/error.qtpl:40
 	qs422016 := string(qb422016.B)
-//line web/error.qtpl:41
+//line web/error.qtpl:40
 	qt422016.ReleaseByteBuffer(qb422016)
-//line web/error.qtpl:41
+//line web/error.qtpl:40
 	return qs422016
-//line web/error.qtpl:41
+//line web/error.qtpl:40
 }

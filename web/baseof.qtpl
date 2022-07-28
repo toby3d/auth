@@ -38,22 +38,18 @@
 
 {% func (p *BaseOf) Head() %}
   {% comment %}https://evilmartians.com/chronicles/how-to-favicon-in-2021-six-files-that-fit-most-needs{% endcomment %}
-  <link
-    rel="icon"
+  <link rel="icon"
     href="{%s p.Config.Server.StaticURLPrefix %}/favicon.ico"
     sizes="any">
 
-  <link
-    rel="icon"
+  <link rel="icon"
     href="{%s p.Config.Server.StaticURLPrefix %}/icon.svg"
     type="image/svg+xml">
 
-  <link
-    rel="apple-touch-icon"
+  <link rel="apple-touch-icon"
     href="{%s p.Config.Server.StaticURLPrefix %}/apple-touch-icon.png">
 
-  <link
-    rel="manifest"
+  <link rel="manifest"
     href="{%s p.Config.Server.StaticURLPrefix %}/manifest.webmanifest">
 {% endfunc %}
 
@@ -61,15 +57,12 @@
 
 {% func Template(p Page) %}
   <!DOCTYPE html>
-  <html
-    class="page"
+  <html class="page"
     lang="{%= p.Lang() %}">
 
     <head>
-      <meta charset="UTF-8">
-      <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0">
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
       {%= p.Head() %}
       

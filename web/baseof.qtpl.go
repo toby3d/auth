@@ -153,103 +153,103 @@ func (p *BaseOf) StreamHead(qw422016 *qt422016.Writer) {
 	qw422016.N().S(` `)
 //line web/baseof.qtpl:40
 	qw422016.N().S(` <link rel="icon" href="`)
-//line web/baseof.qtpl:43
+//line web/baseof.qtpl:42
 	qw422016.E().S(p.Config.Server.StaticURLPrefix)
-//line web/baseof.qtpl:43
+//line web/baseof.qtpl:42
 	qw422016.N().S(`/favicon.ico" sizes="any"> <link rel="icon" href="`)
-//line web/baseof.qtpl:48
+//line web/baseof.qtpl:46
 	qw422016.E().S(p.Config.Server.StaticURLPrefix)
-//line web/baseof.qtpl:48
+//line web/baseof.qtpl:46
 	qw422016.N().S(`/icon.svg" type="image/svg+xml"> <link rel="apple-touch-icon" href="`)
-//line web/baseof.qtpl:53
+//line web/baseof.qtpl:50
 	qw422016.E().S(p.Config.Server.StaticURLPrefix)
-//line web/baseof.qtpl:53
+//line web/baseof.qtpl:50
 	qw422016.N().S(`/apple-touch-icon.png"> <link rel="manifest" href="`)
-//line web/baseof.qtpl:57
+//line web/baseof.qtpl:53
 	qw422016.E().S(p.Config.Server.StaticURLPrefix)
-//line web/baseof.qtpl:57
+//line web/baseof.qtpl:53
 	qw422016.N().S(`/manifest.webmanifest"> `)
-//line web/baseof.qtpl:58
+//line web/baseof.qtpl:54
 }
 
-//line web/baseof.qtpl:58
+//line web/baseof.qtpl:54
 func (p *BaseOf) WriteHead(qq422016 qtio422016.Writer) {
-//line web/baseof.qtpl:58
+//line web/baseof.qtpl:54
 	qw422016 := qt422016.AcquireWriter(qq422016)
-//line web/baseof.qtpl:58
+//line web/baseof.qtpl:54
 	p.StreamHead(qw422016)
-//line web/baseof.qtpl:58
+//line web/baseof.qtpl:54
 	qt422016.ReleaseWriter(qw422016)
-//line web/baseof.qtpl:58
+//line web/baseof.qtpl:54
 }
 
-//line web/baseof.qtpl:58
+//line web/baseof.qtpl:54
 func (p *BaseOf) Head() string {
-//line web/baseof.qtpl:58
+//line web/baseof.qtpl:54
 	qb422016 := qt422016.AcquireByteBuffer()
-//line web/baseof.qtpl:58
+//line web/baseof.qtpl:54
 	p.WriteHead(qb422016)
-//line web/baseof.qtpl:58
+//line web/baseof.qtpl:54
 	qs422016 := string(qb422016.B)
-//line web/baseof.qtpl:58
+//line web/baseof.qtpl:54
 	qt422016.ReleaseByteBuffer(qb422016)
-//line web/baseof.qtpl:58
+//line web/baseof.qtpl:54
 	return qs422016
-//line web/baseof.qtpl:58
+//line web/baseof.qtpl:54
 }
 
-//line web/baseof.qtpl:60
+//line web/baseof.qtpl:56
 func (p *BaseOf) StreamBody(qw422016 *qt422016.Writer) {
-//line web/baseof.qtpl:60
+//line web/baseof.qtpl:56
 }
 
-//line web/baseof.qtpl:60
+//line web/baseof.qtpl:56
 func (p *BaseOf) WriteBody(qq422016 qtio422016.Writer) {
-//line web/baseof.qtpl:60
+//line web/baseof.qtpl:56
 	qw422016 := qt422016.AcquireWriter(qq422016)
-//line web/baseof.qtpl:60
+//line web/baseof.qtpl:56
 	p.StreamBody(qw422016)
-//line web/baseof.qtpl:60
+//line web/baseof.qtpl:56
 	qt422016.ReleaseWriter(qw422016)
-//line web/baseof.qtpl:60
+//line web/baseof.qtpl:56
 }
 
-//line web/baseof.qtpl:60
+//line web/baseof.qtpl:56
 func (p *BaseOf) Body() string {
-//line web/baseof.qtpl:60
+//line web/baseof.qtpl:56
 	qb422016 := qt422016.AcquireByteBuffer()
-//line web/baseof.qtpl:60
+//line web/baseof.qtpl:56
 	p.WriteBody(qb422016)
-//line web/baseof.qtpl:60
+//line web/baseof.qtpl:56
 	qs422016 := string(qb422016.B)
-//line web/baseof.qtpl:60
+//line web/baseof.qtpl:56
 	qt422016.ReleaseByteBuffer(qb422016)
-//line web/baseof.qtpl:60
+//line web/baseof.qtpl:56
 	return qs422016
-//line web/baseof.qtpl:60
+//line web/baseof.qtpl:56
 }
 
-//line web/baseof.qtpl:62
+//line web/baseof.qtpl:58
 func StreamTemplate(qw422016 *qt422016.Writer, p Page) {
-//line web/baseof.qtpl:62
+//line web/baseof.qtpl:58
 	qw422016.N().S(` <!DOCTYPE html> <html class="page" lang="`)
-//line web/baseof.qtpl:66
+//line web/baseof.qtpl:61
 	p.StreamLang(qw422016)
-//line web/baseof.qtpl:66
-	qw422016.N().S(`"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> `)
-//line web/baseof.qtpl:74
+//line web/baseof.qtpl:61
+	qw422016.N().S(`"> <head> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> `)
+//line web/baseof.qtpl:67
 	p.StreamHead(qw422016)
-//line web/baseof.qtpl:74
+//line web/baseof.qtpl:67
 	qw422016.N().S(` <title>`)
-//line web/baseof.qtpl:76
+//line web/baseof.qtpl:69
 	p.StreamTitle(qw422016)
-//line web/baseof.qtpl:76
+//line web/baseof.qtpl:69
 	qw422016.N().S(`</title> </head> <body class="page__body body"> `)
-//line web/baseof.qtpl:79
+//line web/baseof.qtpl:72
 	p.StreamBody(qw422016)
-//line web/baseof.qtpl:79
+//line web/baseof.qtpl:72
 	qw422016.N().S(` `)
-//line web/baseof.qtpl:82
+//line web/baseof.qtpl:75
 	var path, vcsRevision string
 
 	if bi, ok := debug.ReadBuildInfo(); ok {
@@ -264,94 +264,94 @@ func StreamTemplate(qw422016 *qt422016.Writer, p Page) {
 		}
 	}
 
-//line web/baseof.qtpl:95
+//line web/baseof.qtpl:88
 	qw422016.N().S(` `)
-//line web/baseof.qtpl:97
+//line web/baseof.qtpl:90
 	if vcsRevision != "" {
-//line web/baseof.qtpl:97
+//line web/baseof.qtpl:90
 		qw422016.N().S(` <footer> <small> `)
-//line web/baseof.qtpl:100
+//line web/baseof.qtpl:93
 		p.StreamT(qw422016, "version")
-//line web/baseof.qtpl:100
+//line web/baseof.qtpl:93
 		qw422016.N().S(` <a href="https://`)
-//line web/baseof.qtpl:101
+//line web/baseof.qtpl:94
 		qw422016.E().S(path)
-//line web/baseof.qtpl:101
+//line web/baseof.qtpl:94
 		qw422016.N().S(`/commit/`)
-//line web/baseof.qtpl:101
+//line web/baseof.qtpl:94
 		qw422016.E().S(vcsRevision)
-//line web/baseof.qtpl:101
+//line web/baseof.qtpl:94
 		qw422016.N().S(`" target="_blank"> `)
-//line web/baseof.qtpl:102
+//line web/baseof.qtpl:95
 		qw422016.E().S(vcsRevision[:7])
-//line web/baseof.qtpl:102
+//line web/baseof.qtpl:95
 		qw422016.N().S(`</a> </small> </footer> `)
-//line web/baseof.qtpl:106
+//line web/baseof.qtpl:99
 	}
-//line web/baseof.qtpl:106
+//line web/baseof.qtpl:99
 	qw422016.N().S(` </body> </html> `)
-//line web/baseof.qtpl:109
+//line web/baseof.qtpl:102
 }
 
-//line web/baseof.qtpl:109
+//line web/baseof.qtpl:102
 func WriteTemplate(qq422016 qtio422016.Writer, p Page) {
-//line web/baseof.qtpl:109
+//line web/baseof.qtpl:102
 	qw422016 := qt422016.AcquireWriter(qq422016)
-//line web/baseof.qtpl:109
+//line web/baseof.qtpl:102
 	StreamTemplate(qw422016, p)
-//line web/baseof.qtpl:109
+//line web/baseof.qtpl:102
 	qt422016.ReleaseWriter(qw422016)
-//line web/baseof.qtpl:109
+//line web/baseof.qtpl:102
 }
 
-//line web/baseof.qtpl:109
+//line web/baseof.qtpl:102
 func Template(p Page) string {
-//line web/baseof.qtpl:109
+//line web/baseof.qtpl:102
 	qb422016 := qt422016.AcquireByteBuffer()
-//line web/baseof.qtpl:109
+//line web/baseof.qtpl:102
 	WriteTemplate(qb422016, p)
-//line web/baseof.qtpl:109
+//line web/baseof.qtpl:102
 	qs422016 := string(qb422016.B)
-//line web/baseof.qtpl:109
+//line web/baseof.qtpl:102
 	qt422016.ReleaseByteBuffer(qb422016)
-//line web/baseof.qtpl:109
+//line web/baseof.qtpl:102
 	return qs422016
-//line web/baseof.qtpl:109
+//line web/baseof.qtpl:102
 }
 
-//line web/baseof.qtpl:111
+//line web/baseof.qtpl:104
 func (p *BaseOf) StreamT(qw422016 *qt422016.Writer, format string, args ...interface{}) {
-//line web/baseof.qtpl:111
+//line web/baseof.qtpl:104
 	qw422016.N().S(` `)
-//line web/baseof.qtpl:112
+//line web/baseof.qtpl:105
 	qw422016.E().S(p.Printer.Sprintf(format, args...))
-//line web/baseof.qtpl:112
+//line web/baseof.qtpl:105
 	qw422016.N().S(` `)
-//line web/baseof.qtpl:113
+//line web/baseof.qtpl:106
 }
 
-//line web/baseof.qtpl:113
+//line web/baseof.qtpl:106
 func (p *BaseOf) WriteT(qq422016 qtio422016.Writer, format string, args ...interface{}) {
-//line web/baseof.qtpl:113
+//line web/baseof.qtpl:106
 	qw422016 := qt422016.AcquireWriter(qq422016)
-//line web/baseof.qtpl:113
+//line web/baseof.qtpl:106
 	p.StreamT(qw422016, format, args...)
-//line web/baseof.qtpl:113
+//line web/baseof.qtpl:106
 	qt422016.ReleaseWriter(qw422016)
-//line web/baseof.qtpl:113
+//line web/baseof.qtpl:106
 }
 
-//line web/baseof.qtpl:113
+//line web/baseof.qtpl:106
 func (p *BaseOf) T(format string, args ...interface{}) string {
-//line web/baseof.qtpl:113
+//line web/baseof.qtpl:106
 	qb422016 := qt422016.AcquireByteBuffer()
-//line web/baseof.qtpl:113
+//line web/baseof.qtpl:106
 	p.WriteT(qb422016, format, args...)
-//line web/baseof.qtpl:113
+//line web/baseof.qtpl:106
 	qs422016 := string(qb422016.B)
-//line web/baseof.qtpl:113
+//line web/baseof.qtpl:106
 	qt422016.ReleaseByteBuffer(qb422016)
-//line web/baseof.qtpl:113
+//line web/baseof.qtpl:106
 	return qs422016
-//line web/baseof.qtpl:113
+//line web/baseof.qtpl:106
 }

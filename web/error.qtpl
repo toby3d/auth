@@ -25,8 +25,7 @@
       {% endif %}
 
       {% if err.URI != "" %}
-        <a
-          rel="noreferrer noopener"
+        <a rel="noreferrer noopener"
           href="{%s err.URI %}"
           target="_blank">
 
