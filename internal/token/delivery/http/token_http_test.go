@@ -117,7 +117,7 @@ func TestRevocation(t *testing.T) {
 		t.Errorf("POST %s = %d, want %d", requestURL, result, http.StatusOK)
 	}
 
-	expBody := []byte("{}") //nolint: ifshort
+	expBody := []byte("{}") //nolint:ifshort
 	if result := bytes.TrimSpace(resp.Body()); !bytes.Equal(result, expBody) {
 		t.Errorf("POST %s = %s, want %s", requestURL, result, expBody)
 	}

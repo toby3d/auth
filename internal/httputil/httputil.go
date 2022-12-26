@@ -95,7 +95,7 @@ func ExtractMetadata(resp *http.Response, client *http.Client) (*domain.Metadata
 }
 
 func ExtractProperty(resp *http.Response, itemType, key string) []interface{} {
-	//nolint: exhaustivestruct // only Host part in url.URL is needed
+	//nolint:exhaustivestruct // only Host part in url.URL is needed
 	data := microformats.Parse(bytes.NewReader(resp.Body()), &url.URL{
 		Host: string(resp.Header.Peek(http.HeaderHost)),
 	})

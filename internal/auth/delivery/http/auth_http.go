@@ -347,7 +347,7 @@ func NewAuthAuthorizationRequest() *AuthAuthorizationRequest {
 	}
 }
 
-//nolint: cyclop
+//nolint:cyclop
 func (r *AuthAuthorizationRequest) bind(ctx *http.RequestCtx) error {
 	indieAuthError := new(domain.Error)
 	if err := form.Unmarshal(ctx.QueryArgs().QueryString(), r); err != nil {
@@ -384,7 +384,7 @@ func NewAuthVerifyRequest() *AuthVerifyRequest {
 	}
 }
 
-//nolint: funlen,cyclop
+//nolint:funlen,cyclop
 func (r *AuthVerifyRequest) bind(ctx *http.RequestCtx) error {
 	indieAuthError := new(domain.Error)
 

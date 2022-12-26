@@ -32,7 +32,7 @@ func NewHTPPClientRepository(client *http.Client) profile.Repository {
 	}
 }
 
-//nolint: cyclop
+//nolint:cyclop
 func (repo *httpProfileRepository) Get(ctx context.Context, me *domain.Me) (*domain.Profile, error) {
 	req := http.AcquireRequest()
 	defer http.ReleaseRequest(req)

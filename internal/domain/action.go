@@ -15,7 +15,7 @@ type Action struct {
 	uid string
 }
 
-//nolint: gochecknoglobals // structs cannot be constants
+//nolint:gochecknoglobals // structs cannot be constants
 var (
 	ActionUnd = Action{uid: ""} // "und"
 
@@ -28,7 +28,7 @@ var (
 
 var ErrActionSyntax error = NewError(ErrorCodeInvalidRequest, "unknown action method", "")
 
-//nolint: gochecknoglobals
+//nolint:gochecknoglobals
 var uidsActions = map[string]Action{
 	ActionRevoke.uid: ActionRevoke,
 	ActionTicket.uid: ActionTicket,

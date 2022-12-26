@@ -87,7 +87,7 @@ func (h *RequestHandler) handleRender(ctx *http.RequestCtx) {
 	})
 }
 
-//nolint: funlen
+//nolint:unlen
 func (h *RequestHandler) handleCallback(ctx *http.RequestCtx) {
 	ctx.SetContentType(common.MIMETextHTMLCharsetUTF8)
 

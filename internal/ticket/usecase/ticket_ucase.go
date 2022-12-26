@@ -15,7 +15,7 @@ import (
 )
 
 type (
-	//nolint: tagliatelle // https://indieauth.net/source/#access-token-response
+	//nolint:tagliatelle // https://indieauth.net/source/#access-token-response
 	AccessToken struct {
 		Me           *domain.Me `json:"me"`
 		Profile      *Profile   `json:"profile,omitempty"`

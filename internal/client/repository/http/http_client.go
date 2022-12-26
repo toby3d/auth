@@ -76,7 +76,7 @@ func (repo *httpClientRepository) Get(ctx context.Context, cid *domain.ClientID)
 	return client, nil
 }
 
-//nolint: gocognit, cyclop
+//nolint:gocognit,cyclop
 func extract(dst *domain.Client, src *http.Response) {
 	for _, endpoint := range httputil.ExtractEndpoints(src, relRedirectURI) {
 		if !containsURL(dst.RedirectURI, endpoint) {

@@ -73,7 +73,7 @@ func (repo *sqlite3TicketRepository) GetAndDelete(ctx context.Context, rawTicket
 
 	tkt := new(Ticket)
 	if err = tx.GetContext(ctx, tkt, QueryGet, rawTicket); err != nil {
-		//nolint: errcheck // deffered method
+		//nolint:errcheck // deffered method
 		defer tx.Rollback()
 
 		if errors.Is(err, sql.ErrNoRows) {

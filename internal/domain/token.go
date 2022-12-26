@@ -37,7 +37,8 @@ type (
 )
 
 // DefaultNewTokenOptions describes the default settings for NewToken.
-//nolint: gochecknoglobals, gomnd
+//
+//nolint:gochecknoglobals,gomnd
 var DefaultNewTokenOptions = NewTokenOptions{
 	Expiration:  0,
 	Scope:       nil,
@@ -49,7 +50,8 @@ var DefaultNewTokenOptions = NewTokenOptions{
 }
 
 // NewToken create a new token by provided options.
-//nolint: cyclop
+//
+//nolint:cyclop
 func NewToken(opts NewTokenOptions) (*Token, error) {
 	if opts.NonceLength == 0 {
 		opts.NonceLength = DefaultNewTokenOptions.NonceLength
@@ -109,7 +111,8 @@ func NewToken(opts NewTokenOptions) (*Token, error) {
 }
 
 // TestToken returns valid random generated token for tests.
-//nolint: gomnd // testing domain can contains non-standart values
+//
+//nolint:gomnd // testing domain can contains non-standart values
 func TestToken(tb testing.TB) *Token {
 	tb.Helper()
 

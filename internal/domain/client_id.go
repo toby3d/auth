@@ -16,14 +16,15 @@ type ClientID struct {
 	clientID *http.URI
 }
 
-//nolint: gochecknoglobals // slices cannot be constants
+//nolint:gochecknoglobals // slices cannot be constants
 var (
 	localhostIPv4 = netaddr.MustParseIP("127.0.0.1")
 	localhostIPv6 = netaddr.MustParseIP("::1")
 )
 
 // ParseClientID parse string as client ID URL identifier.
-//nolint: funlen, cyclop
+//
+//nolint:funlen,cyclop
 func ParseClientID(src string) (*ClientID, error) {
 	cid := http.AcquireURI()
 	if err := cid.Parse(nil, []byte(src)); err != nil {
@@ -82,7 +83,7 @@ func ParseClientID(src string) (*ClientID, error) {
 	if err != nil {
 		ipPort, err := netaddr.ParseIPPort(domain)
 		if err != nil {
-			//nolint: nilerr // ClientID does not contain an IP address, so it is valid
+			//nolint:nilerr // ClientID does not contain an IP address, so it is valid
 			return &ClientID{clientID: cid}, nil
 		}
 

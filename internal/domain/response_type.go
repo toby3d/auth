@@ -14,7 +14,7 @@ type ResponseType struct {
 	uid string
 }
 
-//nolint: gochecknoglobals // structs cannot be constants
+//nolint:gochecknoglobals // structs cannot be constants
 var (
 	ResponseTypeUnd = ResponseType{uid: ""} // "und"
 

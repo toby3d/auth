@@ -16,7 +16,7 @@ type GrantType struct {
 	uid string
 }
 
-//nolint: gochecknoglobals // structs cannot be constants
+//nolint:gochecknoglobals // structs cannot be constants
 var (
 	GrantTypeUnd               = GrantType{uid: ""}                   // "und"
 	GrantTypeAuthorizationCode = GrantType{uid: "authorization_code"} // "authorization_code"
@@ -32,7 +32,7 @@ var ErrGrantTypeUnknown error = NewError(
 	"",
 )
 
-//nolint: gochecknoglobals // maps cannot be constants
+//nolint:gochecknoglobals // maps cannot be constants
 var uidsGrantTypes = map[string]GrantType{
 	GrantTypeAuthorizationCode.uid: GrantTypeAuthorizationCode,
 	GrantTypeRefreshToken.uid:      GrantTypeRefreshToken,

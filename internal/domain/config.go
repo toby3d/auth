@@ -78,7 +78,8 @@ type (
 )
 
 // TestConfig returns a valid config for tests.
-//nolint: gomnd // testing domain can contains non-standart values
+//
+//nolint:gomnd // testing domain can contains non-standart values
 func TestConfig(tb testing.TB) *Config {
 	tb.Helper()
 

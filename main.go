@@ -87,7 +87,7 @@ const (
 	DefaultWriteTimeout  time.Duration = 10 * time.Second
 )
 
-//nolint: gochecknoglobals
+//nolint:gochecknoglobals
 var (
 	// NOTE(toby3d): write logs in stdout, see: https://12factor.net/logs
 	logger          = log.New(os.Stdout, "IndieAuth\t", log.Lmsgprefix|log.LstdFlags|log.LUTC)
@@ -100,7 +100,7 @@ var (
 	enablePprof    bool
 )
 
-//nolint: gochecknoinits
+//nolint:gochecknoinits
 func init() {
 	flag.StringVar(&configPath, "config", filepath.Join(".", "config.yml"), "load specific config")
 	flag.BoolVar(&enablePprof, "pprof", false, "enable pprof mode")
@@ -157,7 +157,7 @@ func init() {
 	indieAuthClient.RedirectURI = []*domain.URL{redirectURI}
 }
 
-//nolint: funlen, cyclop // "god object" and the entry point of all modules
+//nolint:funlen,cyclop // "god object" and the entry point of all modules
 func main() {
 	var opts NewAppOptions
 
@@ -186,7 +186,7 @@ func main() {
 
 	go opts.Sessions.GC()
 
-	//nolint: exhaustivestruct // too many options
+	//nolint:exhaustivestruct // too many options
 	opts.Client = &http.Client{
 		Name:         fmt.Sprintf("%s/0.1 (+%s)", config.Name, config.Server.GetAddress()),
 		ReadTimeout:  DefaultReadTimeout,
@@ -197,7 +197,7 @@ func main() {
 
 	r := router.New()
 	NewApp(opts).Register(r)
-	//nolint: exhaustivestruct// too many options
+	//nolint:exhaustivestruct // too many options
 	r.ServeFilesCustom(path.Join(config.Server.StaticURLPrefix, "{filepath:*}"), &http.FS{
 		Root:               config.Server.StaticRootPath,
 		CacheDuration:      DefaultCacheDuration,
@@ -211,7 +211,7 @@ func main() {
 		r.GET("/debug/pprof/{filepath:*}", pprofhandler.PprofHandler)
 	}
 
-	//nolint: exhaustivestruct
+	//nolint:exhaustivestruct
 	server := &http.Server{
 		Name:                  fmt.Sprintf("IndieAuth/0.1 (+%s)", config.Server.GetAddress()),
 		Handler:               r.Handler,

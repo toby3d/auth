@@ -41,7 +41,7 @@ func NewTokenUseCase(config Config) token.UseCase {
 	}
 }
 
-//nolint: cyclop
+//nolint:cyclop
 func (uc *tokenUseCase) Exchange(ctx context.Context, opts token.ExchangeOptions) (*domain.Token, *domain.Profile,
 	error,
 ) {
@@ -129,7 +129,7 @@ func (uc *tokenUseCase) Verify(ctx context.Context, accessToken string) (*domain
 
 	profile, err := uc.profiles.Get(ctx, result.Me)
 	if err != nil {
-		return result, nil, nil //nolint: nilerr // it's okay to return result without profile
+		return result, nil, nil //nolint:nilerr // it's okay to return result without profile
 	}
 
 	if !result.Scope.Has(domain.ScopeEmail) && len(profile.Email) > 0 {

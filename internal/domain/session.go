@@ -6,7 +6,7 @@ import (
 	"source.toby3d.me/toby3d/auth/internal/random"
 )
 
-//nolint: tagliatelle
+//nolint:tagliatelle
 type Session struct {
 	ClientID            *ClientID           `json:"client_id"`
 	RedirectURI         *URL                `json:"redirect_uri"`
@@ -19,7 +19,8 @@ type Session struct {
 }
 
 // TestSession returns valid random generated session for tests.
-//nolint: gomnd // testing domain can contains non-standart values
+//
+//nolint:gomnd // testing domain can contains non-standart values
 func TestSession(tb testing.TB) *Session {
 	tb.Helper()
 

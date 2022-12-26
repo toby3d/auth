@@ -21,7 +21,7 @@ type Provider struct {
 	URL          string
 }
 
-//nolint: gochecknoglobals // structs cannot be contants
+//nolint:gochecknoglobals // structs cannot be contants
 var (
 	ProviderDirect = Provider{
 		AuthURL:      "/authorize",

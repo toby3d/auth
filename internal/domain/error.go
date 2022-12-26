@@ -13,7 +13,7 @@ import (
 
 type (
 	// Error describes the format of a typical IndieAuth error.
-	//nolint: tagliatelle // RFC 6749 section 5.2
+	//nolint:tagliatelle // RFC 6749 section 5.2
 	Error struct {
 		// A single error code.
 		Code ErrorCode `json:"error"`
@@ -150,7 +150,7 @@ var (
 
 var ErrErrorCodeUnknown error = NewError(ErrorCodeInvalidRequest, "unknown error code", "")
 
-//nolint: gochecknoglobals // maps cannot be constants
+//nolint:gochecknoglobals // maps cannot be constants
 var uidsErrorCodes = map[string]ErrorCode{
 	ErrorCodeAccessDenied.uid:            ErrorCodeAccessDenied,
 	ErrorCodeInsufficientScope.uid:       ErrorCodeInsufficientScope,

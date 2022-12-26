@@ -37,7 +37,7 @@ func NewRequestHandler(tokens token.UseCase, config *domain.Config) *RequestHand
 
 func (h *RequestHandler) Register(r *router.Router) {
 	chain := middleware.Chain{
-		//nolint: exhaustivestruct
+		//nolint:exhaustivestruct
 		middleware.JWTWithConfig(middleware.JWTConfig{
 			AuthScheme:    "Bearer",
 			ContextKey:    "token",
@@ -63,7 +63,7 @@ func (h *RequestHandler) handleUserInformation(ctx *http.RequestCtx) {
 	if err != nil || tkn == nil {
 		// WARN(toby3d): If the token is not valid, the endpoint still
 		// MUST return a 200 Response.
-		_ = encoder.Encode(err) //nolint: errchkjson
+		_ = encoder.Encode(err) //nolint:errchkjson
 
 		return
 	}
@@ -71,7 +71,7 @@ func (h *RequestHandler) handleUserInformation(ctx *http.RequestCtx) {
 	if !tkn.Scope.Has(domain.ScopeProfile) {
 		ctx.SetStatusCode(http.StatusForbidden)
 
-		//nolint: errchkjson
+		//nolint:errchkjson
 		_ = encoder.Encode(domain.NewError(
 			domain.ErrorCodeInsufficientScope,
 			"token with 'profile' scope is required to view profile data",
@@ -83,7 +83,7 @@ func (h *RequestHandler) handleUserInformation(ctx *http.RequestCtx) {
 
 	resp := new(UserInformationResponse)
 	if userInfo == nil {
-		_ = encoder.Encode(resp) //nolint: errchkjson
+		_ = encoder.Encode(resp) //nolint:errchkjson
 
 		return
 	}
@@ -104,5 +104,5 @@ func (h *RequestHandler) handleUserInformation(ctx *http.RequestCtx) {
 		resp.Email = userInfo.GetEmail().String()
 	}
 
-	_ = encoder.Encode(resp) //nolint: errchkjson
+	_ = encoder.Encode(resp) //nolint:errchkjson
 }

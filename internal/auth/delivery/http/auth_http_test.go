@@ -50,7 +50,7 @@ func TestAuthorize(t *testing.T) {
 	deps.store.Store(path.Join(userrepo.DefaultPathPrefix, me.String()), user)
 
 	r := router.New()
-	//nolint: exhaustivestruct
+	//nolint:exhaustivestruct
 	delivery.NewRequestHandler(delivery.NewRequestHandlerOptions{
 		Auth:    deps.authService,
 		Clients: deps.clientService,

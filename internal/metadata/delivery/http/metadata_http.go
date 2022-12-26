@@ -11,7 +11,7 @@ import (
 )
 
 type (
-	//nolint: tagliatelle // https://indieauth.net/source/#indieauth-server-metadata
+	//nolint:tagliatelle // https://indieauth.net/source/#indieauth-server-metadata
 	MetadataResponse struct {
 		// The server's issuer identifier.
 		Issuer string `json:"issuer"`
@@ -27,13 +27,13 @@ type (
 
 		// JSON array containing a list of client authentication methods
 		// supported by this introspection endpoint.
-		IntrospectionEndpointAuthMethodsSupported []string `json:"introspection_endpoint_auth_methods_supported,omitempty"` //nolint: lll
+		IntrospectionEndpointAuthMethodsSupported []string `json:"introspection_endpoint_auth_methods_supported,omitempty"` //nolint:lll
 
 		// The Revocation Endpoint.
 		RevocationEndpoint string `json:"revocation_endpoint,omitempty"`
 
 		// JSON array containing the value "none".
-		RevocationEndpointAuthMethodsSupported []string `json:"revocation_endpoint_auth_methods_supported,omitempty"` //nolint: lll
+		RevocationEndpointAuthMethodsSupported []string `json:"revocation_endpoint_auth_methods_supported,omitempty"` //nolint:lll
 
 		// JSON array containing scope values supported by the
 		// IndieAuth server.
@@ -54,7 +54,7 @@ type (
 
 		// Boolean parameter indicating whether the authorization server
 		// provides the iss parameter.
-		AuthorizationResponseIssParameterSupported bool `json:"authorization_response_iss_parameter_supported,omitempty"` //nolint: lll
+		AuthorizationResponseIssParameterSupported bool `json:"authorization_response_iss_parameter_supported,omitempty"` //nolint:lll
 
 		// The User Info Endpoint.
 		UserinfoEndpoint string `json:"userinfo_endpoint,omitempty"`

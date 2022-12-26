@@ -12,7 +12,7 @@ import (
 	repository "source.toby3d.me/toby3d/auth/internal/token/repository/sqlite3"
 )
 
-//nolint: gochecknoglobals // slices cannot be contants
+//nolint:gochecknoglobals // slices cannot be contants
 var tableColumns = []string{"created_at", "access_token", "client_id", "me", "scope"}
 
 func TestCreate(t *testing.T) {

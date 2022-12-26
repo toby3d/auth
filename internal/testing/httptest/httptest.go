@@ -24,7 +24,7 @@ var (
 func New(tb testing.TB, handler http.RequestHandler) (*http.Client, *http.Server, func()) {
 	tb.Helper()
 
-	//nolint: exhaustivestruct
+	//nolint:exhaustivestruct
 	server := &http.Server{
 		CloseOnShutdown:   true,
 		DisableKeepalive:  true,
@@ -34,16 +34,16 @@ func New(tb testing.TB, handler http.RequestHandler) (*http.Client, *http.Server
 
 	ln := httputil.NewInmemoryListener()
 
-	//nolint: errcheck
+	//nolint:errcheck
 	go server.ServeTLSEmbed(ln, certData, keyData)
 
-	//nolint: exhaustivestruct
+	//nolint:exhaustivestruct
 	client := &http.Client{
 		TLSConfig: &tls.Config{
-			InsecureSkipVerify: true, //nolint: gosec
+			InsecureSkipVerify: true, //nolint:gosec
 		},
 		Dial: func(addr string) (net.Conn, error) {
-			return ln.Dial() //nolint: wrapcheck
+			return ln.Dial() //nolint:wrapcheck
 		},
 	}
 

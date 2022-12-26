@@ -23,7 +23,7 @@ type (
 
 var ErrScopeUnknown error = NewError(ErrorCodeInvalidRequest, "unknown scope", "https://indieweb.org/scope")
 
-//nolint: gochecknoglobals // structs cannot be constants
+//nolint:gochecknoglobals // structs cannot be constants
 var (
 	ScopeUnd = Scope{uid: ""} // "und"
 
@@ -59,7 +59,7 @@ var (
 	ScopeEmail = Scope{uid: "email"} // "email"
 )
 
-//nolint: gochecknoglobals // maps cannot be constants
+//nolint:gochecknoglobals // maps cannot be constants
 var uidsScopes = map[string]Scope{
 	ScopeBlock.uid:    ScopeBlock,
 	ScopeChannels.uid: ScopeChannels,

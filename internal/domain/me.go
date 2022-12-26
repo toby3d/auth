@@ -17,7 +17,8 @@ type Me struct {
 }
 
 // ParseMe parse string as me URL identifier.
-//nolint: funlen, cyclop
+//
+//nolint:funlen,cyclop
 func ParseMe(raw string) (*Me, error) {
 	id := http.AcquireURI()
 	if err := id.Parse(nil, []byte(raw)); err != nil {

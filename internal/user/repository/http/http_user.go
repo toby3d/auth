@@ -78,7 +78,7 @@ func (repo *httpUserRepository) Get(ctx context.Context, me *domain.Me) (*domain
 	return user, nil
 }
 
-//nolint: cyclop
+//nolint:cyclop
 func extractUser(dst *domain.User, src *http.Response) {
 	if dst.IndieAuthMetadata != nil {
 		if endpoints := httputil.ExtractEndpoints(src, relIndieAuthMetadata); len(endpoints) > 0 {

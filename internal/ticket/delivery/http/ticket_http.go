@@ -57,7 +57,7 @@ func NewRequestHandler(tickets ticket.UseCase, matcher language.Matcher, config 
 }
 
 func (h *RequestHandler) Register(r *router.Router) {
-	//nolint: exhaustivestruct
+	//nolint:exhaustivestruct
 	chain := middleware.Chain{
 		middleware.CSRFWithConfig(middleware.CSRFConfig{
 			Skipper: func(ctx *http.RequestCtx) bool {

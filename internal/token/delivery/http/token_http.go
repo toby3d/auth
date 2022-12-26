@@ -55,7 +55,7 @@ type (
 		Token string `form:"token"`
 	}
 
-	//nolint: tagliatelle // https://indieauth.net/source/#access-token-response
+	//nolint:tagliatelle // https://indieauth.net/source/#access-token-response
 	TokenExchangeResponse struct {
 		// The OAuth 2.0 Bearer Token RFC6750.
 		AccessToken string `json:"access_token"`
@@ -90,7 +90,7 @@ type (
 		Email string `json:"email,omitempty"`
 	}
 
-	//nolint: tagliatelle // https://indieauth.net/source/#access-token-verification-response
+	//nolint:tagliatelle // https://indieauth.net/source/#access-token-verification-response
 	TokenIntrospectResponse struct {
 		// Boolean indicator of whether or not the presented token is
 		// currently active.
@@ -138,7 +138,7 @@ func NewRequestHandler(tokens token.UseCase, tickets ticket.UseCase, config *dom
 
 func (h *RequestHandler) Register(r *router.Router) {
 	chain := middleware.Chain{
-		//nolint: exhaustivestruct
+		//nolint:exhaustivestruct
 		middleware.JWTWithConfig(middleware.JWTConfig{
 			AuthScheme:    "Bearer",
 			ContextKey:    "token",
@@ -227,7 +227,7 @@ func (h *RequestHandler) handleAction(ctx *http.RequestCtx) {
 	}
 }
 
-//nolint: funlen
+//nolint:funlen
 func (h *RequestHandler) handleExchange(ctx *http.RequestCtx) {
 	ctx.SetContentType(common.MIMEApplicationJSONCharsetUTF8)
 
