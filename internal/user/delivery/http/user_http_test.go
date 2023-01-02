@@ -1,20 +1,20 @@
 package http_test
 
 import (
+	"net/http/httptest"
 	"path"
 	"sync"
 	"testing"
 
-	"github.com/fasthttp/router"
 	"github.com/goccy/go-json"
 	http "github.com/valyala/fasthttp"
 
+	"source.toby3d.me/toby3d/auth/internal/common"
 	"source.toby3d.me/toby3d/auth/internal/domain"
 	"source.toby3d.me/toby3d/auth/internal/profile"
 	profilerepo "source.toby3d.me/toby3d/auth/internal/profile/repository/memory"
 	"source.toby3d.me/toby3d/auth/internal/session"
 	sessionrepo "source.toby3d.me/toby3d/auth/internal/session/repository/memory"
-	"source.toby3d.me/toby3d/auth/internal/testing/httptest"
 	"source.toby3d.me/toby3d/auth/internal/token"
 	tokenrepo "source.toby3d.me/toby3d/auth/internal/token/repository/memory"
 	tokenucase "source.toby3d.me/toby3d/auth/internal/token/usecase"
@@ -38,25 +38,20 @@ func TestUserInfo(t *testing.T) {
 	deps := NewDependencies(t)
 	deps.store.Store(path.Join(profilerepo.DefaultPathPrefix, deps.token.Me.String()), deps.profile)
 
-	r := router.New()
-	delivery.NewRequestHandler(deps.tokenService, deps.config).Register(r)
-
-	client, _, cleanup := httptest.New(t, r.Handler)
-	t.Cleanup(cleanup)
-
 	req := httptest.NewRequest(http.MethodGet, "https://example.com/userinfo", nil)
-	defer http.ReleaseRequest(req)
-	deps.token.SetAuthHeader(req)
+	req.Header.Set(common.HeaderAuthorization, "Bearer "+deps.token.AccessToken)
 
-	resp := http.AcquireResponse()
-	defer http.ReleaseResponse(resp)
+	w := httptest.NewRecorder()
+	delivery.NewHandler(deps.tokenService, deps.config).ServeHTTP(w, req)
 
-	if err := client.Do(req, resp); err != nil {
-		t.Fatal(err)
+	resp := w.Result()
+
+	if exp := http.StatusOK; resp.StatusCode != exp {
+		t.Errorf("%s %s = %d, want %d", req.Method, req.RequestURI, resp.StatusCode, exp)
 	}
 
 	result := new(delivery.UserInformationResponse)
-	if err := json.Unmarshal(resp.Body(), result); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
 		t.Fatal(err)
 	}
 
