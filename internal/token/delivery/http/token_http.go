@@ -244,7 +244,7 @@ func (h *RequestHandler) handleExchange(ctx *http.RequestCtx) {
 
 	token, profile, err := h.tokens.Exchange(ctx, token.ExchangeOptions{
 		ClientID:     req.ClientID,
-		RedirectURI:  req.RedirectURI,
+		RedirectURI:  req.RedirectURI.URL,
 		Code:         req.Code,
 		CodeVerifier: req.CodeVerifier,
 	})

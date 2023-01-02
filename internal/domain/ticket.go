@@ -1,12 +1,13 @@
 package domain
 
 import (
+	"net/url"
 	"testing"
 )
 
 type Ticket struct {
 	// The access token will work at this URL.
-	Resource *URL
+	Resource *url.URL
 
 	// The access token should be used when acting on behalf of this URL.
 	Subject *Me
@@ -20,7 +21,7 @@ func TestTicket(tb testing.TB) *Ticket {
 	tb.Helper()
 
 	return &Ticket{
-		Resource: TestURL(tb, "https://alice.example.com/private/"),
+		Resource: &url.URL{Scheme: "https", Host: "alice.example.com", Path: "/private/"},
 		Subject:  TestMe(tb, "https://bob.example.com/"),
 		Ticket:   "32985723984723985792834",
 	}

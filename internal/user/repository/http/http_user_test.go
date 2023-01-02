@@ -84,7 +84,7 @@ func testHandler(tb testing.TB, user *domain.User) http.RequestHandler {
 			testBody, user.Name[0], user.URL[0].String(), user.Photo[0].String(), user.Email[0],
 		))
 	})
-	router.GET(string(user.IndieAuthMetadata.Path()), func(ctx *http.RequestCtx) {
+	router.GET(user.IndieAuthMetadata.Path, func(ctx *http.RequestCtx) {
 		ctx.SuccessString(common.MIMEApplicationJSONCharsetUTF8, `{
 			"issuer": "`+user.Me.String()+`",
 			"authorization_endpoint": "`+user.AuthorizationEndpoint.String()+`",

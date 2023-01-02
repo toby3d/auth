@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"fmt"
+	"net/url"
 
 	http "github.com/valyala/fasthttp"
 
@@ -66,12 +67,12 @@ func (repo *httpProfileRepository) Get(ctx context.Context, me *domain.Me) (*dom
 	}
 
 	for _, rawURL := range httputil.ExtractProperty(resp, hCard, propertyURL) {
-		url, ok := rawURL.(string)
+		rawURL, ok := rawURL.(string)
 		if !ok {
 			continue
 		}
 
-		if u, err := domain.ParseURL(url); err == nil {
+		if u, err := url.Parse(rawURL); err == nil {
 			result.URL = append(result.URL, u)
 		}
 	}
@@ -82,7 +83,7 @@ func (repo *httpProfileRepository) Get(ctx context.Context, me *domain.Me) (*dom
 			continue
 		}
 
-		if p, err := domain.ParseURL(photo); err == nil {
+		if p, err := url.Parse(photo); err == nil {
 			result.Photo = append(result.Photo, p)
 		}
 	}

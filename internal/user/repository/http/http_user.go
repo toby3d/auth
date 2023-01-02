@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"fmt"
+	"net/url"
 
 	http "github.com/valyala/fasthttp"
 
@@ -117,7 +118,7 @@ func extractUser(dst *domain.User, src *http.Response) {
 	}
 }
 
-//nolint: cyclop
+//nolint:cyclop
 func extractProfile(dst *domain.Profile, src *http.Response) {
 	for _, name := range httputil.ExtractProperty(src, hCard, propertyName) {
 		if n, ok := name.(string); ok {
@@ -137,12 +138,12 @@ func extractProfile(dst *domain.Profile, src *http.Response) {
 	}
 
 	for _, rawURL := range httputil.ExtractProperty(src, hCard, propertyURL) {
-		url, ok := rawURL.(string)
+		rawURL, ok := rawURL.(string)
 		if !ok {
 			continue
 		}
 
-		if u, err := domain.ParseURL(url); err == nil {
+		if u, err := url.Parse(rawURL); err == nil {
 			dst.URL = append(dst.URL, u)
 		}
 	}
@@ -153,7 +154,7 @@ func extractProfile(dst *domain.Profile, src *http.Response) {
 			continue
 		}
 
-		if p, err := domain.ParseURL(photo); err == nil {
+		if p, err := url.Parse(photo); err == nil {
 			dst.Photo = append(dst.Photo, p)
 		}
 	}

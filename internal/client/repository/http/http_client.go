@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/url"
 
 	http "github.com/valyala/fasthttp"
 
@@ -65,9 +66,9 @@ func (repo *httpClientRepository) Get(ctx context.Context, cid *domain.ClientID)
 
 	client := &domain.Client{
 		ID:          cid,
-		RedirectURI: make([]*domain.URL, 0),
-		Logo:        make([]*domain.URL, 0),
-		URL:         make([]*domain.URL, 0),
+		RedirectURI: make([]*url.URL, 0),
+		Logo:        make([]*url.URL, 0),
+		URL:         make([]*url.URL, 0),
 		Name:        make([]string, 0),
 	}
 
@@ -93,24 +94,24 @@ func extract(dst *domain.Client, src *http.Response) {
 
 		for _, logo := range httputil.ExtractProperty(src, itemType, propertyLogo) {
 			var (
-				uri *domain.URL
+				u   *url.URL
 				err error
 			)
 
 			switch l := logo.(type) {
 			case string:
-				uri, err = domain.ParseURL(l)
+				u, err = url.Parse(l)
 			case map[string]string:
 				if value, ok := l["value"]; ok {
-					uri, err = domain.ParseURL(value)
+					u, err = url.Parse(value)
 				}
 			}
 
-			if err != nil || containsURL(dst.Logo, uri) {
+			if err != nil || containsURL(dst.Logo, u) {
 				continue
 			}
 
-			dst.Logo = append(dst.Logo, uri)
+			dst.Logo = append(dst.Logo, u)
 		}
 
 		for _, property := range httputil.ExtractProperty(src, itemType, propertyURL) {
@@ -119,7 +120,7 @@ func extract(dst *domain.Client, src *http.Response) {
 				continue
 			}
 
-			if u, err := domain.ParseURL(prop); err == nil || !containsURL(dst.URL, u) {
+			if u, err := url.Parse(prop); err == nil || !containsURL(dst.URL, u) {
 				dst.URL = append(dst.URL, u)
 			}
 		}
@@ -138,7 +139,7 @@ func containsString(src []string, find string) bool {
 	return false
 }
 
-func containsURL(src []*domain.URL, find *domain.URL) bool {
+func containsURL(src []*url.URL, find *url.URL) bool {
 	for i := range src {
 		if src[i].String() != find.String() {
 			continue

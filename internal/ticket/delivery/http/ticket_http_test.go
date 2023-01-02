@@ -81,7 +81,7 @@ func NewDependencies(tb testing.TB) Dependencies {
 
 	r := router.New()
 	// NOTE(toby3d): private resource
-	r.GET(ticket.Resource.URL().EscapedPath(), func(ctx *http.RequestCtx) {
+	r.GET(ticket.Resource.Path, func(ctx *http.RequestCtx) {
 		ctx.SuccessString(common.MIMETextHTMLCharsetUTF8,
 			`<link rel="token_endpoint" href="https://auth.example.org/token">`)
 	})

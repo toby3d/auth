@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"time"
 
 	json "github.com/goccy/go-json"
@@ -59,7 +60,7 @@ func (useCase *ticketUseCase) Generate(ctx context.Context, tkt *domain.Ticket) 
 		return fmt.Errorf("cannot discovery ticket subject: %w", err)
 	}
 
-	var ticketEndpoint *domain.URL
+	var ticketEndpoint *url.URL
 
 	// NOTE(toby3d): find metadata first
 	if metadata, err := httputil.ExtractMetadata(resp, useCase.client); err == nil && metadata != nil {
@@ -80,7 +81,7 @@ func (useCase *ticketUseCase) Generate(ctx context.Context, tkt *domain.Ticket) 
 
 	req.Reset()
 	req.Header.SetMethod(http.MethodPost)
-	req.SetRequestURIBytes(ticketEndpoint.RequestURI())
+	req.SetRequestURI(ticketEndpoint.String())
 	req.Header.SetContentType(common.MIMEApplicationForm)
 	req.PostArgs().Set("ticket", tkt.Ticket)
 	req.PostArgs().Set("subject", tkt.Subject.String())
@@ -107,7 +108,7 @@ func (useCase *ticketUseCase) Redeem(ctx context.Context, tkt *domain.Ticket) (*
 		return nil, fmt.Errorf("cannot discovery ticket resource: %w", err)
 	}
 
-	var tokenEndpoint *domain.URL
+	var tokenEndpoint *url.URL
 
 	// NOTE(toby3d): find metadata first
 	if metadata, err := httputil.ExtractMetadata(resp, useCase.client); err == nil && metadata != nil {

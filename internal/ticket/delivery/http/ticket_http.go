@@ -136,7 +136,7 @@ func (h *RequestHandler) handleSend(ctx *http.RequestCtx) {
 
 	ticket := &domain.Ticket{
 		Ticket:   "",
-		Resource: req.Resource,
+		Resource: req.Resource.URL,
 		Subject:  req.Subject,
 	}
 
@@ -177,7 +177,7 @@ func (h *RequestHandler) handleRedeem(ctx *http.RequestCtx) {
 
 	token, err := h.tickets.Redeem(ctx, &domain.Ticket{
 		Ticket:   req.Ticket,
-		Resource: req.Resource,
+		Resource: req.Resource.URL,
 		Subject:  req.Subject,
 	})
 	if err != nil {

@@ -74,15 +74,15 @@ func (repo *httpMetadataRepository) Get(ctx context.Context, me *domain.Me) (*do
 
 	//nolint:exhaustivestruct // TODO(toby3d)
 	return &domain.Metadata{
-		AuthorizationEndpoint:                      data.AuthorizationEndpoint,
+		AuthorizationEndpoint:                      data.AuthorizationEndpoint.URL,
 		AuthorizationResponseIssParameterSupported: data.AuthorizationResponseIssParameterSupported,
 		CodeChallengeMethodsSupported:              data.CodeChallengeMethodsSupported,
 		GrantTypesSupported:                        data.GrantTypesSupported,
 		Issuer:                                     data.Issuer,
 		ResponseTypesSupported:                     data.ResponseTypesSupported,
 		ScopesSupported:                            data.ScopesSupported,
-		ServiceDocumentation:                       data.ServiceDocumentation,
-		TokenEndpoint:                              data.TokenEndpoint,
+		ServiceDocumentation:                       data.ServiceDocumentation.URL,
+		TokenEndpoint:                              data.TokenEndpoint.URL,
 		// TODO(toby3d): support extensions?
 		// Micropub: data.Micropub,
 		// Microsub: data.Microsub,

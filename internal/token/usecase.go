@@ -2,6 +2,7 @@ package token
 
 import (
 	"context"
+	"net/url"
 
 	"source.toby3d.me/toby3d/auth/internal/domain"
 )
@@ -9,7 +10,7 @@ import (
 type (
 	ExchangeOptions struct {
 		ClientID     *domain.ClientID
-		RedirectURI  *domain.URL
+		RedirectURI  *url.URL
 		Code         string
 		CodeVerifier string
 	}

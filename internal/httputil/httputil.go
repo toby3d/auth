@@ -20,8 +20,8 @@ var ErrEndpointNotExist = domain.NewError(
 	"https://indieauth.net/source/#discovery-0",
 )
 
-func ExtractEndpoints(resp *http.Response, rel string) []*domain.URL {
-	results := make([]*domain.URL, 0)
+func ExtractEndpoints(resp *http.Response, rel string) []*url.URL {
+	results := make([]*url.URL, 0)
 
 	urls, err := ExtractEndpointsFromHeader(resp, rel)
 	if err == nil {
@@ -36,40 +36,40 @@ func ExtractEndpoints(resp *http.Response, rel string) []*domain.URL {
 	return results
 }
 
-func ExtractEndpointsFromHeader(resp *http.Response, rel string) ([]*domain.URL, error) {
-	results := make([]*domain.URL, 0)
+func ExtractEndpointsFromHeader(resp *http.Response, rel string) ([]*url.URL, error) {
+	results := make([]*url.URL, 0)
 
 	for _, link := range linkheader.Parse(string(resp.Header.Peek(http.HeaderLink))) {
 		if !strings.EqualFold(link.Rel, rel) {
 			continue
 		}
 
-		u := http.AcquireURI()
-		if err := u.Parse(resp.Header.Peek(http.HeaderHost), []byte(link.URL)); err != nil {
+		u, err := url.ParseRequestURI(link.URL)
+		if err != nil {
 			return nil, fmt.Errorf("cannot parse header endpoint: %w", err)
 		}
 
-		results = append(results, &domain.URL{URI: u})
+		results = append(results, u)
 	}
 
 	return results, nil
 }
 
-func ExtractEndpointsFromBody(resp *http.Response, rel string) ([]*domain.URL, error) {
+func ExtractEndpointsFromBody(resp *http.Response, rel string) ([]*url.URL, error) {
 	endpoints, ok := microformats.Parse(bytes.NewReader(resp.Body()), nil).Rels[rel]
 	if !ok || len(endpoints) == 0 {
 		return nil, ErrEndpointNotExist
 	}
 
-	results := make([]*domain.URL, 0)
+	results := make([]*url.URL, 0)
 
 	for i := range endpoints {
-		u := http.AcquireURI()
-		if err := u.Parse(resp.Header.Peek(http.HeaderHost), []byte(endpoints[i])); err != nil {
+		u, err := url.Parse(endpoints[i])
+		if err != nil {
 			return nil, fmt.Errorf("cannot parse body endpoint: %w", err)
 		}
 
-		results = append(results, &domain.URL{URI: u})
+		results = append(results, u)
 	}
 
 	return results, nil

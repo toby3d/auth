@@ -5,23 +5,21 @@ import (
 	"net/url"
 	"strconv"
 	"testing"
-
-	http "github.com/valyala/fasthttp"
 )
 
 // URL describe any valid HTTP URL.
 type URL struct {
-	*http.URI
+	*url.URL
 }
 
 // ParseURL parse string as URL.
 func ParseURL(src string) (*URL, error) {
-	u := http.AcquireURI()
-	if err := u.Parse(nil, []byte(src)); err != nil {
+	u, err := url.Parse(src)
+	if err != nil {
 		return nil, fmt.Errorf("cannot parse URL: %w", err)
 	}
 
-	return &URL{URI: u}, nil
+	return &URL{URL: u}, nil
 }
 
 // MustParseURL parse string as URL or panic.
@@ -38,11 +36,10 @@ func MustParseURL(src string) *URL {
 func TestURL(tb testing.TB, src string) *URL {
 	tb.Helper()
 
-	u := http.AcquireURI()
-	u.Update(src)
+	u, _ := url.Parse(src)
 
 	return &URL{
-		URI: u,
+		URL: u,
 	}
 }
 
@@ -77,18 +74,4 @@ func (u *URL) UnmarshalJSON(v []byte) error {
 
 func (u URL) MarshalJSON() ([]byte, error) {
 	return []byte(strconv.Quote(u.String())), nil
-}
-
-// URL returns url.URL representation of URL.
-func (u URL) URL() *url.URL {
-	if u.URI == nil {
-		return nil
-	}
-
-	result, err := url.ParseRequestURI(u.String())
-	if err != nil {
-		return nil
-	}
-
-	return result
 }

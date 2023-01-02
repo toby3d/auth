@@ -206,7 +206,7 @@ func (h *RequestHandler) handleAuthorize(ctx *http.RequestCtx) {
 		return
 	}
 
-	if !client.ValidateRedirectURI(req.RedirectURI) {
+	if !client.ValidateRedirectURI(req.RedirectURI.URL) {
 		ctx.SetStatusCode(http.StatusBadRequest)
 		web.WriteTemplate(ctx, &web.ErrorPage{
 			BaseOf: baseOf,
@@ -251,14 +251,10 @@ func (h *RequestHandler) handleVerify(ctx *http.RequestCtx) {
 		return
 	}
 
-	redirectURL := http.AcquireURI()
-	defer http.ReleaseURI(redirectURL)
-	req.RedirectURI.CopyTo(redirectURL)
-
 	if strings.EqualFold(req.Authorize, "deny") {
 		domain.NewError(domain.ErrorCodeAccessDenied, "user deny authorization request", "", req.State).
-			SetReirectURI(redirectURL)
-		ctx.Redirect(redirectURL.String(), http.StatusFound)
+			SetReirectURI(req.RedirectURI.URL)
+		ctx.Redirect(req.RedirectURI.String(), http.StatusFound)
 
 		return
 	}
@@ -266,7 +262,7 @@ func (h *RequestHandler) handleVerify(ctx *http.RequestCtx) {
 	code, err := h.useCase.Generate(ctx, auth.GenerateOptions{
 		ClientID:            req.ClientID,
 		Me:                  req.Me,
-		RedirectURI:         req.RedirectURI,
+		RedirectURI:         req.RedirectURI.URL,
 		CodeChallengeMethod: req.CodeChallengeMethod,
 		Scope:               req.Scope,
 		CodeChallenge:       req.CodeChallenge,
@@ -284,10 +280,10 @@ func (h *RequestHandler) handleVerify(ctx *http.RequestCtx) {
 		"iss":   h.config.Server.GetRootURL(),
 		"state": req.State,
 	} {
-		redirectURL.QueryArgs().Set(key, val)
+		req.RedirectURI.Query().Set(key, val)
 	}
 
-	ctx.Redirect(redirectURL.String(), http.StatusFound)
+	ctx.Redirect(req.RedirectURI.String(), http.StatusFound)
 }
 
 func (h *RequestHandler) handleExchange(ctx *http.RequestCtx) {
@@ -307,7 +303,7 @@ func (h *RequestHandler) handleExchange(ctx *http.RequestCtx) {
 	me, profile, err := h.useCase.Exchange(ctx, auth.ExchangeOptions{
 		Code:         req.Code,
 		ClientID:     req.ClientID,
-		RedirectURI:  req.RedirectURI,
+		RedirectURI:  req.RedirectURI.URL,
 		CodeVerifier: req.CodeVerifier,
 	})
 	if err != nil {
@@ -322,8 +318,8 @@ func (h *RequestHandler) handleExchange(ctx *http.RequestCtx) {
 	if profile != nil {
 		userInfo = &AuthProfileResponse{
 			Email: profile.GetEmail(),
-			Photo: profile.GetPhoto(),
-			URL:   profile.GetURL(),
+			Photo: &domain.URL{URL: profile.GetPhoto()},
+			URL:   &domain.URL{URL: profile.GetURL()},
 			Name:  profile.GetName(),
 		}
 	}

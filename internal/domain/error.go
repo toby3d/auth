@@ -2,10 +2,10 @@ package domain
 
 import (
 	"fmt"
+	"net/url"
 	"strconv"
 	"strings"
 
-	http "github.com/valyala/fasthttp"
 	"golang.org/x/xerrors"
 
 	"source.toby3d.me/toby3d/auth/internal/common"
@@ -226,8 +226,8 @@ func (e Error) FormatError(printer xerrors.Printer) error {
 
 // SetReirectURI sets fasthttp.QueryArgs with the request state, code,
 // description and error URI in the provided fasthttp.URI.
-func (e Error) SetReirectURI(uri *http.URI) {
-	if uri == nil {
+func (e Error) SetReirectURI(u *url.URL) {
+	if u == nil {
 		return
 	}
 
@@ -241,7 +241,7 @@ func (e Error) SetReirectURI(uri *http.URI) {
 			continue
 		}
 
-		uri.QueryArgs().Set(key, val)
+		u.Query().Set(key, val)
 	}
 }
 

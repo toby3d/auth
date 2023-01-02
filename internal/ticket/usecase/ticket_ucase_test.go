@@ -21,7 +21,7 @@ func TestRedeem(t *testing.T) {
 	ticket := domain.TestTicket(t)
 
 	router := router.New()
-	router.GET(string(ticket.Resource.Path()), func(ctx *http.RequestCtx) {
+	router.GET(string(ticket.Resource.Path), func(ctx *http.RequestCtx) {
 		ctx.SuccessString(common.MIMETextHTMLCharsetUTF8, `<link rel="token_endpoint" href="`+
 			ticket.Subject.String()+`token">`)
 	})
