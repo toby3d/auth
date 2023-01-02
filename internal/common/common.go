@@ -12,4 +12,8 @@ const (
 	MIMETextPlainCharsetUTF8       string = MIMETextPlain + "; " + charsetUTF8
 )
 
+const (
+	HeaderContentType string = "Content-Type"
+)
+
 const Und string = "und"
