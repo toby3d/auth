@@ -65,12 +65,12 @@ func (c *Client) ValidateRedirectURI(redirectURI *URL) bool {
 		rHost = string(redirectURI.Host())
 	}
 
-	cHost, cPort, err := net.SplitHostPort(string(c.ID.clientID.Host()))
+	cHost, cPort, err := net.SplitHostPort(c.ID.clientID.Host)
 	if err != nil {
-		cHost = string(c.ID.clientID.Host())
+		cHost = c.ID.clientID.Hostname()
 	}
 
-	if bytes.EqualFold(redirectURI.Scheme(), c.ID.clientID.Scheme()) &&
+	if bytes.EqualFold(redirectURI.Scheme(), []byte(c.ID.clientID.Scheme)) &&
 		strings.EqualFold(rHost, cHost) &&
 		strings.EqualFold(rPort, cPort) {
 		return true

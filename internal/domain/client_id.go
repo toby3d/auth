@@ -7,13 +7,12 @@ import (
 	"strings"
 	"testing"
 
-	http "github.com/valyala/fasthttp"
 	"inet.af/netaddr"
 )
 
 // ClientID is a URL client identifier.
 type ClientID struct {
-	clientID *http.URI
+	clientID *url.URL
 }
 
 //nolint:gochecknoglobals // slices cannot be constants
@@ -26,8 +25,8 @@ var (
 //
 //nolint:funlen,cyclop
 func ParseClientID(src string) (*ClientID, error) {
-	cid := http.AcquireURI()
-	if err := cid.Parse(nil, []byte(src)); err != nil {
+	cid, err := url.Parse(src)
+	if err != nil {
 		return nil, NewError(
 			ErrorCodeInvalidRequest,
 			err.Error(),
@@ -35,8 +34,7 @@ func ParseClientID(src string) (*ClientID, error) {
 		)
 	}
 
-	scheme := string(cid.Scheme())
-	if scheme != "http" && scheme != "https" {
+	if cid.Scheme != "http" && cid.Scheme != "https" {
 		return nil, NewError(
 			ErrorCodeInvalidRequest,
 			"client identifier URL MUST have either an https or http scheme",
@@ -44,8 +42,7 @@ func ParseClientID(src string) (*ClientID, error) {
 		)
 	}
 
-	path := string(cid.PathOriginal())
-	if path == "" || strings.Contains(path, "/.") || strings.Contains(path, "/..") {
+	if cid.Path == "" || strings.Contains(cid.Path, "/.") || strings.Contains(cid.Path, "/..") {
 		return nil, NewError(
 			ErrorCodeInvalidRequest,
 			"client identifier URL MUST contain a path component and MUST NOT contain "+
@@ -54,7 +51,7 @@ func ParseClientID(src string) (*ClientID, error) {
 		)
 	}
 
-	if cid.Hash() != nil {
+	if cid.Fragment != "" {
 		return nil, NewError(
 			ErrorCodeInvalidRequest,
 			"client identifier URL MUST NOT contain a fragment component",
@@ -62,7 +59,7 @@ func ParseClientID(src string) (*ClientID, error) {
 		)
 	}
 
-	if cid.Username() != nil || cid.Password() != nil {
+	if cid.User != nil {
 		return nil, NewError(
 			ErrorCodeInvalidRequest,
 			"client identifier URL MUST NOT contain a username or password component",
@@ -70,7 +67,7 @@ func ParseClientID(src string) (*ClientID, error) {
 		)
 	}
 
-	domain := string(cid.Host())
+	domain := cid.Hostname()
 	if domain == "" {
 		return nil, NewError(
 			ErrorCodeInvalidRequest,
@@ -150,30 +147,11 @@ func (cid ClientID) MarshalJSON() ([]byte, error) {
 	return []byte(strconv.Quote(cid.String())), nil
 }
 
-// URI returns copy of parsed *fasthttp.URI.
-//
-// WARN(toby3d): This copy MUST be released via fasthttp.ReleaseURI.
-func (cid ClientID) URI() *http.URI {
-	uri := http.AcquireURI()
-	cid.clientID.CopyTo(uri)
-
-	return uri
-}
-
 // URL returns url.URL representation of client ID.
 func (cid ClientID) URL() *url.URL {
-	return &url.URL{
-		ForceQuery:  false,
-		Fragment:    string(cid.clientID.Hash()),
-		Host:        string(cid.clientID.Host()),
-		Opaque:      "",
-		Path:        string(cid.clientID.Path()),
-		RawFragment: "",
-		RawPath:     string(cid.clientID.PathOriginal()),
-		RawQuery:    string(cid.clientID.QueryString()),
-		Scheme:      string(cid.clientID.Scheme()),
-		User:        nil,
-	}
+	out, _ := url.Parse(cid.clientID.String())
+
+	return out
 }
 
 // String returns string representation of client ID.
