@@ -1,27 +1,25 @@
 package http
 
 import (
-	"github.com/fasthttp/router"
-	http "github.com/valyala/fasthttp"
+	"fmt"
+	"net/http"
 
 	"source.toby3d.me/toby3d/auth/internal/common"
-	"source.toby3d.me/toby3d/middleware"
+	"source.toby3d.me/toby3d/auth/internal/middleware"
 )
 
-type RequestHandler struct{}
+type Handler struct{}
 
-func NewRequestHandler() *RequestHandler {
-	return &RequestHandler{}
+func NewHandler() *Handler {
+	return &Handler{}
 }
 
-func (h *RequestHandler) Register(r *router.Router) {
-	chain := middleware.Chain{
-		middleware.LogFmt(),
-	}
-
-	r.GET("/health", chain.RequestHandler(h.read))
+func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	http.HandlerFunc(middleware.HandlerFunc(h.handleFunc).Intercept(middleware.LogFmt())).ServeHTTP(w, r)
 }
 
-func (h *RequestHandler) read(ctx *http.RequestCtx) {
-	ctx.SuccessString(common.MIMEApplicationJSONCharsetUTF8, `{"ok": true}`)
+func (h *Handler) handleFunc(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set(common.HeaderContentType, common.MIMETextPlainCharsetUTF8)
+	fmt.Fprint(w, `👌`)
+	w.WriteHeader(http.StatusOK)
 }
