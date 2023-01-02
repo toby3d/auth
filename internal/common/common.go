@@ -13,7 +13,8 @@ const (
 )
 
 const (
-	HeaderContentType string = "Content-Type"
+	HeaderContentType   string = "Content-Type"
+	HeaderAuthorization string = "Authorization"
 )
 
 const Und string = "und"
