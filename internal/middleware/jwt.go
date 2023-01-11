@@ -148,7 +148,8 @@ type (
 )
 
 // DefaultJWTConfig is the default JWT auth middleware config.
-//nolint: gochecknoglobals
+//
+//nolint:gochecknoglobals
 var DefaultJWTConfig = JWTConfig{
 	Skipper:       DefaultSkipper,
 	SigningMethod: "HS256",
@@ -177,7 +178,8 @@ func JWT(key any) Interceptor {
 }
 
 // JWTWithConfig returns a JWT auth middleware with config.
-//nolint: funlen, gocognit
+//
+//nolint:funlen,gocognit
 func JWTWithConfig(config JWTConfig) Interceptor {
 	// Defaults
 	if config.Skipper == nil {
