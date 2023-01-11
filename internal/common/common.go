@@ -13,8 +13,18 @@ const (
 )
 
 const (
-	HeaderContentType   string = "Content-Type"
-	HeaderAuthorization string = "Authorization"
+	HeaderAccept                   string = "Accept"
+	HeaderAcceptLanguage           string = "Accept-Language"
+	HeaderAccessControlAllowOrigin string = "Access-Control-Allow-Origin"
+	HeaderAuthorization            string = "Authorization"
+	HeaderContentType              string = "Content-Type"
+	HeaderCookie                   string = "Cookie"
+	HeaderHost                     string = "Host"
+	HeaderLink                     string = "Link"
+	HeaderLocation                 string = "Location"
+	HeaderVary                     string = "Vary"
+	HeaderWWWAuthenticate          string = "WWW-Authenticate"
+	HeaderXCSRFToken               string = "X-CSRF-Token"
 )
 
 const Und string = "und"
