@@ -107,17 +107,17 @@ func (uc *tokenUseCase) Verify(ctx context.Context, accessToken string) (*domain
 		return nil, nil, fmt.Errorf("cannot validate JWT token: %w", err)
 	}
 
+	cid, _ := domain.ParseClientID(tkn.Issuer())
+	me, _ := domain.ParseMe(tkn.Subject())
 	result := &domain.Token{
 		CreatedAt:    tkn.IssuedAt(),
 		Expiry:       tkn.Expiration(),
-		ClientID:     nil,
-		Me:           nil,
+		ClientID:     *cid,
+		Me:           *me,
 		Scope:        nil,
 		AccessToken:  accessToken,
 		RefreshToken: "", // TODO(toby3d)
 	}
-	result.ClientID, _ = domain.ParseClientID(tkn.Issuer())
-	result.Me, _ = domain.ParseMe(tkn.Subject())
 
 	if scope, ok := tkn.Get("scope"); ok {
 		result.Scope, _ = scope.(domain.Scopes)
@@ -149,7 +149,7 @@ func (uc *tokenUseCase) Revoke(ctx context.Context, accessToken string) error {
 		return fmt.Errorf("cannot verify token: %w", err)
 	}
 
-	if err = uc.tokens.Create(ctx, tkn); err != nil && !errors.Is(err, token.ErrExist) {
+	if err = uc.tokens.Create(ctx, *tkn); err != nil && !errors.Is(err, token.ErrExist) {
 		return fmt.Errorf("cannot save token in database: %w", err)
 	}
 

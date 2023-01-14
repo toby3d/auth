@@ -1,13 +1,12 @@
 package http
 
 import (
-	"github.com/fasthttp/router"
+	"net/http"
+
 	"github.com/goccy/go-json"
-	http "github.com/valyala/fasthttp"
 
 	"source.toby3d.me/toby3d/auth/internal/common"
 	"source.toby3d.me/toby3d/auth/internal/domain"
-	"source.toby3d.me/toby3d/middleware"
 )
 
 type (
@@ -60,28 +59,29 @@ type (
 		UserinfoEndpoint string `json:"userinfo_endpoint,omitempty"`
 	}
 
-	RequestHandler struct {
+	Handler struct {
 		metadata *domain.Metadata
 	}
 )
 
-func NewRequestHandler(metadata *domain.Metadata) *RequestHandler {
-	return &RequestHandler{
+func NewHandler(metadata *domain.Metadata) *Handler {
+	return &Handler{
 		metadata: metadata,
 	}
 }
 
-func (h *RequestHandler) Register(r *router.Router) {
-	chain := middleware.Chain{
-		middleware.LogFmt(),
-	}
-
-	r.GET("/.well-known/oauth-authorization-server", chain.RequestHandler(h.read))
+func (h *Handler) Handler() http.Handler {
+	return http.HandlerFunc(h.handleFunc)
 }
 
-func (h *RequestHandler) read(ctx *http.RequestCtx) {
-	ctx.SetStatusCode(http.StatusOK)
-	ctx.SetContentType(common.MIMEApplicationJSONCharsetUTF8)
+func (h *Handler) handleFunc(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "" && r.Method != http.MethodGet {
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+
+		return
+	}
+
+	w.Header().Set(common.HeaderContentType, common.MIMEApplicationJSONCharsetUTF8)
 
 	scopes, responseTypes, grantTypes, codeChallengeMethods := make([]string, 0), make([]string, 0),
 		make([]string, 0), make([]string, 0)
@@ -103,7 +103,7 @@ func (h *RequestHandler) read(ctx *http.RequestCtx) {
 			h.metadata.CodeChallengeMethodsSupported[i].String())
 	}
 
-	_ = json.NewEncoder(ctx).Encode(&MetadataResponse{
+	_ = json.NewEncoder(w).Encode(&MetadataResponse{
 		AuthorizationEndpoint: h.metadata.AuthorizationEndpoint.String(),
 		IntrospectionEndpoint: h.metadata.IntrospectionEndpoint.String(),
 		Issuer:                h.metadata.Issuer.String(),
@@ -123,4 +123,6 @@ func (h *RequestHandler) read(ctx *http.RequestCtx) {
 		// client_secret_basic according to RFC8414.
 		RevocationEndpointAuthMethodsSupported: h.metadata.RevocationEndpointAuthMethodsSupported,
 	})
+
+	w.WriteHeader(http.StatusOK)
 }

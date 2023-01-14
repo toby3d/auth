@@ -17,137 +17,137 @@
 } %}
 
 {% func (p *AuthorizePage) Title() %}
-  {% if p.Client.GetName() == "" %}
-    {%= p.T("Authorize %s", p.Client.GetName()) %}
-  {% else %}
-    {%= p.T("Authorize application") %}
-  {% endif %}
+{% if p.Client.GetName() == "" %}
+{%= p.T("Authorize %s", p.Client.GetName()) %}
+{% else %}
+{%= p.T("Authorize application") %}
+{% endif %}
 {% endfunc %}
 
 {% func (p *AuthorizePage) Body() %}
-  <header>
-    {% if p.Client.GetLogo() != nil %}
-      <img class=""
-        crossorigin="anonymous"
-        decoding="async"
-        height="140"
-        importance="high"
-        loading="lazy"
-        referrerpolicy="no-referrer-when-downgrade"
-        src="{%s p.Client.GetLogo().String() %}"
-        alt="{%s p.Client.GetName() %}"
-        width="140">
-    {% endif %}
+<header>
+  {% if p.Client.GetLogo() != nil %}
+  <img class=""
+       crossorigin="anonymous"
+       decoding="async"
+       height="140"
+       importance="high"
+       loading="lazy"
+       referrerpolicy="no-referrer-when-downgrade"
+       src="{%s p.Client.GetLogo().String() %}"
+       alt="{%s p.Client.GetName() %}"
+       width="140">
+  {% endif %}
 
-    <h2>
-      {% if p.Client.GetURL() != nil %}
-        <a href="{%s p.Client.GetURL().String() %}">
+  <h2>
+    {% if p.Client.GetURL() != nil %}
+    <a href="{%s p.Client.GetURL().String() %}">
       {% endif %}
       {% if p.Client.GetName() != "" %}
-        {%s p.Client.GetName() %}
+      {%s p.Client.GetName() %}
       {% else %}
-        {%s p.Client.ID.String() %}
+      {%s p.Client.ID.String() %}
       {% endif %}
       {% if p.Client.GetURL() != nil %}
-        </a>
-      {% endif %}
-    </h2>
-  </header>
+    </a>
+    {% endif %}
+  </h2>
+</header>
 
-  <main>
-    <form class=""
-      accept-charset="utf-8"
-      action="/api/authorize"
-      autocomplete="off"
-      enctype="application/x-www-form-urlencoded"
-      method="post"
-      novalidate="true"
-      target="_self">
+<main>
+  <form class=""
+        accept-charset="utf-8"
+        action="/authorize/verify"
+        autocomplete="off"
+        enctype="application/x-www-form-urlencoded"
+        method="post"
+        novalidate="true"
+        target="_self">
 
-      {% if p.CSRF != nil %}
-        <input type="hidden"
-          name="_csrf"
-          value="{%z p.CSRF %}">
-      {% endif %}
+    {% if p.CSRF != nil %}
+    <input type="hidden"
+           name="_csrf"
+           value="{%z p.CSRF %}">
+    {% endif %}
 
-      {% for key, val := range map[string]string{
+    {% for key, val := range map[string]string{
         "client_id":     p.Client.ID.String(),
         "redirect_uri":  p.RedirectURI.String(),
         "response_type": p.ResponseType.String(),
         "state":         p.State,
       } %}
-        <input type="hidden"
-          name="{%s key %}"
-          value="{%s val %}">
+    <input type="hidden"
+           name="{%s key %}"
+           value="{%s val %}">
+    {% endfor %}
+
+    {% if len(p.Scope) > 0 %}
+    <fieldset>
+      <legend>{%= p.T("Choose your scopes") %}</legend>
+
+      {% for _, scope := range p.Scope %}
+      <div>
+        <label>
+          <input type="checkbox"
+                 name="scope[]"
+                 value="{%s scope.String() %}"
+                 checked>
+
+          {%s scope.String() %}
+        </label>
+      </div>
       {% endfor %}
+    </fieldset>
+    {% endif %}
 
-      {% if len(p.Scope) > 0 %}
-      <fieldset>
-        <legend>{%= p.T("Choose your scopes") %}</legend>
+    {% if p.CodeChallenge != "" %}
+    <input type="hidden"
+           name="code_challenge"
+           value="{%s p.CodeChallenge %}">
 
-        {% for _, scope := range p.Scope %}
-          <div>
-            <label>
-              <input type="checkbox"
-                name="scope[]"
-                value="{%s scope.String() %}"
-                checked>
+    <input type="hidden"
+           name="code_challenge_method"
+           value="{%s p.CodeChallengeMethod.String() %}">
+    {% endif %}
 
-              {%s scope.String() %}
-            </label>
-          </div>
-        {% endfor %}
-      </fieldset>
-      {% endif %}
+    {% if p.Me != nil %}
+    <input type="hidden"
+           name="me"
+           value="{%s p.Me.String() %}">
+    {% endif %}
 
-      {% if p.CodeChallenge != "" %}
-        <input type="hidden"
-          name="code_challenge"
-          value="{%s p.CodeChallenge %}">
+    {% if len(p.Providers) > 0 %}
+    <select name="provider"
+            autocomplete
+            required>
 
-        <input type="hidden"
-          name="code_challenge_method"
-          value="{%s p.CodeChallengeMethod.String() %}">
-      {% endif %}
-
-      {% if p.Me != nil %}
-        <input type="hidden"
-          name="me"
-          value="{%s p.Me.String() %}">
-      {% endif %}
-
-      {% if len(p.Providers) > 0 %}
-        <select name="provider"
-          autocomplete
-          required>
-
-          {% for _, provider := range p.Providers %}
-            <option value="{%s provider.UID %}"
+      {% for _, provider := range p.Providers %}
+      <option value="{%s provider.UID %}"
               {% if provider.UID == "mastodon" %}selected{% endif %}>
 
-              {%s provider.Name %}
-            </option>
-          {% endfor %}
-        </select>
-      {% else %}
-        <input type="hidden"
-          name="provider"
-          value="direct">
-      {% endif %}
+        {%s provider.Name %}
+      </option>
+      {% endfor %}
+    </select>
+    {% else %}
+    <input type="hidden"
+           name="provider"
+           value="direct">
+    {% endif %}
 
-      <button type="submit"
-        name="authorize"
-        value="deny">
+    <button type="submit"
+            name="authorize"
+            value="deny">
 
-        {%= p.T("Deny") %}
-      </button>
+      {%= p.T("Deny") %}
+    </button>
 
-      <button type="submit"
-        name="authorize"
-        value="allow">
+    <button type="submit"
+            name="authorize"
+            value="allow">
 
-        {%= p.T("Allow") %}
-      </button>
-    </form>
-  </main>
+      {%= p.T("Allow") %}
+    </button>
+  </form>
+</main>
 {% endfunc %}

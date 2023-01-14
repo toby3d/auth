@@ -9,8 +9,8 @@ import (
 
 type (
 	GenerateOptions struct {
-		ClientID            *domain.ClientID
-		Me                  *domain.Me
+		ClientID            domain.ClientID
+		Me                  domain.Me
 		RedirectURI         *url.URL
 		CodeChallengeMethod domain.CodeChallengeMethod
 		Scope               domain.Scopes
@@ -18,7 +18,7 @@ type (
 	}
 
 	ExchangeOptions struct {
-		ClientID     *domain.ClientID
+		ClientID     domain.ClientID
 		RedirectURI  *url.URL
 		Code         string
 		CodeVerifier string

@@ -2,8 +2,6 @@ package usecase_test
 
 import (
 	"context"
-	"path"
-	"sync"
 	"testing"
 
 	"source.toby3d.me/toby3d/auth/internal/domain"
@@ -22,7 +20,6 @@ type Dependencies struct {
 	profiles profile.Repository
 	session  *domain.Session
 	sessions session.Repository
-	store    *sync.Map
 	token    *domain.Token
 	tokens   token.Repository
 }
@@ -31,9 +28,12 @@ func TestExchange(t *testing.T) {
 	t.Parallel()
 
 	deps := NewDependencies(t)
-	deps.store.Store(path.Join(profilerepo.DefaultPathPrefix, deps.session.Me.String()), deps.profile)
 
-	if err := deps.sessions.Create(context.Background(), deps.session); err != nil {
+	if err := deps.profiles.Create(context.Background(), deps.session.Me, *deps.profile); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := deps.sessions.Create(context.Background(), *deps.session); err != nil {
 		t.Fatal(err)
 	}
 
@@ -95,7 +95,7 @@ func TestVerify(t *testing.T) {
 		t.Parallel()
 
 		testToken := domain.TestToken(t)
-		if err := deps.tokens.Create(context.Background(), testToken); err != nil {
+		if err := deps.tokens.Create(context.Background(), *testToken); err != nil {
 			t.Fatal(err)
 		}
 
@@ -136,17 +136,15 @@ func TestRevoke(t *testing.T) {
 func NewDependencies(tb testing.TB) Dependencies {
 	tb.Helper()
 
-	store := new(sync.Map)
 	config := domain.TestConfig(tb)
 
 	return Dependencies{
 		config:   config,
 		profile:  domain.TestProfile(tb),
-		profiles: profilerepo.NewMemoryProfileRepository(store),
+		profiles: profilerepo.NewMemoryProfileRepository(),
 		session:  domain.TestSession(tb),
-		sessions: sessionrepo.NewMemorySessionRepository(store, config),
-		store:    store,
+		sessions: sessionrepo.NewMemorySessionRepository(*config),
 		token:    domain.TestToken(tb),
-		tokens:   tokenrepo.NewMemoryTokenRepository(store),
+		tokens:   tokenrepo.NewMemoryTokenRepository(),
 	}
 }

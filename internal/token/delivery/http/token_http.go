@@ -1,187 +1,100 @@
 package http
 
 import (
-	"errors"
-	"path"
+	"net/http"
 
-	"github.com/fasthttp/router"
-	json "github.com/goccy/go-json"
+	"github.com/goccy/go-json"
 	"github.com/lestrrat-go/jwx/v2/jwa"
-	http "github.com/valyala/fasthttp"
 
 	"source.toby3d.me/toby3d/auth/internal/common"
 	"source.toby3d.me/toby3d/auth/internal/domain"
+	"source.toby3d.me/toby3d/auth/internal/middleware"
 	"source.toby3d.me/toby3d/auth/internal/ticket"
 	"source.toby3d.me/toby3d/auth/internal/token"
-	"source.toby3d.me/toby3d/form"
-	"source.toby3d.me/toby3d/middleware"
+	"source.toby3d.me/toby3d/auth/internal/urlutil"
 )
 
-type (
-	TokenExchangeRequest struct {
-		ClientID     *domain.ClientID `form:"client_id"`
-		RedirectURI  *domain.URL      `form:"redirect_uri"`
-		GrantType    domain.GrantType `form:"grant_type"`
-		Code         string           `form:"code"`
-		CodeVerifier string           `form:"code_verifier"`
-	}
+type Handler struct {
+	config  *domain.Config
+	tokens  token.UseCase
+	tickets ticket.UseCase
+}
 
-	TokenRefreshRequest struct {
-		GrantType domain.GrantType `form:"grant_type"` // refresh_token
-
-		// The refresh token previously offered to the client.
-		RefreshToken string `form:"refresh_token"`
-
-		// The client ID that was used when the refresh token was issued.
-		ClientID *domain.ClientID `form:"client_id"`
-
-		// The client may request a token with the same or fewer scopes
-		// than the original access token. If omitted, is treated as
-		// equal to the original scopes granted.
-		Scope domain.Scopes `form:"scope"`
-	}
-
-	TokenRevocationRequest struct {
-		Action domain.Action `form:"action,omitempty"`
-		Token  string        `form:"token"`
-	}
-
-	TokenTicketRequest struct {
-		Action domain.Action `form:"action"`
-		Ticket string        `form:"ticket"`
-	}
-
-	TokenIntrospectRequest struct {
-		Token string `form:"token"`
-	}
-
-	//nolint:tagliatelle // https://indieauth.net/source/#access-token-response
-	TokenExchangeResponse struct {
-		// The OAuth 2.0 Bearer Token RFC6750.
-		AccessToken string `json:"access_token"`
-
-		// The canonical user profile URL for the user this access token
-		// corresponds to.
-		Me string `json:"me"`
-
-		// The user's profile information.
-		Profile *TokenProfileResponse `json:"profile,omitempty"`
-
-		// The lifetime in seconds of the access token.
-		ExpiresIn int64 `json:"expires_in,omitempty"`
-
-		// The refresh token, which can be used to obtain new access
-		// tokens.
-		RefreshToken string `json:"refresh_token"`
-	}
-
-	TokenProfileResponse struct {
-		// Name the user wishes to provide to the client.
-		Name string `json:"name,omitempty"`
-
-		// URL of the user's website.
-		URL string `json:"url,omitempty"`
-
-		// A photo or image that the user wishes clients to use as a
-		// profile image.
-		Photo string `json:"photo,omitempty"`
-
-		// The email address a user wishes to provide to the client.
-		Email string `json:"email,omitempty"`
-	}
-
-	//nolint:tagliatelle // https://indieauth.net/source/#access-token-verification-response
-	TokenIntrospectResponse struct {
-		// Boolean indicator of whether or not the presented token is
-		// currently active.
-		Active bool `json:"active"`
-
-		// The profile URL of the user corresponding to this token.
-		Me string `json:"me"`
-
-		// The client ID associated with this token.
-		ClientID string `json:"client_id"`
-
-		// A space-separated list of scopes associated with this token.
-		Scope string `json:"scope"`
-
-		// Integer timestamp, measured in the number of seconds since
-		// January 1 1970 UTC, indicating when this token will expire.
-		Exp int64 `json:"exp,omitempty"`
-
-		// Integer timestamp, measured in the number of seconds since
-		// January 1 1970 UTC, indicating when this token was originally
-		// issued.
-		Iat int64 `json:"iat,omitempty"`
-	}
-
-	TokenInvalidIntrospectResponse struct {
-		Active bool `json:"active"`
-	}
-
-	TokenRevocationResponse struct{}
-
-	RequestHandler struct {
-		config  *domain.Config
-		tokens  token.UseCase
-		tickets ticket.UseCase
-	}
-)
-
-func NewRequestHandler(tokens token.UseCase, tickets ticket.UseCase, config *domain.Config) *RequestHandler {
-	return &RequestHandler{
+func NewHandler(tokens token.UseCase, tickets ticket.UseCase, config *domain.Config) *Handler {
+	return &Handler{
 		config:  config,
 		tokens:  tokens,
 		tickets: tickets,
 	}
 }
 
-func (h *RequestHandler) Register(r *router.Router) {
+func (h *Handler) Handler() http.Handler {
 	chain := middleware.Chain{
 		//nolint:exhaustivestruct
 		middleware.JWTWithConfig(middleware.JWTConfig{
-			AuthScheme:    "Bearer",
-			ContextKey:    "token",
+			Skipper: func(_ http.ResponseWriter, r *http.Request) bool {
+				head, _ := urlutil.ShiftPath(r.URL.Path)
+
+				return head == "token"
+			},
 			SigningKey:    []byte(h.config.JWT.Secret),
 			SigningMethod: jwa.SignatureAlgorithm(h.config.JWT.Algorithm),
-			Skipper: func(ctx *http.RequestCtx) bool {
-				matched, _ := path.Match("/token*", string(ctx.Path()))
-
-				return matched
-			},
-			SuccessHandler: nil,
-			TokenLookup:    "param:token,header:" + http.HeaderAuthorization + ":Bearer ",
+			ContextKey:    "token",
+			TokenLookup:   "form:token," + "header:" + common.HeaderAuthorization + ":Bearer ",
+			AuthScheme:    "Bearer",
 		}),
-		middleware.LogFmt(),
 	}
 
-	r.POST("/token", chain.RequestHandler(h.handleAction))
-	r.POST("/introspect", chain.RequestHandler(h.handleIntrospect))
-	r.POST("/revocation", chain.RequestHandler(h.handleRevokation))
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+
+			return
+		}
+
+		var head string
+		head, r.URL.Path = urlutil.ShiftPath(r.URL.Path)
+
+		switch head {
+		default:
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		case "token":
+			chain.Handler(h.handleAction).ServeHTTP(w, r)
+		case "introspect":
+			chain.Handler(h.handleIntrospect).ServeHTTP(w, r)
+		case "revocation":
+			chain.Handler(h.handleRevokation).ServeHTTP(w, r)
+		}
+	})
 }
 
-func (h *RequestHandler) handleIntrospect(ctx *http.RequestCtx) {
-	ctx.SetContentType(common.MIMEApplicationJSONCharsetUTF8)
-	ctx.SetStatusCode(http.StatusOK)
-
-	encoder := json.NewEncoder(ctx)
-
-	req := new(TokenIntrospectRequest)
-	if err := req.bind(ctx); err != nil {
-		ctx.SetStatusCode(http.StatusBadRequest)
-
-		_ = encoder.Encode(err)
+func (h *Handler) handleIntrospect(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 
 		return
 	}
 
-	tkn, _, err := h.tokens.Verify(ctx, req.Token)
+	w.Header().Set(common.HeaderContentType, common.MIMEApplicationJSONCharsetUTF8)
+
+	encoder := json.NewEncoder(w)
+
+	req := new(TokenIntrospectRequest)
+	if err := req.bind(r); err != nil {
+		_ = encoder.Encode(err)
+
+		w.WriteHeader(http.StatusBadRequest)
+
+		return
+	}
+
+	tkn, _, err := h.tokens.Verify(r.Context(), req.Token)
 	if err != nil || tkn == nil {
 		// WARN(toby3d): If the token is not valid, the endpoint still
 		// MUST return a 200 Response.
-		_ = encoder.Encode(&TokenInvalidIntrospectResponse{
-			Active: false,
-		})
+		_ = encoder.Encode(&TokenInvalidIntrospectResponse{Active: false})
+
+		w.WriteHeader(http.StatusOK)
 
 		return
 	}
@@ -194,68 +107,83 @@ func (h *RequestHandler) handleIntrospect(ctx *http.RequestCtx) {
 		Me:       tkn.Me.String(),
 		Scope:    tkn.Scope.String(),
 	})
+
+	w.WriteHeader(http.StatusOK)
 }
 
-func (h *RequestHandler) handleAction(ctx *http.RequestCtx) {
-	ctx.SetContentType(common.MIMEApplicationJSONCharsetUTF8)
+func (h *Handler) handleAction(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 
-	encoder := json.NewEncoder(ctx)
+		return
+	}
+
+	w.Header().Set(common.HeaderContentType, common.MIMEApplicationJSONCharsetUTF8)
+
+	encoder := json.NewEncoder(w)
 
 	switch {
-	case ctx.PostArgs().Has("grant_type"):
-		h.handleExchange(ctx)
-	case ctx.PostArgs().Has("action"):
-		action, err := domain.ParseAction(string(ctx.PostArgs().Peek("action")))
-		if err != nil {
-			ctx.SetStatusCode(http.StatusBadRequest)
+	case r.PostForm.Has("grant_type"):
+		h.handleExchange(w, r)
+	case r.PostForm.Has("action"):
+		if err := r.ParseForm(); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
 
-			_ = encoder.Encode(domain.NewError(
-				domain.ErrorCodeInvalidRequest,
-				err.Error(),
-				"",
-			))
+			_ = encoder.Encode(domain.NewError(domain.ErrorCodeInvalidRequest, err.Error(), ""))
+
+			return
+		}
+
+		action, err := domain.ParseAction(r.PostForm.Get("action"))
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+
+			_ = encoder.Encode(domain.NewError(domain.ErrorCodeInvalidRequest, err.Error(), ""))
 
 			return
 		}
 
 		switch action {
 		case domain.ActionRevoke:
-			h.handleRevokation(ctx)
+			h.handleRevokation(w, r)
 		case domain.ActionTicket:
-			h.handleTicket(ctx)
+			h.handleTicket(w, r)
 		}
 	}
 }
 
 //nolint:funlen
-func (h *RequestHandler) handleExchange(ctx *http.RequestCtx) {
-	ctx.SetContentType(common.MIMEApplicationJSONCharsetUTF8)
+func (h *Handler) handleExchange(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 
-	encoder := json.NewEncoder(ctx)
+		return
+	}
+
+	w.Header().Set(common.HeaderContentType, common.MIMEApplicationJSONCharsetUTF8)
+
+	encoder := json.NewEncoder(w)
 
 	req := new(TokenExchangeRequest)
-	if err := req.bind(ctx); err != nil {
-		ctx.SetStatusCode(http.StatusBadRequest)
+	if err := req.bind(r); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
 
 		_ = encoder.Encode(err)
 
 		return
 	}
 
-	token, profile, err := h.tokens.Exchange(ctx, token.ExchangeOptions{
+	token, profile, err := h.tokens.Exchange(r.Context(), token.ExchangeOptions{
 		ClientID:     req.ClientID,
 		RedirectURI:  req.RedirectURI.URL,
 		Code:         req.Code,
 		CodeVerifier: req.CodeVerifier,
 	})
 	if err != nil {
-		ctx.SetStatusCode(http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
 
-		_ = encoder.Encode(domain.NewError(
-			domain.ErrorCodeInvalidRequest,
-			err.Error(),
-			"https://indieauth.net/source/#request",
-		))
+		_ = encoder.Encode(domain.NewError(domain.ErrorCodeInvalidRequest, err.Error(),
+			"https://indieauth.net/source/#request"))
 
 		return
 	}
@@ -294,62 +222,69 @@ func (h *RequestHandler) handleExchange(ctx *http.RequestCtx) {
 	}
 
 	_ = encoder.Encode(resp)
+
+	w.WriteHeader(http.StatusOK)
 }
 
-func (h *RequestHandler) handleRevokation(ctx *http.RequestCtx) {
-	ctx.SetContentType(common.MIMEApplicationJSONCharsetUTF8)
-	ctx.SetStatusCode(http.StatusOK)
+func (h *Handler) handleRevokation(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 
-	encoder := json.NewEncoder(ctx)
+		return
+	}
+
+	w.Header().Set(common.HeaderContentType, common.MIMEApplicationJSONCharsetUTF8)
+
+	encoder := json.NewEncoder(w)
 
 	req := NewTokenRevocationRequest()
-	if err := req.bind(ctx); err != nil {
-		ctx.SetStatusCode(http.StatusBadRequest)
+	if err := req.bind(r); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
 
 		_ = encoder.Encode(err)
 
 		return
 	}
 
-	if err := h.tokens.Revoke(ctx, req.Token); err != nil {
-		ctx.SetStatusCode(http.StatusBadRequest)
+	if err := h.tokens.Revoke(r.Context(), req.Token); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
 
-		_ = encoder.Encode(domain.NewError(
-			domain.ErrorCodeInvalidRequest,
-			err.Error(),
-			"",
-		))
+		_ = encoder.Encode(domain.NewError(domain.ErrorCodeInvalidRequest, err.Error(), ""))
 
 		return
 	}
 
 	_ = encoder.Encode(&TokenRevocationResponse{})
+
+	w.WriteHeader(http.StatusOK)
 }
 
-func (h *RequestHandler) handleTicket(ctx *http.RequestCtx) {
-	ctx.SetContentType(common.MIMEApplicationJSONCharsetUTF8)
-	ctx.SetStatusCode(http.StatusOK)
+func (h *Handler) handleTicket(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 
-	encoder := json.NewEncoder(ctx)
+		return
+	}
+
+	w.Header().Set(common.HeaderContentType, common.MIMEApplicationJSONCharsetUTF8)
+
+	encoder := json.NewEncoder(w)
 
 	req := new(TokenTicketRequest)
-	if err := req.bind(ctx); err != nil {
-		ctx.SetStatusCode(http.StatusBadRequest)
+	if err := req.bind(r); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
 
 		_ = encoder.Encode(err)
 
 		return
 	}
 
-	tkn, err := h.tickets.Exchange(ctx, req.Ticket)
+	tkn, err := h.tickets.Exchange(r.Context(), req.Ticket)
 	if err != nil {
-		ctx.SetStatusCode(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
 
-		_ = encoder.Encode(domain.NewError(
-			domain.ErrorCodeInvalidRequest,
-			err.Error(),
-			"https://indieauth.net/source/#request",
-		))
+		_ = encoder.Encode(domain.NewError(domain.ErrorCodeInvalidRequest, err.Error(),
+			"https://indieauth.net/source/#request"))
 
 		return
 	}
@@ -361,81 +296,6 @@ func (h *RequestHandler) handleTicket(ctx *http.RequestCtx) {
 		ExpiresIn:    tkn.Expiry.Unix(),
 		RefreshToken: "", // TODO(toby3d)
 	})
-}
 
-func (r *TokenExchangeRequest) bind(ctx *http.RequestCtx) error {
-	indieAuthError := new(domain.Error)
-	if err := form.Unmarshal(ctx.QueryArgs().QueryString(), r); err != nil {
-		if errors.As(err, indieAuthError) {
-			return indieAuthError
-		}
-
-		return domain.NewError(
-			domain.ErrorCodeInvalidRequest,
-			err.Error(),
-			"https://indieauth.net/source/#request",
-		)
-	}
-
-	return nil
-}
-
-func NewTokenRevocationRequest() *TokenRevocationRequest {
-	return &TokenRevocationRequest{
-		Action: domain.ActionRevoke,
-		Token:  "",
-	}
-}
-
-func (r *TokenRevocationRequest) bind(ctx *http.RequestCtx) error {
-	indieAuthError := new(domain.Error)
-
-	err := form.Unmarshal(ctx.PostArgs().QueryString(), r)
-	if err != nil {
-		if errors.As(err, indieAuthError) {
-			return indieAuthError
-		}
-
-		return domain.NewError(
-			domain.ErrorCodeInvalidRequest,
-			err.Error(),
-			"https://indieauth.net/source/#request",
-		)
-	}
-
-	return nil
-}
-
-func (r *TokenTicketRequest) bind(ctx *http.RequestCtx) error {
-	indieAuthError := new(domain.Error)
-	if err := form.Unmarshal(ctx.QueryArgs().QueryString(), r); err != nil {
-		if errors.As(err, indieAuthError) {
-			return indieAuthError
-		}
-
-		return domain.NewError(
-			domain.ErrorCodeInvalidRequest,
-			err.Error(),
-			"https://indieauth.net/source/#request",
-		)
-	}
-
-	return nil
-}
-
-func (r *TokenIntrospectRequest) bind(ctx *http.RequestCtx) error {
-	indieAuthError := new(domain.Error)
-	if err := form.Unmarshal(ctx.PostArgs().QueryString(), r); err != nil {
-		if errors.As(err, indieAuthError) {
-			return indieAuthError
-		}
-
-		return domain.NewError(
-			domain.ErrorCodeInvalidRequest,
-			err.Error(),
-			"https://indieauth.net/source/#access-token-verification-request",
-		)
-	}
-
-	return nil
+	w.WriteHeader(http.StatusOK)
 }

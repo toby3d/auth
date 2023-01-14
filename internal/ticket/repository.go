@@ -7,7 +7,7 @@ import (
 )
 
 type Repository interface {
-	Create(ctx context.Context, ticket *domain.Ticket) error
+	Create(ctx context.Context, ticket domain.Ticket) error
 	GetAndDelete(ctx context.Context, ticket string) (*domain.Ticket, error)
 	GC()
 }

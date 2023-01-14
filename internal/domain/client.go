@@ -9,7 +9,7 @@ import (
 
 // Client describes the client requesting data about the user.
 type Client struct {
-	ID          *ClientID
+	ID          ClientID
 	Logo        []*url.URL
 	RedirectURI []*url.URL
 	URL         []*url.URL
@@ -17,7 +17,7 @@ type Client struct {
 }
 
 // NewClient creates a new empty Client with provided ClientID, if any.
-func NewClient(cid *ClientID) *Client {
+func NewClient(cid ClientID) *Client {
 	return &Client{
 		ID:          cid,
 		Logo:        make([]*url.URL, 0),
@@ -32,7 +32,7 @@ func TestClient(tb testing.TB) *Client {
 	tb.Helper()
 
 	return &Client{
-		ID:   TestClientID(tb),
+		ID:   *TestClientID(tb),
 		Name: []string{"Example App"},
 		URL:  []*url.URL{{Scheme: "https", Host: "app.example.com", Path: "/"}},
 		Logo: []*url.URL{{Scheme: "https", Host: "app.example.com", Path: "/logo.png"}},

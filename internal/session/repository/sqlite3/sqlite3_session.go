@@ -4,11 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
 
+	"github.com/goccy/go-json"
 	"github.com/jmoiron/sqlx"
 
 	"source.toby3d.me/toby3d/auth/internal/domain"
@@ -53,8 +53,8 @@ func NewSQLite3SessionRepository(db *sqlx.DB) session.Repository {
 	}
 }
 
-func (repo *sqlite3SessionRepository) Create(ctx context.Context, session *domain.Session) error {
-	src, err := NewSession(session)
+func (repo *sqlite3SessionRepository) Create(ctx context.Context, session domain.Session) error {
+	src, err := NewSession(&session)
 	if err != nil {
 		return fmt.Errorf("cannot encode session data for store: %w", err)
 	}

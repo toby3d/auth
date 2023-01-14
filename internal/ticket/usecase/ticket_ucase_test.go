@@ -3,14 +3,13 @@ package usecase_test
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"testing"
-
-	"github.com/fasthttp/router"
-	http "github.com/valyala/fasthttp"
 
 	"source.toby3d.me/toby3d/auth/internal/common"
 	"source.toby3d.me/toby3d/auth/internal/domain"
-	"source.toby3d.me/toby3d/auth/internal/testing/httptest"
 	ucase "source.toby3d.me/toby3d/auth/internal/ticket/usecase"
 )
 
@@ -20,25 +19,33 @@ func TestRedeem(t *testing.T) {
 	token := domain.TestToken(t)
 	ticket := domain.TestTicket(t)
 
-	router := router.New()
-	router.GET(string(ticket.Resource.Path), func(ctx *http.RequestCtx) {
-		ctx.SuccessString(common.MIMETextHTMLCharsetUTF8, `<link rel="token_endpoint" href="`+
-			ticket.Subject.String()+`token">`)
-	})
-	router.POST("/token", func(ctx *http.RequestCtx) {
-		ctx.SuccessString(common.MIMEApplicationJSONCharsetUTF8, fmt.Sprintf(`{
+	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+
+			return
+		}
+
+		w.Header().Set(common.HeaderContentType, common.MIMEApplicationJSONCharsetUTF8)
+		fmt.Fprintf(w, `{
 			"token_type": "Bearer",
 			"access_token": "%s",
 			"scope": "%s",
 			"me": "%s"
-		}`, token.AccessToken, token.Scope.String(), token.Me.String()))
-	})
+		}`, token.AccessToken, token.Scope.String(), token.Me.String())
+	}))
+	t.Cleanup(tokenServer.Close)
 
-	client, _, cleanup := httptest.New(t, router.Handler)
-	t.Cleanup(cleanup)
+	subjectServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set(common.HeaderContentType, common.MIMETextHTMLCharsetUTF8)
+		fmt.Fprint(w, `<link rel="token_endpoint" href="`+tokenServer.URL+`/token">`)
+	}))
+	t.Cleanup(subjectServer.Close)
 
-	result, err := ucase.NewTicketUseCase(nil, client, domain.TestConfig(t)).
-		Redeem(context.Background(), ticket)
+	ticket.Resource, _ = url.Parse(subjectServer.URL + "/")
+
+	result, err := ucase.NewTicketUseCase(nil, subjectServer.Client(), domain.TestConfig(t)).
+		Redeem(context.Background(), *ticket)
 	if err != nil {
 		t.Fatal(err)
 	}

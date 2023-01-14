@@ -1,13 +1,15 @@
 package usecase
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"net/http"
 	"net/url"
 	"time"
 
 	json "github.com/goccy/go-json"
-	http "github.com/valyala/fasthttp"
 
 	"source.toby3d.me/toby3d/auth/internal/common"
 	"source.toby3d.me/toby3d/auth/internal/domain"
@@ -47,26 +49,28 @@ func NewTicketUseCase(tickets ticket.Repository, client *http.Client, config *do
 	}
 }
 
-func (useCase *ticketUseCase) Generate(ctx context.Context, tkt *domain.Ticket) error {
-	req := http.AcquireRequest()
-	defer http.ReleaseRequest(req)
-	req.Header.SetMethod(http.MethodGet)
-	req.SetRequestURI(tkt.Subject.String())
-
-	resp := http.AcquireResponse()
-	defer http.ReleaseResponse(resp)
-
-	if err := useCase.client.Do(req, resp); err != nil {
+func (useCase *ticketUseCase) Generate(ctx context.Context, tkt domain.Ticket) error {
+	resp, err := useCase.client.Get(tkt.Subject.String())
+	if err != nil {
 		return fmt.Errorf("cannot discovery ticket subject: %w", err)
 	}
 
-	var ticketEndpoint *url.URL
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("cannot read response body: %w", err)
+	}
+
+	buf := bytes.NewReader(body)
+	ticketEndpoint := new(url.URL)
 
 	// NOTE(toby3d): find metadata first
-	if metadata, err := httputil.ExtractMetadata(resp, useCase.client); err == nil && metadata != nil {
+	metadata, err := httputil.ExtractFromMetadata(useCase.client, tkt.Subject.String())
+	if err == nil && metadata != nil {
 		ticketEndpoint = metadata.TicketEndpoint
 	} else { // NOTE(toby3d): fallback to old links searching
-		if endpoints := httputil.ExtractEndpoints(resp, "ticket_endpoint"); len(endpoints) > 0 {
+		endpoints := httputil.ExtractEndpoints(buf, tkt.Subject.URL(), resp.Header.Get(common.HeaderLink),
+			"ticket_endpoint")
+		if len(endpoints) > 0 {
 			ticketEndpoint = endpoints[len(endpoints)-1]
 		}
 	}
@@ -79,65 +83,59 @@ func (useCase *ticketUseCase) Generate(ctx context.Context, tkt *domain.Ticket) 
 		return fmt.Errorf("cannot save ticket in store: %w", err)
 	}
 
-	req.Reset()
-	req.Header.SetMethod(http.MethodPost)
-	req.SetRequestURI(ticketEndpoint.String())
-	req.Header.SetContentType(common.MIMEApplicationForm)
-	req.PostArgs().Set("ticket", tkt.Ticket)
-	req.PostArgs().Set("subject", tkt.Subject.String())
-	req.PostArgs().Set("resource", tkt.Resource.String())
-	resp.Reset()
+	payload := make(url.Values)
+	payload.Set("ticket", tkt.Ticket)
+	payload.Set("subject", tkt.Subject.String())
+	payload.Set("resource", tkt.Resource.String())
 
-	if err := useCase.client.Do(req, resp); err != nil {
+	if _, err = useCase.client.PostForm(ticketEndpoint.String(), payload); err != nil {
 		return fmt.Errorf("cannot send ticket to subject ticket_endpoint: %w", err)
 	}
 
 	return nil
 }
 
-func (useCase *ticketUseCase) Redeem(ctx context.Context, tkt *domain.Ticket) (*domain.Token, error) {
-	req := http.AcquireRequest()
-	defer http.ReleaseRequest(req)
-	req.SetRequestURI(tkt.Resource.String())
-	req.Header.SetMethod(http.MethodGet)
-
-	resp := http.AcquireResponse()
-	defer http.ReleaseResponse(resp)
-
-	if err := useCase.client.Do(req, resp); err != nil {
+func (useCase *ticketUseCase) Redeem(ctx context.Context, tkt domain.Ticket) (*domain.Token, error) {
+	resp, err := useCase.client.Get(tkt.Resource.String())
+	if err != nil {
 		return nil, fmt.Errorf("cannot discovery ticket resource: %w", err)
 	}
 
-	var tokenEndpoint *url.URL
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read response body: %w", err)
+	}
+
+	buf := bytes.NewReader(body)
+	tokenEndpoint := new(url.URL)
 
 	// NOTE(toby3d): find metadata first
-	if metadata, err := httputil.ExtractMetadata(resp, useCase.client); err == nil && metadata != nil {
+	metadata, err := httputil.ExtractFromMetadata(useCase.client, tkt.Resource.String())
+	if err == nil && metadata != nil {
 		tokenEndpoint = metadata.TokenEndpoint
 	} else { // NOTE(toby3d): fallback to old links searching
-		if endpoints := httputil.ExtractEndpoints(resp, "token_endpoint"); len(endpoints) > 0 {
+		endpoints := httputil.ExtractEndpoints(buf, tkt.Resource, resp.Header.Get(common.HeaderLink),
+			"token_endpoint")
+		if len(endpoints) > 0 {
 			tokenEndpoint = endpoints[len(endpoints)-1]
 		}
 	}
 
-	if tokenEndpoint == nil {
+	if tokenEndpoint == nil || tokenEndpoint.String() == "" {
 		return nil, ticket.ErrTokenEndpointNotExist
 	}
 
-	req.Reset()
-	req.Header.SetMethod(http.MethodPost)
-	req.SetRequestURI(tokenEndpoint.String())
-	req.Header.SetContentType(common.MIMEApplicationForm)
-	req.Header.Set(http.HeaderAccept, common.MIMEApplicationJSON)
-	req.PostArgs().Set("grant_type", domain.GrantTypeTicket.String())
-	req.PostArgs().Set("ticket", tkt.Ticket)
-	resp.Reset()
+	payload := make(url.Values)
+	payload.Set("grant_type", domain.GrantTypeTicket.String())
+	payload.Set("ticket", tkt.Ticket)
 
-	if err := useCase.client.Do(req, resp); err != nil {
+	resp, err = useCase.client.PostForm(tokenEndpoint.String(), payload)
+	if err != nil {
 		return nil, fmt.Errorf("cannot exchange ticket on token_endpoint: %w", err)
 	}
 
 	data := new(AccessToken)
-	if err := json.Unmarshal(resp.Body(), data); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(data); err != nil {
 		return nil, fmt.Errorf("cannot unmarshal access token response: %w", err)
 	}
 
@@ -147,8 +145,8 @@ func (useCase *ticketUseCase) Redeem(ctx context.Context, tkt *domain.Ticket) (*
 		Scope:     nil, // TODO(toby3d)
 		// TODO(toby3d): should this also include client_id?
 		// https://github.com/indieweb/indieauth/issues/85
-		ClientID:     nil,
-		Me:           data.Me,
+		ClientID:     domain.ClientID{},
+		Me:           *data.Me,
 		AccessToken:  data.AccessToken,
 		RefreshToken: "", // TODO(toby3d)
 	}, nil
@@ -163,8 +161,8 @@ func (useCase *ticketUseCase) Exchange(ctx context.Context, ticket string) (*dom
 	token, err := domain.NewToken(domain.NewTokenOptions{
 		Expiration:  useCase.config.JWT.Expiry,
 		Scope:       domain.Scopes{domain.ScopeRead},
-		Issuer:      nil,
-		Subject:     tkt.Subject,
+		Issuer:      domain.ClientID{},
+		Subject:     *tkt.Subject,
 		Secret:      []byte(useCase.config.JWT.Secret),
 		Algorithm:   useCase.config.JWT.Algorithm,
 		NonceLength: useCase.config.JWT.NonceLength,

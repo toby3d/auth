@@ -1,14 +1,17 @@
 package http
 
 import (
+	"bytes"
 	"context"
 	"fmt"
-	"net"
+	"io"
+	"net/http"
 	"net/url"
 
-	http "github.com/valyala/fasthttp"
+	"golang.org/x/exp/slices"
 
 	"source.toby3d.me/toby3d/auth/internal/client"
+	"source.toby3d.me/toby3d/auth/internal/common"
 	"source.toby3d.me/toby3d/auth/internal/domain"
 	"source.toby3d.me/toby3d/auth/internal/httputil"
 )
@@ -34,33 +37,18 @@ func NewHTTPClientRepository(c *http.Client) client.Repository {
 	}
 }
 
-func (repo *httpClientRepository) Get(ctx context.Context, cid *domain.ClientID) (*domain.Client, error) {
-	ips, err := net.LookupIP(cid.URL().Hostname())
+// WARN(toby3d): not implemented.
+func (httpClientRepository) Create(_ context.Context, _ domain.Client) error {
+	return nil
+}
+
+func (repo httpClientRepository) Get(ctx context.Context, cid domain.ClientID) (*domain.Client, error) {
+	resp, err := repo.client.Get(cid.String())
 	if err != nil {
-		return nil, fmt.Errorf("cannot resolve client IP by id: %w", err)
-	}
-
-	for _, ip := range ips {
-		if !ip.IsLoopback() {
-			continue
-		}
-
-		return nil, client.ErrNotExist
-	}
-
-	req := http.AcquireRequest()
-	defer http.ReleaseRequest(req)
-	req.SetRequestURI(cid.String())
-	req.Header.SetMethod(http.MethodGet)
-
-	resp := http.AcquireResponse()
-	defer http.ReleaseResponse(resp)
-
-	if err := repo.client.DoRedirects(req, resp, DefaultMaxRedirectsCount); err != nil {
 		return nil, fmt.Errorf("failed to make a request to the client: %w", err)
 	}
 
-	if resp.StatusCode() == http.StatusNotFound {
+	if resp.StatusCode == http.StatusNotFound {
 		return nil, fmt.Errorf("%w: status on client page is not 200", client.ErrNotExist)
 	}
 
@@ -72,74 +60,62 @@ func (repo *httpClientRepository) Get(ctx context.Context, cid *domain.ClientID)
 		Name:        make([]string, 0),
 	}
 
-	extract(client, resp)
+	extract(resp.Body, resp.Request.URL, client, resp.Header.Get(common.HeaderLink))
 
 	return client, nil
 }
 
 //nolint:gocognit,cyclop
-func extract(dst *domain.Client, src *http.Response) {
-	for _, endpoint := range httputil.ExtractEndpoints(src, relRedirectURI) {
-		if !containsURL(dst.RedirectURI, endpoint) {
+func extract(r io.Reader, u *url.URL, dst *domain.Client, header string) {
+	body, _ := io.ReadAll(r)
+
+	for _, endpoint := range httputil.ExtractEndpoints(bytes.NewReader(body), u, header, relRedirectURI) {
+		if !containsUrl(dst.RedirectURI, endpoint) {
 			dst.RedirectURI = append(dst.RedirectURI, endpoint)
 		}
 	}
 
-	for _, itemType := range []string{hXApp, hApp} {
-		for _, name := range httputil.ExtractProperty(src, itemType, propertyName) {
-			if n, ok := name.(string); ok && !containsString(dst.Name, n) {
+	for _, itemType := range []string{hApp, hXApp} {
+		for _, name := range httputil.ExtractProperty(bytes.NewReader(body), u, itemType, propertyName) {
+			if n, ok := name.(string); ok && !slices.Contains(dst.Name, n) {
 				dst.Name = append(dst.Name, n)
 			}
 		}
 
-		for _, logo := range httputil.ExtractProperty(src, itemType, propertyLogo) {
-			var (
-				u   *url.URL
-				err error
-			)
+		for _, logo := range httputil.ExtractProperty(bytes.NewReader(body), u, itemType, propertyLogo) {
+			var logoURL *url.URL
+			var err error
 
 			switch l := logo.(type) {
 			case string:
-				u, err = url.Parse(l)
+				logoURL, err = url.Parse(l)
 			case map[string]string:
 				if value, ok := l["value"]; ok {
-					u, err = url.Parse(value)
+					logoURL, err = url.Parse(value)
 				}
 			}
 
-			if err != nil || containsURL(dst.Logo, u) {
+			if err != nil || containsUrl(dst.Logo, logoURL) {
 				continue
 			}
 
-			dst.Logo = append(dst.Logo, u)
+			dst.Logo = append(dst.Logo, logoURL)
 		}
 
-		for _, property := range httputil.ExtractProperty(src, itemType, propertyURL) {
+		for _, property := range httputil.ExtractProperty(bytes.NewReader(body), u, itemType, propertyURL) {
 			prop, ok := property.(string)
 			if !ok {
 				continue
 			}
 
-			if u, err := url.Parse(prop); err == nil || !containsURL(dst.URL, u) {
+			if u, err := url.Parse(prop); err == nil && !containsUrl(dst.URL, u) {
 				dst.URL = append(dst.URL, u)
 			}
 		}
 	}
 }
 
-func containsString(src []string, find string) bool {
-	for i := range src {
-		if src[i] != find {
-			continue
-		}
-
-		return true
-	}
-
-	return false
-}
-
-func containsURL(src []*url.URL, find *url.URL) bool {
+func containsUrl(src []*url.URL, find *url.URL) bool {
 	for i := range src {
 		if src[i].String() != find.String() {
 			continue

@@ -3,16 +3,15 @@ package http_test
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
-	"github.com/fasthttp/router"
-	"github.com/stretchr/testify/assert"
-	http "github.com/valyala/fasthttp"
+	"github.com/google/go-cmp/cmp"
 
 	"source.toby3d.me/toby3d/auth/internal/common"
 	"source.toby3d.me/toby3d/auth/internal/domain"
-	"source.toby3d.me/toby3d/auth/internal/testing/httptest"
 	repository "source.toby3d.me/toby3d/auth/internal/user/repository/http"
 )
 
@@ -40,39 +39,29 @@ func TestGet(t *testing.T) {
 	t.Parallel()
 
 	user := domain.TestUser(t)
-	client, _, cleanup := httptest.New(t, testHandler(t, user))
-	t.Cleanup(cleanup)
 
-	result, err := repository.NewHTTPUserRepository(client).Get(context.Background(), user.Me)
+	srv := httptest.NewServer(testHandler(t, user))
+	t.Cleanup(srv.Close)
+
+	user.Me = domain.TestMe(t, srv.URL+"/")
+
+	result, err := repository.NewHTTPUserRepository(srv.Client()).
+		Get(context.Background(), *user.Me)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// NOTE(toby3d): endpoints
-	assert.Equal(t, user.AuthorizationEndpoint.String(), result.AuthorizationEndpoint.String())
-	assert.Equal(t, user.TokenEndpoint.String(), result.TokenEndpoint.String())
-	assert.Equal(t, user.Micropub.String(), result.Micropub.String())
-	assert.Equal(t, user.Microsub.String(), result.Microsub.String())
-
-	// NOTE(toby3d): profile
-	assert.Equal(t, user.Profile.Name, result.Profile.Name)
-	assert.Equal(t, user.Profile.Email, result.Profile.Email)
-
-	for i := range user.Profile.URL {
-		assert.Equal(t, user.Profile.URL[i].String(), result.Profile.URL[i].String())
-	}
-
-	for i := range user.Profile.Photo {
-		assert.Equal(t, user.Profile.Photo[i].String(), result.Profile.Photo[i].String())
+	if diff := cmp.Diff(user, result, cmp.AllowUnexported(domain.Me{}, domain.Email{})); diff != "" {
+		t.Errorf("%+s", diff)
 	}
 }
 
-func testHandler(tb testing.TB, user *domain.User) http.RequestHandler {
+func testHandler(tb testing.TB, user *domain.User) http.Handler {
 	tb.Helper()
 
-	router := router.New()
-	router.GET("/", func(ctx *http.RequestCtx) {
-		ctx.Response.Header.Set(http.HeaderLink, strings.Join([]string{
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set(common.HeaderLink, strings.Join([]string{
 			`<` + user.AuthorizationEndpoint.String() + `>; rel="authorization_endpoint"`,
 			`<` + user.IndieAuthMetadata.String() + `>; rel="indieauth-metadata"`,
 			`<` + user.Micropub.String() + `>; rel="micropub"`,
@@ -80,17 +69,17 @@ func testHandler(tb testing.TB, user *domain.User) http.RequestHandler {
 			`<` + user.TicketEndpoint.String() + `>; rel="ticket_endpoint"`,
 			`<` + user.TokenEndpoint.String() + `>; rel="token_endpoint"`,
 		}, ", "))
-		ctx.SuccessString(common.MIMETextHTMLCharsetUTF8, fmt.Sprintf(
-			testBody, user.Name[0], user.URL[0].String(), user.Photo[0].String(), user.Email[0],
-		))
+		w.Header().Set(common.HeaderContentType, common.MIMETextHTMLCharsetUTF8)
+		fmt.Fprintf(w, testBody, user.Name[0], user.URL[0].String(), user.Photo[0].String(), user.Email[0])
 	})
-	router.GET(user.IndieAuthMetadata.Path, func(ctx *http.RequestCtx) {
-		ctx.SuccessString(common.MIMEApplicationJSONCharsetUTF8, `{
+	mux.HandleFunc(user.IndieAuthMetadata.Path, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set(common.HeaderContentType, common.MIMEApplicationJSONCharsetUTF8)
+		fmt.Fprint(w, `{
 			"issuer": "`+user.Me.String()+`",
 			"authorization_endpoint": "`+user.AuthorizationEndpoint.String()+`",
 			"token_endpoint": "`+user.TokenEndpoint.String()+`"
 		}`)
 	})
 
-	return router.Handler
+	return mux
 }

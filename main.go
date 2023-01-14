@@ -5,27 +5,27 @@
 package main
 
 import (
+	"context"
+	"embed"
 	_ "embed"
 	"errors"
 	"flag"
-	"fmt"
+	"io/fs"
 	"log"
+	"net/http"
+	_ "net/http/pprof"
+	"net/url"
 	"os"
 	"os/signal"
-	"path"
 	"path/filepath"
 	"runtime"
 	"runtime/pprof"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 
-	"github.com/fasthttp/router"
 	"github.com/jmoiron/sqlx"
 	"github.com/spf13/viper"
-	http "github.com/valyala/fasthttp"
-	"github.com/valyala/fasthttp/pprofhandler"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 	_ "modernc.org/sqlite"
@@ -40,6 +40,7 @@ import (
 	"source.toby3d.me/toby3d/auth/internal/domain"
 	healthhttpdelivery "source.toby3d.me/toby3d/auth/internal/health/delivery/http"
 	metadatahttpdelivery "source.toby3d.me/toby3d/auth/internal/metadata/delivery/http"
+	"source.toby3d.me/toby3d/auth/internal/middleware"
 	"source.toby3d.me/toby3d/auth/internal/profile"
 	profilehttprepo "source.toby3d.me/toby3d/auth/internal/profile/repository/http"
 	profileucase "source.toby3d.me/toby3d/auth/internal/profile/usecase"
@@ -57,6 +58,7 @@ import (
 	tokenmemoryrepo "source.toby3d.me/toby3d/auth/internal/token/repository/memory"
 	tokensqlite3repo "source.toby3d.me/toby3d/auth/internal/token/repository/sqlite3"
 	tokenucase "source.toby3d.me/toby3d/auth/internal/token/usecase"
+	"source.toby3d.me/toby3d/auth/internal/urlutil"
 	userhttpdelivery "source.toby3d.me/toby3d/auth/internal/user/delivery/http"
 )
 
@@ -69,6 +71,7 @@ type (
 		tickets  ticket.UseCase
 		profiles profile.UseCase
 		tokens   token.UseCase
+		static   fs.FS
 	}
 
 	NewAppOptions struct {
@@ -78,6 +81,7 @@ type (
 		Tickets  ticket.Repository
 		Tokens   token.Repository
 		Profiles profile.Repository
+		Static   fs.FS
 	}
 )
 
@@ -93,12 +97,15 @@ var (
 	logger          = log.New(os.Stdout, "IndieAuth\t", log.Lmsgprefix|log.LstdFlags|log.LUTC)
 	config          = new(domain.Config)
 	indieAuthClient = new(domain.Client)
-
-	configPath     string
-	cpuProfilePath string
-	memProfilePath string
-	enablePprof    bool
 )
+
+var (
+	configPath, cpuProfilePath, memProfilePath string
+	enablePprof                                bool
+)
+
+//go:embed assets/*
+var staticFS embed.FS
 
 //nolint:gochecknoinits
 func init() {
@@ -133,33 +140,43 @@ func init() {
 	rootURL := config.Server.GetRootURL()
 	indieAuthClient.Name = []string{config.Name}
 
-	if indieAuthClient.ID, err = domain.ParseClientID(rootURL); err != nil {
+	cid, err := domain.ParseClientID(rootURL)
+	if err != nil {
 		logger.Fatalln("fail to read config:", err)
 	}
 
-	url, err := domain.ParseURL(rootURL)
+	indieAuthClient.ID = *cid
+
+	u, err := url.Parse(rootURL)
 	if err != nil {
 		logger.Fatalln("cannot parse root URL as client URL:", err)
 	}
 
-	logo, err := domain.ParseURL(rootURL + config.Server.StaticURLPrefix + "/icon.svg")
+	logo, err := url.Parse(rootURL + config.Server.StaticURLPrefix + "/icon.svg")
 	if err != nil {
 		logger.Fatalln("cannot parse root URL as client URL:", err)
 	}
 
-	redirectURI, err := domain.ParseURL(rootURL + "/callback")
+	redirectURI, err := url.Parse(rootURL + "callback")
 	if err != nil {
 		logger.Fatalln("cannot parse root URL as client URL:", err)
 	}
 
-	indieAuthClient.URL = []*domain.URL{url}
-	indieAuthClient.Logo = []*domain.URL{logo}
-	indieAuthClient.RedirectURI = []*domain.URL{redirectURI}
+	indieAuthClient.URL = []*url.URL{u}
+	indieAuthClient.Logo = []*url.URL{logo}
+	indieAuthClient.RedirectURI = []*url.URL{redirectURI}
 }
 
 //nolint:funlen,cyclop // "god object" and the entry point of all modules
 func main() {
+	ctx := context.Background()
+
 	var opts NewAppOptions
+
+	var err error
+	if opts.Static, err = fs.Sub(staticFS, "assets"); err != nil {
+		logger.Fatalln(err)
+	}
 
 	switch strings.ToLower(config.Database.Type) {
 	case "sqlite3":
@@ -176,51 +193,27 @@ func main() {
 		opts.Sessions = sessionsqlite3repo.NewSQLite3SessionRepository(store)
 		opts.Tickets = ticketsqlite3repo.NewSQLite3TicketRepository(store, config)
 	case "memory":
-		store := new(sync.Map)
-		opts.Tokens = tokenmemoryrepo.NewMemoryTokenRepository(store)
-		opts.Sessions = sessionmemoryrepo.NewMemorySessionRepository(store, config)
-		opts.Tickets = ticketmemoryrepo.NewMemoryTicketRepository(store, config)
+		opts.Tokens = tokenmemoryrepo.NewMemoryTokenRepository()
+		opts.Sessions = sessionmemoryrepo.NewMemorySessionRepository(*config)
+		opts.Tickets = ticketmemoryrepo.NewMemoryTicketRepository(*config)
 	default:
 		log.Fatalln("unsupported database type, use 'memory' or 'sqlite3'")
 	}
 
 	go opts.Sessions.GC()
 
-	//nolint:exhaustivestruct // too many options
-	opts.Client = &http.Client{
-		Name:         fmt.Sprintf("%s/0.1 (+%s)", config.Name, config.Server.GetAddress()),
-		ReadTimeout:  DefaultReadTimeout,
-		WriteTimeout: DefaultWriteTimeout,
-	}
+	opts.Client = new(http.Client)
 	opts.Clients = clienthttprepo.NewHTTPClientRepository(opts.Client)
 	opts.Profiles = profilehttprepo.NewHTPPClientRepository(opts.Client)
 
-	r := router.New()
-	NewApp(opts).Register(r)
-	//nolint:exhaustivestruct // too many options
-	r.ServeFilesCustom(path.Join(config.Server.StaticURLPrefix, "{filepath:*}"), &http.FS{
-		Root:               config.Server.StaticRootPath,
-		CacheDuration:      DefaultCacheDuration,
-		AcceptByteRange:    true,
-		Compress:           true,
-		CompressBrotli:     true,
-		GenerateIndexPages: true,
-	})
-
-	if enablePprof {
-		r.GET("/debug/pprof/{filepath:*}", pprofhandler.PprofHandler)
-	}
+	app := NewApp(opts)
 
 	//nolint:exhaustivestruct
 	server := &http.Server{
-		Name:                  fmt.Sprintf("IndieAuth/0.1 (+%s)", config.Server.GetAddress()),
-		Handler:               r.Handler,
-		ReadTimeout:           DefaultReadTimeout,
-		WriteTimeout:          DefaultWriteTimeout,
-		DisableKeepalive:      true,
-		ReduceMemoryUsage:     true,
-		SecureErrorLogMessage: true,
-		CloseOnShutdown:       true,
+		Addr:         config.Server.GetAddress(),
+		Handler:      app.Handler(),
+		ReadTimeout:  DefaultReadTimeout,
+		WriteTimeout: DefaultWriteTimeout,
 	}
 
 	done := make(chan os.Signal, 1)
@@ -243,15 +236,15 @@ func main() {
 		logger.Printf("started at %s, available at %s", config.Server.GetAddress(),
 			config.Server.GetRootURL())
 
-		err := server.ListenAndServe(config.Server.GetAddress())
-		if err != nil && !errors.Is(err, http.ErrConnectionClosed) {
+		err := server.ListenAndServe()
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logger.Fatalln("cannot listen and serve:", err)
 		}
 	}()
 
 	<-done
 
-	if err := server.Shutdown(); err != nil {
+	if err := server.Shutdown(ctx); err != nil {
 		logger.Fatalln("failed shutdown of server:", err)
 	}
 
@@ -274,6 +267,7 @@ func main() {
 
 func NewApp(opts NewAppOptions) *App {
 	return &App{
+		static:   opts.Static,
 		auth:     authucase.NewAuthUseCase(opts.Sessions, opts.Profiles, config),
 		clients:  clientucase.NewClientUseCase(opts.Clients),
 		matcher:  language.NewMatcher(message.DefaultCatalog.Languages()),
@@ -289,20 +283,19 @@ func NewApp(opts NewAppOptions) *App {
 	}
 }
 
-func (app *App) Register(r *router.Router) {
-	tickethttpdelivery.NewRequestHandler(app.tickets, app.matcher, config).Register(r)
-	healthhttpdelivery.NewRequestHandler().Register(r)
-	metadatahttpdelivery.NewRequestHandler(&domain.Metadata{
-		Issuer:                indieAuthClient.ID,
-		AuthorizationEndpoint: domain.MustParseURL(indieAuthClient.ID.String() + "authorize"),
-		TokenEndpoint:         domain.MustParseURL(indieAuthClient.ID.String() + "token"),
-		TicketEndpoint:        domain.MustParseURL(indieAuthClient.ID.String() + "ticket"),
+// TODO(toby3d): move module middlewares to here.
+func (app *App) Handler() http.Handler {
+	metadata := metadatahttpdelivery.NewHandler(&domain.Metadata{
+		Issuer:                indieAuthClient.ID.URL(),
+		AuthorizationEndpoint: indieAuthClient.ID.URL().JoinPath("authorize"),
+		TokenEndpoint:         indieAuthClient.ID.URL().JoinPath("token"),
+		TicketEndpoint:        indieAuthClient.ID.URL().JoinPath("ticket"),
 		MicropubEndpoint:      nil,
 		MicrosubEndpoint:      nil,
-		IntrospectionEndpoint: domain.MustParseURL(indieAuthClient.ID.String() + "introspect"),
-		RevocationEndpoint:    domain.MustParseURL(indieAuthClient.ID.String() + "revocation"),
-		UserinfoEndpoint:      domain.MustParseURL(indieAuthClient.ID.String() + "userinfo"),
-		ServiceDocumentation:  domain.MustParseURL("https://indieauth.net/source/"),
+		IntrospectionEndpoint: indieAuthClient.ID.URL().JoinPath("introspect"),
+		RevocationEndpoint:    indieAuthClient.ID.URL().JoinPath("revocation"),
+		UserinfoEndpoint:      indieAuthClient.ID.URL().JoinPath("userinfo"),
+		ServiceDocumentation:  &url.URL{Scheme: "https", Host: "indieauth.net", Path: "/source/"},
 		IntrospectionEndpointAuthMethodsSupported: []string{"Bearer"},
 		RevocationEndpointAuthMethodsSupported:    []string{"none"},
 		ScopesSupported: domain.Scopes{
@@ -319,8 +312,14 @@ func (app *App) Register(r *router.Router) {
 			domain.ScopeRead,
 			domain.ScopeUpdate,
 		},
-		ResponseTypesSupported: []domain.ResponseType{domain.ResponseTypeCode, domain.ResponseTypeID},
-		GrantTypesSupported:    []domain.GrantType{domain.GrantTypeAuthorizationCode, domain.GrantTypeTicket},
+		ResponseTypesSupported: []domain.ResponseType{
+			domain.ResponseTypeCode,
+			domain.ResponseTypeID,
+		},
+		GrantTypesSupported: []domain.GrantType{
+			domain.GrantTypeAuthorizationCode,
+			domain.GrantTypeTicket,
+		},
 		CodeChallengeMethodsSupported: []domain.CodeChallengeMethod{
 			domain.CodeChallengeMethodMD5,
 			domain.CodeChallengeMethodPLAIN,
@@ -329,20 +328,57 @@ func (app *App) Register(r *router.Router) {
 			domain.CodeChallengeMethodS512,
 		},
 		AuthorizationResponseIssParameterSupported: true,
-	}).Register(r)
-	tokenhttpdelivery.NewRequestHandler(app.tokens, app.tickets, config).Register(r)
-	clienthttpdelivery.NewRequestHandler(clienthttpdelivery.NewRequestHandlerOptions{
-		Client:  indieAuthClient,
-		Config:  config,
-		Matcher: app.matcher,
-		Tokens:  app.tokens,
-	}).Register(r)
-	authhttpdelivery.NewRequestHandler(authhttpdelivery.NewRequestHandlerOptions{
+	}).Handler()
+	health := healthhttpdelivery.NewHandler().Handler()
+	auth := authhttpdelivery.NewHandler(authhttpdelivery.NewHandlerOptions{
 		Auth:     app.auth,
 		Clients:  app.clients,
-		Config:   config,
+		Config:   *config,
 		Matcher:  app.matcher,
 		Profiles: app.profiles,
-	}).Register(r)
-	userhttpdelivery.NewRequestHandler(app.tokens, config).Register(r)
+	}).Handler()
+	token := tokenhttpdelivery.NewHandler(app.tokens, app.tickets, config).Handler()
+	client := clienthttpdelivery.NewHandler(clienthttpdelivery.NewHandlerOptions{
+		Client:  *indieAuthClient,
+		Config:  *config,
+		Matcher: app.matcher,
+		Tokens:  app.tokens,
+	}).Handler()
+	user := userhttpdelivery.NewHandler(app.tokens, config).Handler()
+	ticket := tickethttpdelivery.NewHandler(app.tickets, app.matcher, *config).Handler()
+	static := http.FileServer(http.FS(app.static))
+
+	return http.HandlerFunc(middleware.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var head string
+		head, r.URL.Path = urlutil.ShiftPath(r.URL.Path)
+
+		switch head {
+		default:
+			r.URL = r.URL.JoinPath(head, r.URL.Path)
+
+			static.ServeHTTP(w, r)
+		case "", "callback":
+			r.URL = r.URL.JoinPath(head, r.URL.Path)
+
+			client.ServeHTTP(w, r)
+		case "token", "introspect", "revocation":
+			r.URL = r.URL.JoinPath(head, r.URL.Path)
+
+			token.ServeHTTP(w, r)
+		case ".well-known":
+			if head, _ = urlutil.ShiftPath(r.URL.Path); head == "oauth-authorization-server" {
+				metadata.ServeHTTP(w, r)
+			} else {
+				http.NotFound(w, r)
+			}
+		case "authorize":
+			auth.ServeHTTP(w, r)
+		case "health":
+			health.ServeHTTP(w, r)
+		case "userinfo":
+			user.ServeHTTP(w, r)
+		case "ticket":
+			ticket.ServeHTTP(w, r)
+		}
+	}).Intercept(middleware.LogFmt()))
 }

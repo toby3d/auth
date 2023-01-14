@@ -1,10 +1,10 @@
 package http
 
 import (
-	"encoding/json"
 	"net/http"
 	"strings"
 
+	"github.com/goccy/go-json"
 	"github.com/lestrrat-go/jwx/v2/jwa"
 
 	"source.toby3d.me/toby3d/auth/internal/common"
@@ -13,19 +13,10 @@ import (
 	"source.toby3d.me/toby3d/auth/internal/token"
 )
 
-type (
-	UserInformationResponse struct {
-		Name  string `json:"name,omitempty"`
-		URL   string `json:"url,omitempty"`
-		Photo string `json:"photo,omitempty"`
-		Email string `json:"email,omitempty"`
-	}
-
-	Handler struct {
-		config *domain.Config
-		tokens token.UseCase
-	}
-)
+type Handler struct {
+	config *domain.Config
+	tokens token.UseCase
+}
 
 func NewHandler(tokens token.UseCase, config *domain.Config) *Handler {
 	return &Handler{
@@ -34,7 +25,7 @@ func NewHandler(tokens token.UseCase, config *domain.Config) *Handler {
 	}
 }
 
-func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Handler() http.Handler {
 	chain := middleware.Chain{
 		//nolint:exhaustivestruct
 		middleware.JWTWithConfig(middleware.JWTConfig{
@@ -45,13 +36,18 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			Skipper:       middleware.DefaultSkipper,
 			TokenLookup:   "header:" + common.HeaderAuthorization + ":Bearer ",
 		}),
-		middleware.LogFmt(),
 	}
 
-	chain.Handler(h.handleFunc).ServeHTTP(w, r)
+	return chain.Handler(h.handleFunc)
 }
 
 func (h *Handler) handleFunc(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "" && r.Method != http.MethodGet {
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+
+		return
+	}
+
 	w.Header().Set(common.HeaderContentType, common.MIMEApplicationJSONCharsetUTF8)
 
 	encoder := json.NewEncoder(w)

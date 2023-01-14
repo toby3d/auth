@@ -77,7 +77,6 @@ type (
 		// Possible values:
 		// - "header:<name>"
 		// - "query:<name>"
-		// - "param:<name>"
 		// - "cookie:<name>"
 		// - "form:<name>"
 		// Multiply sources example:

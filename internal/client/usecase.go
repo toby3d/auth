@@ -8,7 +8,7 @@ import (
 
 type UseCase interface {
 	// Discovery returns client public information bu ClientID URL.
-	Discovery(ctx context.Context, id *domain.ClientID) (*domain.Client, error)
+	Discovery(ctx context.Context, id domain.ClientID) (*domain.Client, error)
 }
 
 var ErrInvalidMe error = domain.NewError(

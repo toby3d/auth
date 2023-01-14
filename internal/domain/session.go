@@ -9,9 +9,9 @@ import (
 
 //nolint:tagliatelle
 type Session struct {
-	ClientID            *ClientID           `json:"client_id"`
+	ClientID            ClientID            `json:"client_id"`
 	RedirectURI         *url.URL            `json:"redirect_uri"`
-	Me                  *Me                 `json:"me"`
+	Me                  Me                  `json:"me"`
 	Profile             *Profile            `json:"profile,omitempty"`
 	Scope               Scopes              `json:"scope"`
 	CodeChallengeMethod CodeChallengeMethod `json:"code_challenge_method,omitempty"`
@@ -31,12 +31,12 @@ func TestSession(tb testing.TB) *Session {
 	}
 
 	return &Session{
-		ClientID:            TestClientID(tb),
+		ClientID:            *TestClientID(tb),
 		Code:                code,
 		CodeChallenge:       "hackme",
 		CodeChallengeMethod: CodeChallengeMethodPLAIN,
 		Profile:             TestProfile(tb),
-		Me:                  TestMe(tb, "https://user.example.net/"),
+		Me:                  *TestMe(tb, "https://user.example.net/"),
 		RedirectURI:         &url.URL{Scheme: "https", Host: "example.com", Path: "/callback"},
 		Scope: Scopes{
 			ScopeEmail,

@@ -7,7 +7,8 @@ import (
 )
 
 type Repository interface {
-	Get(ctx context.Context, me *domain.Me) (*domain.Profile, error)
+	Create(ctx context.Context, me domain.Me, profile domain.Profile) error
+	Get(ctx context.Context, me domain.Me) (*domain.Profile, error)
 }
 
 var ErrNotExist error = domain.NewError(

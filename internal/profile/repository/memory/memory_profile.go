@@ -2,8 +2,6 @@ package memory
 
 import (
 	"context"
-	"fmt"
-	"path"
 	"sync"
 
 	"source.toby3d.me/toby3d/auth/internal/domain"
@@ -11,30 +9,33 @@ import (
 )
 
 type memoryProfileRepository struct {
-	store *sync.Map
+	mutex    *sync.RWMutex
+	profiles map[string]domain.Profile
 }
 
-const (
-	ErrPrefix         string = "memory"
-	DefaultPathPrefix string = "profiles"
-)
-
-func NewMemoryProfileRepository(store *sync.Map) profile.Repository {
+func NewMemoryProfileRepository() profile.Repository {
 	return &memoryProfileRepository{
-		store: store,
+		mutex:    new(sync.RWMutex),
+		profiles: make(map[string]domain.Profile),
 	}
 }
 
-func (repo *memoryProfileRepository) Get(_ context.Context, me *domain.Me) (*domain.Profile, error) {
-	src, ok := repo.store.Load(path.Join(DefaultPathPrefix, me.String()))
-	if !ok {
-		return nil, fmt.Errorf("%s: cannot find profile in store: %w", ErrPrefix, profile.ErrNotExist)
+func (repo *memoryProfileRepository) Create(_ context.Context, me domain.Me, p domain.Profile) error {
+	repo.mutex.Lock()
+	defer repo.mutex.Unlock()
+
+	repo.profiles[me.String()] = p
+
+	return nil
+}
+
+func (repo *memoryProfileRepository) Get(_ context.Context, me domain.Me) (*domain.Profile, error) {
+	repo.mutex.RLock()
+	defer repo.mutex.RUnlock()
+
+	if p, ok := repo.profiles[me.String()]; ok {
+		return &p, nil
 	}
 
-	result, ok := src.(*domain.Profile)
-	if !ok {
-		return nil, fmt.Errorf("%s: cannot decode profile from store: %w", ErrPrefix, profile.ErrNotExist)
-	}
-
-	return result, nil
+	return nil, profile.ErrNotExist
 }

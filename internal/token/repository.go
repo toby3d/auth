@@ -7,8 +7,8 @@ import (
 )
 
 type Repository interface {
+	Create(ctx context.Context, accessToken domain.Token) error
 	Get(ctx context.Context, accessToken string) (*domain.Token, error)
-	Create(ctx context.Context, accessToken *domain.Token) error
 }
 
 var (

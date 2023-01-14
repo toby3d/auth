@@ -9,7 +9,7 @@ import (
 
 type (
 	ExchangeOptions struct {
-		ClientID     *domain.ClientID
+		ClientID     domain.ClientID
 		RedirectURI  *url.URL
 		Code         string
 		CodeVerifier string

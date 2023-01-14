@@ -23,7 +23,6 @@ var (
 	errHeaderExtractorValueMissing = errors.New("missing value in request header")
 	errHeaderExtractorValueInvalid = errors.New("invalid value in request header")
 	errQueryExtractorValueMissing  = errors.New("missing value in the query string")
-	errParamExtractorValueMissing  = errors.New("missing value in path params")
 	errCookieExtractorValueMissing = errors.New("missing value in cookies")
 	errFormExtractorValueMissing   = errors.New("missing value in the form")
 )
@@ -67,8 +66,6 @@ func createExtractors(lookups, authScheme string) ([]ValuesExtractor, error) {
 		switch parts[0] {
 		case "query":
 			extractors = append(extractors, valuesFromQuery(parts[1]))
-		// case "param":
-		// 	extractors = append(extractors, valuesFromParam(parts[1]))
 		case "cookie":
 			extractors = append(extractors, valuesFromCookie(parts[1]))
 		case "form":
@@ -162,31 +159,6 @@ func valuesFromQuery(param string) ValuesExtractor {
 		return result, nil
 	}
 }
-
-// valuesFromParam returns a function that extracts values from the url param string.
-/*
-func valuesFromParam(param string) ValuesExtractor {
-	return func(w http.ResponseWriter, r *http.Request) ([]string, error) {
-		result := make([]string, 0)
-		paramVales := r.ParamValues()
-
-		for i, p := range r.ParamNames() {
-			if param == p {
-				result = append(result, paramVales[i])
-				if i >= extractorLimit-1 {
-					break
-				}
-			}
-		}
-
-		if len(result) == 0 {
-			return nil, errParamExtractorValueMissing
-		}
-
-		return result, nil
-	}
-}
-*/
 
 // valuesFromCookie returns a function that extracts values from the named cookie.
 func valuesFromCookie(name string) ValuesExtractor {

@@ -29,7 +29,6 @@ type (
 		Port            string `yaml:"port"`
 		Protocol        string `yaml:"protocol"`
 		RootURL         string `yaml:"rootUrl"`
-		StaticRootPath  string `yaml:"staticRootPath"`
 		StaticURLPrefix string `yaml:"staticUrlPrefix"`
 		EnablePprof     bool   `yaml:"enablePprof"`
 	}
@@ -44,14 +43,14 @@ type (
 	// exchange it for a token or user information.
 	ConfigCode struct {
 		Expiry time.Duration `yaml:"expiry"` // 10m
-		Length int           `yaml:"length"` // 32
+		Length uint8         `yaml:"length"` // 32
 	}
 
 	ConfigJWT struct {
 		Expiry      time.Duration `yaml:"expiry"`    // 1h
 		Algorithm   string        `yaml:"algorithm"` // HS256
 		Secret      string        `yaml:"secret"`
-		NonceLength int           `yaml:"nonceLength"` // 22
+		NonceLength uint8         `yaml:"nonceLength"` // 22
 	}
 
 	ConfigIndieAuth struct {
@@ -62,7 +61,7 @@ type (
 
 	ConfigTicketAuth struct {
 		Expiry time.Duration `yaml:"expiry"` // 1m
-		Length int           `yaml:"length"` // 24
+		Length uint8         `yaml:"length"` // 24
 	}
 
 	ConfigRelMeAuth struct {
@@ -95,7 +94,6 @@ func TestConfig(tb testing.TB) *Config {
 			Port:            "3000",
 			Protocol:        "http",
 			RootURL:         "{{protocol}}://{{domain}}:{{port}}/",
-			StaticRootPath:  "/",
 			StaticURLPrefix: "/static",
 		},
 		Database: ConfigDatabase{
@@ -136,7 +134,6 @@ func (cs ConfigServer) GetRootURL() string {
 		"host":            cs.Host,
 		"port":            cs.Port,
 		"protocol":        cs.Protocol,
-		"staticRootPath":  cs.StaticRootPath,
 		"staticUrlPrefix": cs.StaticURLPrefix,
 	})
 }

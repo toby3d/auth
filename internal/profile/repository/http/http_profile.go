@@ -1,11 +1,12 @@
 package http
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"net/http"
 	"net/url"
-
-	http "github.com/valyala/fasthttp"
 
 	"source.toby3d.me/toby3d/auth/internal/domain"
 	"source.toby3d.me/toby3d/auth/internal/httputil"
@@ -33,29 +34,33 @@ func NewHTPPClientRepository(client *http.Client) profile.Repository {
 	}
 }
 
+// WARN(toby3d): not implemented.
+func (repo *httpProfileRepository) Create(_ context.Context, _ domain.Me, _ domain.Profile) error {
+	return nil
+}
+
 //nolint:cyclop
-func (repo *httpProfileRepository) Get(ctx context.Context, me *domain.Me) (*domain.Profile, error) {
-	req := http.AcquireRequest()
-	defer http.ReleaseRequest(req)
-	req.Header.SetMethod(http.MethodGet)
-	req.SetRequestURI(me.String())
-
-	resp := http.AcquireResponse()
-	defer http.ReleaseResponse(resp)
-
-	if err := repo.client.DoRedirects(req, resp, DefaultMaxRedirectsCount); err != nil {
+func (repo *httpProfileRepository) Get(ctx context.Context, me domain.Me) (*domain.Profile, error) {
+	resp, err := repo.client.Get(me.String())
+	if err != nil {
 		return nil, fmt.Errorf("%s: cannot fetch user by me: %w", ErrPrefix, err)
 	}
 
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read response body: %w", err)
+	}
+
+	buf := bytes.NewReader(body)
 	result := domain.NewProfile()
 
-	for _, name := range httputil.ExtractProperty(resp, hCard, propertyName) {
+	for _, name := range httputil.ExtractProperty(buf, me.URL(), hCard, propertyName) {
 		if n, ok := name.(string); ok {
 			result.Name = append(result.Name, n)
 		}
 	}
 
-	for _, rawEmail := range httputil.ExtractProperty(resp, hCard, propertyEmail) {
+	for _, rawEmail := range httputil.ExtractProperty(buf, me.URL(), hCard, propertyEmail) {
 		email, ok := rawEmail.(string)
 		if !ok {
 			continue
@@ -66,7 +71,7 @@ func (repo *httpProfileRepository) Get(ctx context.Context, me *domain.Me) (*dom
 		}
 	}
 
-	for _, rawURL := range httputil.ExtractProperty(resp, hCard, propertyURL) {
+	for _, rawURL := range httputil.ExtractProperty(buf, me.URL(), hCard, propertyURL) {
 		rawURL, ok := rawURL.(string)
 		if !ok {
 			continue
@@ -77,7 +82,7 @@ func (repo *httpProfileRepository) Get(ctx context.Context, me *domain.Me) (*dom
 		}
 	}
 
-	for _, rawPhoto := range httputil.ExtractProperty(resp, hCard, propertyPhoto) {
+	for _, rawPhoto := range httputil.ExtractProperty(buf, me.URL(), hCard, propertyPhoto) {
 		photo, ok := rawPhoto.(string)
 		if !ok {
 			continue
@@ -88,8 +93,8 @@ func (repo *httpProfileRepository) Get(ctx context.Context, me *domain.Me) (*dom
 		}
 	}
 
-	if result.GetName() == "" && result.GetURL() == nil &&
-		result.GetPhoto() == nil && result.GetEmail() == nil {
+	// TODO(toby3d): create method like result.Empty()?
+	if result.GetName() == "" && result.GetURL() == nil && result.GetPhoto() == nil && result.GetEmail() == nil {
 		return nil, profile.ErrNotExist
 	}
 

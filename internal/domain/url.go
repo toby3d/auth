@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"strconv"
 	"testing"
+
+	"source.toby3d.me/toby3d/auth/internal/common"
 )
 
 // URL describe any valid HTTP URL.
@@ -74,4 +76,12 @@ func (u *URL) UnmarshalJSON(v []byte) error {
 
 func (u URL) MarshalJSON() ([]byte, error) {
 	return []byte(strconv.Quote(u.String())), nil
+}
+
+func (u URL) GoString() string {
+	if u.URL == nil {
+		return "domain.URL(" + common.Und + ")"
+	}
+
+	return "domain.URL(" + u.URL.String() + ")"
 }

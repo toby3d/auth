@@ -12,7 +12,7 @@ import (
 	repository "source.toby3d.me/toby3d/auth/internal/ticket/repository/sqlite3"
 )
 
-// nolint: gochecknoglobals // slices cannot be contants
+//nolint: gochecknoglobals // slices cannot be contants
 var tableColumns = []string{"created_at", "resource", "subject", "ticket"}
 
 func TestCreate(t *testing.T) {
@@ -34,7 +34,7 @@ func TestCreate(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	if err := repository.NewSQLite3TicketRepository(db, domain.TestConfig(t)).
-		Create(context.Background(), ticket); err != nil {
+		Create(context.Background(), *ticket); err != nil {
 		t.Error(err)
 	}
 }

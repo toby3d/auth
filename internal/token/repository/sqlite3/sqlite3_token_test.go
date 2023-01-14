@@ -35,7 +35,7 @@ func TestCreate(t *testing.T) {
 		).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	if err := repository.NewSQLite3TokenRepository(db).Create(context.Background(), token); err != nil {
+	if err := repository.NewSQLite3TokenRepository(db).Create(context.Background(), *token); err != nil {
 		t.Error(err)
 	}
 }

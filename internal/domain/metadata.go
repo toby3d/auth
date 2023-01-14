@@ -14,7 +14,7 @@ type Metadata struct {
 	// issuer URL could be https://example.com/, or for a metadata URL of
 	// https://example.com/wp-json/indieauth/1.0/metadata, the issuer URL
 	// could be https://example.com/wp-json/indieauth/1.0
-	Issuer *ClientID
+	Issuer *url.URL
 
 	// The Authorization Endpoint.
 	AuthorizationEndpoint *url.URL
@@ -81,7 +81,11 @@ func TestMetadata(tb testing.TB) *Metadata {
 	tb.Helper()
 
 	return &Metadata{
-		Issuer:                TestClientID(tb),
+		Issuer: &url.URL{
+			Scheme: "https",
+			Host:   "example.com",
+			Path:   "/.well-known/oauth-authorization-server",
+		},
 		AuthorizationEndpoint: &url.URL{Scheme: "https", Host: "indieauth.example.com", Path: "/auth"},
 		TokenEndpoint:         &url.URL{Scheme: "https", Host: "indieauth.example.com", Path: "/token"},
 		TicketEndpoint:        &url.URL{Scheme: "https", Host: "auth.example.org", Path: "/ticket"},

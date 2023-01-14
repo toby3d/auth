@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"source.toby3d.me/toby3d/auth/internal/common"
-	"source.toby3d.me/toby3d/auth/internal/middleware"
 )
 
 type Handler struct{}
@@ -14,8 +13,8 @@ func NewHandler() *Handler {
 	return &Handler{}
 }
 
-func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	http.HandlerFunc(middleware.HandlerFunc(h.handleFunc).Intercept(middleware.LogFmt())).ServeHTTP(w, r)
+func (h *Handler) Handler() http.Handler {
+	return http.HandlerFunc(h.handleFunc)
 }
 
 func (h *Handler) handleFunc(w http.ResponseWriter, r *http.Request) {

@@ -2,10 +2,9 @@ package http_test
 
 import (
 	"io"
+	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	http "github.com/valyala/fasthttp"
 
 	delivery "source.toby3d.me/toby3d/auth/internal/health/delivery/http"
 )
@@ -15,7 +14,10 @@ func TestRequestHandler(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "https://example.com/health", nil)
 	w := httptest.NewRecorder()
-	delivery.NewHandler().ServeHTTP(w, req)
+
+	delivery.NewHandler().
+		Handler().
+		ServeHTTP(w, req)
 
 	resp := w.Result()
 

@@ -1,13 +1,12 @@
 package http_test
 
 import (
+	"context"
+	"net/http"
 	"net/http/httptest"
-	"path"
-	"sync"
 	"testing"
 
 	"github.com/goccy/go-json"
-	http "github.com/valyala/fasthttp"
 
 	"source.toby3d.me/toby3d/auth/internal/common"
 	"source.toby3d.me/toby3d/auth/internal/domain"
@@ -26,7 +25,6 @@ type Dependencies struct {
 	profile      *domain.Profile
 	profiles     profile.Repository
 	sessions     session.Repository
-	store        *sync.Map
 	token        *domain.Token
 	tokens       token.Repository
 	tokenService token.UseCase
@@ -36,13 +34,17 @@ func TestUserInfo(t *testing.T) {
 	t.Parallel()
 
 	deps := NewDependencies(t)
-	deps.store.Store(path.Join(profilerepo.DefaultPathPrefix, deps.token.Me.String()), deps.profile)
+	if err := deps.profiles.Create(context.Background(), deps.token.Me, *deps.profile); err != nil {
+		t.Fatal(err)
+	}
 
 	req := httptest.NewRequest(http.MethodGet, "https://example.com/userinfo", nil)
 	req.Header.Set(common.HeaderAuthorization, "Bearer "+deps.token.AccessToken)
 
 	w := httptest.NewRecorder()
-	delivery.NewHandler(deps.tokenService, deps.config).ServeHTTP(w, req)
+	delivery.NewHandler(deps.tokenService, deps.config).
+		Handler().
+		ServeHTTP(w, req)
 
 	resp := w.Result()
 
@@ -69,22 +71,23 @@ func TestUserInfo(t *testing.T) {
 func NewDependencies(tb testing.TB) Dependencies {
 	tb.Helper()
 
-	store := new(sync.Map)
 	config := domain.TestConfig(tb)
+	sessions := sessionrepo.NewMemorySessionRepository(*config)
+	tokens := tokenrepo.NewMemoryTokenRepository()
+	profiles := profilerepo.NewMemoryProfileRepository()
 
 	return Dependencies{
 		config:   config,
 		profile:  domain.TestProfile(tb),
-		profiles: profilerepo.NewMemoryProfileRepository(store),
-		sessions: sessionrepo.NewMemorySessionRepository(store, config),
-		store:    store,
+		profiles: profiles,
+		sessions: sessions,
 		token:    domain.TestToken(tb),
-		tokens:   tokenrepo.NewMemoryTokenRepository(store),
+		tokens:   tokens,
 		tokenService: tokenucase.NewTokenUseCase(tokenucase.Config{
 			Config:   config,
-			Profiles: profilerepo.NewMemoryProfileRepository(store),
-			Sessions: sessionrepo.NewMemorySessionRepository(store, config),
-			Tokens:   tokenrepo.NewMemoryTokenRepository(store),
+			Profiles: profiles,
+			Sessions: sessions,
+			Tokens:   tokens,
 		}),
 	}
 }

@@ -80,6 +80,22 @@ func ParseScope(uid string) (Scope, error) {
 	return ScopeUnd, fmt.Errorf("%w: %s", ErrScopeUnknown, uid)
 }
 
+func (s *Scope) UnmarshalJSON(v []byte) error {
+	src, err := strconv.Unquote(string(v))
+	if err != nil {
+		return fmt.Errorf("Scope: UnmarshalJSON: cannot unquote string: %w", err)
+	}
+
+	out, err := ParseScope(src)
+	if err != nil {
+		return fmt.Errorf("Scopes: UnmarshalJSON: cannot parse scope: %w", err)
+	}
+
+	*s = out
+
+	return nil
+}
+
 func (s Scope) MarshalJSON() ([]byte, error) {
 	return []byte(strconv.Quote(s.uid)), nil
 }

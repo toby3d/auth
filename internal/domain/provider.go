@@ -1,10 +1,9 @@
 package domain
 
 import (
+	"net/url"
 	"path"
 	"strings"
-
-	http "github.com/valyala/fasthttp"
 )
 
 // Provider represent 3rd party RelMeAuth provider.
@@ -91,9 +90,10 @@ var (
 
 // AuthCodeURL returns URL for authorize user in RelMeAuth client.
 func (p Provider) AuthCodeURL(state string) string {
-	uri := http.AcquireURI()
-	defer http.ReleaseURI(uri)
-	uri.Update(p.AuthURL)
+	u, err := url.Parse(p.AuthURL)
+	if err != nil {
+		return ""
+	}
 
 	for key, val := range map[string]string{
 		"client_id":     p.ClientID,
@@ -102,8 +102,8 @@ func (p Provider) AuthCodeURL(state string) string {
 		"scope":         strings.Join(p.Scopes, " "),
 		"state":         state,
 	} {
-		uri.QueryArgs().Set(key, val)
+		u.Query().Set(key, val)
 	}
 
-	return uri.String()
+	return u.String()
 }

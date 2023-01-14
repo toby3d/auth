@@ -56,8 +56,8 @@ func NewSQLite3TicketRepository(db *sqlx.DB, config *domain.Config) ticket.Repos
 	}
 }
 
-func (repo *sqlite3TicketRepository) Create(ctx context.Context, t *domain.Ticket) error {
-	if _, err := repo.db.NamedExecContext(ctx, QueryCreate, NewTicket(t)); err != nil {
+func (repo *sqlite3TicketRepository) Create(ctx context.Context, t domain.Ticket) error {
+	if _, err := repo.db.NamedExecContext(ctx, QueryCreate, NewTicket(&t)); err != nil {
 		return fmt.Errorf("cannot create token record in db: %w", err)
 	}
 

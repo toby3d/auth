@@ -41,27 +41,27 @@ type AuthorizePage struct {
 func (p *AuthorizePage) StreamTitle(qw422016 *qt422016.Writer) {
 //line web/authorize.qtpl:19
 	qw422016.N().S(`
-  `)
+`)
 //line web/authorize.qtpl:20
 	if p.Client.GetName() == "" {
 //line web/authorize.qtpl:20
 		qw422016.N().S(`
-    `)
+`)
 //line web/authorize.qtpl:21
 		p.StreamT(qw422016, "Authorize %s", p.Client.GetName())
 //line web/authorize.qtpl:21
 		qw422016.N().S(`
-  `)
+`)
 //line web/authorize.qtpl:22
 	} else {
 //line web/authorize.qtpl:22
 		qw422016.N().S(`
-    `)
+`)
 //line web/authorize.qtpl:23
 		p.StreamT(qw422016, "Authorize application")
 //line web/authorize.qtpl:23
 		qw422016.N().S(`
-  `)
+`)
 //line web/authorize.qtpl:24
 	}
 //line web/authorize.qtpl:24
@@ -100,43 +100,43 @@ func (p *AuthorizePage) Title() string {
 func (p *AuthorizePage) StreamBody(qw422016 *qt422016.Writer) {
 //line web/authorize.qtpl:27
 	qw422016.N().S(`
-  <header>
-    `)
+<header>
+  `)
 //line web/authorize.qtpl:29
 	if p.Client.GetLogo() != nil {
 //line web/authorize.qtpl:29
 		qw422016.N().S(`
-      <img class=""
-        crossorigin="anonymous"
-        decoding="async"
-        height="140"
-        importance="high"
-        loading="lazy"
-        referrerpolicy="no-referrer-when-downgrade"
-        src="`)
+  <img class=""
+       crossorigin="anonymous"
+       decoding="async"
+       height="140"
+       importance="high"
+       loading="lazy"
+       referrerpolicy="no-referrer-when-downgrade"
+       src="`)
 //line web/authorize.qtpl:37
 		qw422016.E().S(p.Client.GetLogo().String())
 //line web/authorize.qtpl:37
 		qw422016.N().S(`"
-        alt="`)
+       alt="`)
 //line web/authorize.qtpl:38
 		qw422016.E().S(p.Client.GetName())
 //line web/authorize.qtpl:38
 		qw422016.N().S(`"
-        width="140">
-    `)
+       width="140">
+  `)
 //line web/authorize.qtpl:40
 	}
 //line web/authorize.qtpl:40
 	qw422016.N().S(`
 
-    <h2>
-      `)
+  <h2>
+    `)
 //line web/authorize.qtpl:43
 	if p.Client.GetURL() != nil {
 //line web/authorize.qtpl:43
 		qw422016.N().S(`
-        <a href="`)
+    <a href="`)
 //line web/authorize.qtpl:44
 		qw422016.E().S(p.Client.GetURL().String())
 //line web/authorize.qtpl:44
@@ -151,7 +151,7 @@ func (p *AuthorizePage) StreamBody(qw422016 *qt422016.Writer) {
 	if p.Client.GetName() != "" {
 //line web/authorize.qtpl:46
 		qw422016.N().S(`
-        `)
+      `)
 //line web/authorize.qtpl:47
 		qw422016.E().S(p.Client.GetName())
 //line web/authorize.qtpl:47
@@ -161,7 +161,7 @@ func (p *AuthorizePage) StreamBody(qw422016 *qt422016.Writer) {
 	} else {
 //line web/authorize.qtpl:48
 		qw422016.N().S(`
-        `)
+      `)
 //line web/authorize.qtpl:49
 		qw422016.E().S(p.Client.ID.String())
 //line web/authorize.qtpl:49
@@ -176,44 +176,44 @@ func (p *AuthorizePage) StreamBody(qw422016 *qt422016.Writer) {
 	if p.Client.GetURL() != nil {
 //line web/authorize.qtpl:51
 		qw422016.N().S(`
-        </a>
-      `)
+    </a>
+    `)
 //line web/authorize.qtpl:53
 	}
 //line web/authorize.qtpl:53
 	qw422016.N().S(`
-    </h2>
-  </header>
+  </h2>
+</header>
 
-  <main>
-    <form class=""
-      accept-charset="utf-8"
-      action="/api/authorize"
-      autocomplete="off"
-      enctype="application/x-www-form-urlencoded"
-      method="post"
-      novalidate="true"
-      target="_self">
+<main>
+  <form class=""
+        accept-charset="utf-8"
+        action="/authorize/verify"
+        autocomplete="off"
+        enctype="application/x-www-form-urlencoded"
+        method="post"
+        novalidate="true"
+        target="_self">
 
-      `)
+    `)
 //line web/authorize.qtpl:67
 	if p.CSRF != nil {
 //line web/authorize.qtpl:67
 		qw422016.N().S(`
-        <input type="hidden"
-          name="_csrf"
-          value="`)
+    <input type="hidden"
+           name="_csrf"
+           value="`)
 //line web/authorize.qtpl:70
 		qw422016.E().Z(p.CSRF)
 //line web/authorize.qtpl:70
 		qw422016.N().S(`">
-      `)
+    `)
 //line web/authorize.qtpl:71
 	}
 //line web/authorize.qtpl:71
 	qw422016.N().S(`
 
-      `)
+    `)
 //line web/authorize.qtpl:73
 	for key, val := range map[string]string{
 		"client_id":     p.Client.ID.String(),
@@ -223,129 +223,129 @@ func (p *AuthorizePage) StreamBody(qw422016 *qt422016.Writer) {
 	} {
 //line web/authorize.qtpl:78
 		qw422016.N().S(`
-        <input type="hidden"
-          name="`)
+    <input type="hidden"
+           name="`)
 //line web/authorize.qtpl:80
 		qw422016.E().S(key)
 //line web/authorize.qtpl:80
 		qw422016.N().S(`"
-          value="`)
+           value="`)
 //line web/authorize.qtpl:81
 		qw422016.E().S(val)
 //line web/authorize.qtpl:81
 		qw422016.N().S(`">
-      `)
+    `)
 //line web/authorize.qtpl:82
 	}
 //line web/authorize.qtpl:82
 	qw422016.N().S(`
 
-      `)
+    `)
 //line web/authorize.qtpl:84
 	if len(p.Scope) > 0 {
 //line web/authorize.qtpl:84
 		qw422016.N().S(`
-      <fieldset>
-        <legend>`)
+    <fieldset>
+      <legend>`)
 //line web/authorize.qtpl:86
 		p.StreamT(qw422016, "Choose your scopes")
 //line web/authorize.qtpl:86
 		qw422016.N().S(`</legend>
 
-        `)
+      `)
 //line web/authorize.qtpl:88
 		for _, scope := range p.Scope {
 //line web/authorize.qtpl:88
 			qw422016.N().S(`
-          <div>
-            <label>
-              <input type="checkbox"
-                name="scope[]"
-                value="`)
+      <div>
+        <label>
+          <input type="checkbox"
+                 name="scope[]"
+                 value="`)
 //line web/authorize.qtpl:93
 			qw422016.E().S(scope.String())
 //line web/authorize.qtpl:93
 			qw422016.N().S(`"
-                checked>
+                 checked>
 
-              `)
+          `)
 //line web/authorize.qtpl:96
 			qw422016.E().S(scope.String())
 //line web/authorize.qtpl:96
 			qw422016.N().S(`
-            </label>
-          </div>
-        `)
+        </label>
+      </div>
+      `)
 //line web/authorize.qtpl:99
 		}
 //line web/authorize.qtpl:99
 		qw422016.N().S(`
-      </fieldset>
-      `)
+    </fieldset>
+    `)
 //line web/authorize.qtpl:101
 	}
 //line web/authorize.qtpl:101
 	qw422016.N().S(`
 
-      `)
+    `)
 //line web/authorize.qtpl:103
 	if p.CodeChallenge != "" {
 //line web/authorize.qtpl:103
 		qw422016.N().S(`
-        <input type="hidden"
-          name="code_challenge"
-          value="`)
+    <input type="hidden"
+           name="code_challenge"
+           value="`)
 //line web/authorize.qtpl:106
 		qw422016.E().S(p.CodeChallenge)
 //line web/authorize.qtpl:106
 		qw422016.N().S(`">
 
-        <input type="hidden"
-          name="code_challenge_method"
-          value="`)
+    <input type="hidden"
+           name="code_challenge_method"
+           value="`)
 //line web/authorize.qtpl:110
 		qw422016.E().S(p.CodeChallengeMethod.String())
 //line web/authorize.qtpl:110
 		qw422016.N().S(`">
-      `)
+    `)
 //line web/authorize.qtpl:111
 	}
 //line web/authorize.qtpl:111
 	qw422016.N().S(`
 
-      `)
+    `)
 //line web/authorize.qtpl:113
 	if p.Me != nil {
 //line web/authorize.qtpl:113
 		qw422016.N().S(`
-        <input type="hidden"
-          name="me"
-          value="`)
+    <input type="hidden"
+           name="me"
+           value="`)
 //line web/authorize.qtpl:116
 		qw422016.E().S(p.Me.String())
 //line web/authorize.qtpl:116
 		qw422016.N().S(`">
-      `)
+    `)
 //line web/authorize.qtpl:117
 	}
 //line web/authorize.qtpl:117
 	qw422016.N().S(`
 
-      `)
+    `)
 //line web/authorize.qtpl:119
 	if len(p.Providers) > 0 {
 //line web/authorize.qtpl:119
 		qw422016.N().S(`
-        <select name="provider"
-          autocomplete
-          required>
+    <select name="provider"
+            autocomplete
+            required>
 
-          `)
+      `)
 //line web/authorize.qtpl:124
 		for _, provider := range p.Providers {
 //line web/authorize.qtpl:124
 			qw422016.N().S(`
-            <option value="`)
+      <option value="`)
 //line web/authorize.qtpl:125
 			qw422016.E().S(provider.UID)
 //line web/authorize.qtpl:125
@@ -360,55 +360,55 @@ func (p *AuthorizePage) StreamBody(qw422016 *qt422016.Writer) {
 //line web/authorize.qtpl:126
 			qw422016.N().S(`>
 
-              `)
+        `)
 //line web/authorize.qtpl:128
 			qw422016.E().S(provider.Name)
 //line web/authorize.qtpl:128
 			qw422016.N().S(`
-            </option>
-          `)
+      </option>
+      `)
 //line web/authorize.qtpl:130
 		}
 //line web/authorize.qtpl:130
 		qw422016.N().S(`
-        </select>
-      `)
+    </select>
+    `)
 //line web/authorize.qtpl:132
 	} else {
 //line web/authorize.qtpl:132
 		qw422016.N().S(`
-        <input type="hidden"
-          name="provider"
-          value="direct">
-      `)
+    <input type="hidden"
+           name="provider"
+           value="direct">
+    `)
 //line web/authorize.qtpl:136
 	}
 //line web/authorize.qtpl:136
 	qw422016.N().S(`
 
-      <button type="submit"
-        name="authorize"
-        value="deny">
+    <button type="submit"
+            name="authorize"
+            value="deny">
 
-        `)
+      `)
 //line web/authorize.qtpl:142
 	p.StreamT(qw422016, "Deny")
 //line web/authorize.qtpl:142
 	qw422016.N().S(`
-      </button>
+    </button>
 
-      <button type="submit"
-        name="authorize"
-        value="allow">
+    <button type="submit"
+            name="authorize"
+            value="allow">
 
-        `)
+      `)
 //line web/authorize.qtpl:149
 	p.StreamT(qw422016, "Allow")
 //line web/authorize.qtpl:149
 	qw422016.N().S(`
-      </button>
-    </form>
-  </main>
+    </button>
+  </form>
+</main>
 `)
 //line web/authorize.qtpl:153
 }
