@@ -351,8 +351,6 @@ func (app *App) Handler() http.Handler {
 
 		switch head {
 		case "", "callback", "token", "introspect", "revocation":
-			r.URL = r.URL.JoinPath(head, r.URL.Path)
-		default:
 			if r.URL.Path != "/" {
 				r.URL = r.URL.JoinPath(head, r.URL.Path)
 			} else {
