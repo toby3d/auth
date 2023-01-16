@@ -2,10 +2,10 @@ package domain
 
 import (
 	"fmt"
+	"net/url"
 	"strconv"
 	"strings"
 
-	http "github.com/valyala/fasthttp"
 	"golang.org/x/xerrors"
 
 	"source.toby3d.me/toby3d/auth/internal/common"
@@ -13,7 +13,7 @@ import (
 
 type (
 	// Error describes the format of a typical IndieAuth error.
-	//nolint: tagliatelle // RFC 6749 section 5.2
+	//nolint:tagliatelle // RFC 6749 section 5.2
 	Error struct {
 		// A single error code.
 		Code ErrorCode `json:"error"`
@@ -150,7 +150,7 @@ var (
 
 var ErrErrorCodeUnknown error = NewError(ErrorCodeInvalidRequest, "unknown error code", "")
 
-//nolint: gochecknoglobals // maps cannot be constants
+//nolint:gochecknoglobals // maps cannot be constants
 var uidsErrorCodes = map[string]ErrorCode{
 	ErrorCodeAccessDenied.uid:            ErrorCodeAccessDenied,
 	ErrorCodeInsufficientScope.uid:       ErrorCodeInsufficientScope,
@@ -226,8 +226,8 @@ func (e Error) FormatError(printer xerrors.Printer) error {
 
 // SetReirectURI sets fasthttp.QueryArgs with the request state, code,
 // description and error URI in the provided fasthttp.URI.
-func (e Error) SetReirectURI(uri *http.URI) {
-	if uri == nil {
+func (e Error) SetReirectURI(u *url.URL) {
+	if u == nil {
 		return
 	}
 
@@ -241,7 +241,7 @@ func (e Error) SetReirectURI(uri *http.URI) {
 			continue
 		}
 
-		uri.QueryArgs().Set(key, val)
+		u.Query().Set(key, val)
 	}
 }
 

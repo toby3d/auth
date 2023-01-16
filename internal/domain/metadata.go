@@ -1,6 +1,9 @@
 package domain
 
-import "testing"
+import (
+	"net/url"
+	"testing"
+)
 
 type Metadata struct {
 	// The server's issuer identifier. The issuer identifier is a URL that
@@ -11,36 +14,36 @@ type Metadata struct {
 	// issuer URL could be https://example.com/, or for a metadata URL of
 	// https://example.com/wp-json/indieauth/1.0/metadata, the issuer URL
 	// could be https://example.com/wp-json/indieauth/1.0
-	Issuer *ClientID
+	Issuer *url.URL
 
 	// The Authorization Endpoint.
-	AuthorizationEndpoint *URL
+	AuthorizationEndpoint *url.URL
 
 	// The Token Endpoint.
-	TokenEndpoint *URL
+	TokenEndpoint *url.URL
 
 	// The Ticket Endpoint.
-	TicketEndpoint *URL
+	TicketEndpoint *url.URL
 
 	// The Micropub Endpoint.
-	MicropubEndpoint *URL
+	MicropubEndpoint *url.URL
 
 	// The Microsub Endpoint.
-	MicrosubEndpoint *URL
+	MicrosubEndpoint *url.URL
 
 	// The Introspection Endpoint.
-	IntrospectionEndpoint *URL
+	IntrospectionEndpoint *url.URL
 
 	// The Revocation Endpoint.
-	RevocationEndpoint *URL
+	RevocationEndpoint *url.URL
 
 	// The User Info Endpoint.
-	UserinfoEndpoint *URL
+	UserinfoEndpoint *url.URL
 
 	// URL of a page containing human-readable information that developers
 	// might need to know when using the server. This might be a link to the
 	// IndieAuth spec or something more personal to your implementation.
-	ServiceDocumentation *URL
+	ServiceDocumentation *url.URL
 
 	// JSON array containing scope values supported by the IndieAuth server.
 	// Servers MAY choose not to advertise some supported scope values even
@@ -78,16 +81,20 @@ func TestMetadata(tb testing.TB) *Metadata {
 	tb.Helper()
 
 	return &Metadata{
-		Issuer:                TestClientID(tb),
-		AuthorizationEndpoint: TestURL(tb, "https://indieauth.example.com/auth"),
-		TokenEndpoint:         TestURL(tb, "https://indieauth.example.com/token"),
-		TicketEndpoint:        TestURL(tb, "https://auth.example.org/ticket"),
-		MicropubEndpoint:      TestURL(tb, "https://micropub.example.com/"),
-		MicrosubEndpoint:      TestURL(tb, "https://microsub.example.com/"),
-		IntrospectionEndpoint: TestURL(tb, "https://indieauth.example.com/introspect"),
-		RevocationEndpoint:    TestURL(tb, "https://indieauth.example.com/revocation"),
-		UserinfoEndpoint:      TestURL(tb, "https://indieauth.example.com/userinfo"),
-		ServiceDocumentation:  TestURL(tb, "https://indieauth.net/draft/"),
+		Issuer: &url.URL{
+			Scheme: "https",
+			Host:   "example.com",
+			Path:   "/.well-known/oauth-authorization-server",
+		},
+		AuthorizationEndpoint: &url.URL{Scheme: "https", Host: "indieauth.example.com", Path: "/auth"},
+		TokenEndpoint:         &url.URL{Scheme: "https", Host: "indieauth.example.com", Path: "/token"},
+		TicketEndpoint:        &url.URL{Scheme: "https", Host: "auth.example.org", Path: "/ticket"},
+		MicropubEndpoint:      &url.URL{Scheme: "https", Host: "micropub.example.com", Path: "/"},
+		MicrosubEndpoint:      &url.URL{Scheme: "https", Host: "microsub.example.com", Path: "/"},
+		IntrospectionEndpoint: &url.URL{Scheme: "https", Host: "indieauth.example.com", Path: "/introspect"},
+		RevocationEndpoint:    &url.URL{Scheme: "https", Host: "indieauth.example.com", Path: "/revocation"},
+		UserinfoEndpoint:      &url.URL{Scheme: "https", Host: "indieauth.example.com", Path: "/userinfo"},
+		ServiceDocumentation:  &url.URL{Scheme: "https", Host: "indieauth.net", Path: "/draft/"},
 		ScopesSupported: Scopes{
 			ScopeBlock,
 			ScopeChannels,

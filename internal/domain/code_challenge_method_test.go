@@ -1,6 +1,6 @@
 package domain_test
 
-//nolint: gosec // support old clients
+//nolint:gosec // support old clients
 import (
 	"crypto/md5"
 	"crypto/sha1"
@@ -110,11 +110,11 @@ func TestCodeChallengeMethod_String(t *testing.T) {
 	}
 }
 
-//nolint: gosec // support old clients
+//nolint:gosec // support old clients
 func TestCodeChallengeMethod_Validate(t *testing.T) {
 	t.Parallel()
 
-	verifier, err := random.String(gofakeit.Number(43, 128))
+	verifier, err := random.String(uint8(gofakeit.Number(43, 128)))
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}

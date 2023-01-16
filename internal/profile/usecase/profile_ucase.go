@@ -18,7 +18,7 @@ func NewProfileUseCase(profiles profile.Repository) profile.UseCase {
 	}
 }
 
-func (uc *profileUseCase) Fetch(ctx context.Context, me *domain.Me) (*domain.Profile, error) {
+func (uc *profileUseCase) Fetch(ctx context.Context, me domain.Me) (*domain.Profile, error) {
 	result, err := uc.profiles.Get(ctx, me)
 	if err != nil {
 		return nil, fmt.Errorf("cannot fetch profile info: %w", err)

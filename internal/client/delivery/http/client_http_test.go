@@ -1,11 +1,10 @@
 package http_test
 
 import (
-	"sync"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
-	"github.com/fasthttp/router"
-	http "github.com/valyala/fasthttp"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 
@@ -15,7 +14,6 @@ import (
 	profilerepo "source.toby3d.me/toby3d/auth/internal/profile/repository/memory"
 	"source.toby3d.me/toby3d/auth/internal/session"
 	sessionrepo "source.toby3d.me/toby3d/auth/internal/session/repository/memory"
-	"source.toby3d.me/toby3d/auth/internal/testing/httptest"
 	"source.toby3d.me/toby3d/auth/internal/token"
 	tokenrepo "source.toby3d.me/toby3d/auth/internal/token/repository/memory"
 	tokenucase "source.toby3d.me/toby3d/auth/internal/token/usecase"
@@ -27,7 +25,6 @@ type Dependencies struct {
 	config       *domain.Config
 	matcher      language.Matcher
 	sessions     session.Repository
-	store        *sync.Map
 	tokens       token.Repository
 	tokenService token.UseCase
 }
@@ -36,45 +33,30 @@ func TestRead(t *testing.T) {
 	t.Parallel()
 
 	deps := NewDependencies(t)
+	req := httptest.NewRequest(http.MethodGet, "https://app.example.com/", nil)
+	w := httptest.NewRecorder()
 
-	r := router.New()
-	delivery.NewRequestHandler(delivery.NewRequestHandlerOptions{
-		Client:  deps.client,
-		Config:  deps.config,
+	delivery.NewHandler(delivery.NewHandlerOptions{
+		Client:  *deps.client,
+		Config:  *deps.config,
 		Matcher: deps.matcher,
 		Tokens:  deps.tokenService,
-	}).Register(r)
+	}).Handler().ServeHTTP(w, req)
 
-	client, _, cleanup := httptest.New(t, r.Handler)
-	t.Cleanup(cleanup)
-
-	const requestURI string = "https://app.example.com/"
-	req, resp := httptest.NewRequest(http.MethodGet, requestURI, nil), http.AcquireResponse()
-
-	t.Cleanup(func() {
-		http.ReleaseRequest(req)
-		http.ReleaseResponse(resp)
-	})
-
-	if err := client.Do(req, resp); err != nil {
-		t.Error(err)
-	}
-
-	if resp.StatusCode() != http.StatusOK {
-		t.Errorf("GET %s = %d, want %d", requestURI, resp.StatusCode(), http.StatusOK)
+	if resp := w.Result(); resp.StatusCode != http.StatusOK {
+		t.Errorf("%s %s = %d, want %d", req.Method, req.RequestURI, resp.StatusCode, http.StatusOK)
 	}
 }
 
 func NewDependencies(tb testing.TB) Dependencies {
 	tb.Helper()
 
-	store := new(sync.Map)
 	client := domain.TestClient(tb)
 	config := domain.TestConfig(tb)
 	matcher := language.NewMatcher(message.DefaultCatalog.Languages())
-	sessions := sessionrepo.NewMemorySessionRepository(store, config)
-	tokens := tokenrepo.NewMemoryTokenRepository(store)
-	profiles := profilerepo.NewMemoryProfileRepository(store)
+	sessions := sessionrepo.NewMemorySessionRepository(*config)
+	tokens := tokenrepo.NewMemoryTokenRepository()
+	profiles := profilerepo.NewMemoryProfileRepository()
 	tokenService := tokenucase.NewTokenUseCase(tokenucase.Config{
 		Config:   config,
 		Profiles: profiles,
@@ -87,7 +69,6 @@ func NewDependencies(tb testing.TB) Dependencies {
 		config:       config,
 		matcher:      matcher,
 		sessions:     sessions,
-		store:        store,
 		profiles:     profiles,
 		tokens:       tokens,
 		tokenService: tokenService,

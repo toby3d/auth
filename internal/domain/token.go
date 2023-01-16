@@ -2,13 +2,14 @@ package domain
 
 import (
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
 	"github.com/lestrrat-go/jwx/v2/jwa"
 	"github.com/lestrrat-go/jwx/v2/jwt"
-	http "github.com/valyala/fasthttp"
 
+	"source.toby3d.me/toby3d/auth/internal/common"
 	"source.toby3d.me/toby3d/auth/internal/random"
 )
 
@@ -17,8 +18,8 @@ type (
 	Token struct {
 		CreatedAt    time.Time
 		Expiry       time.Time
-		ClientID     *ClientID
-		Me           *Me
+		ClientID     ClientID
+		Me           Me
 		Scope        Scopes
 		AccessToken  string
 		RefreshToken string
@@ -27,29 +28,31 @@ type (
 	// NewTokenOptions contains options for NewToken function.
 	NewTokenOptions struct {
 		Expiration  time.Duration
-		Issuer      *ClientID
-		Subject     *Me
+		Issuer      ClientID
+		Subject     Me
 		Scope       Scopes
 		Secret      []byte
 		Algorithm   string
-		NonceLength int
+		NonceLength uint8
 	}
 )
 
 // DefaultNewTokenOptions describes the default settings for NewToken.
-//nolint: gochecknoglobals, gomnd
+//
+//nolint:gochecknoglobals,gomnd
 var DefaultNewTokenOptions = NewTokenOptions{
 	Expiration:  0,
 	Scope:       nil,
-	Issuer:      nil,
-	Subject:     nil,
+	Issuer:      ClientID{},
+	Subject:     Me{},
 	Secret:      nil,
 	Algorithm:   "HS256",
 	NonceLength: 32,
 }
 
 // NewToken create a new token by provided options.
-//nolint: cyclop
+//
+//nolint:cyclop
 func NewToken(opts NewTokenOptions) (*Token, error) {
 	if opts.NonceLength == 0 {
 		opts.NonceLength = DefaultNewTokenOptions.NonceLength
@@ -68,7 +71,7 @@ func NewToken(opts NewTokenOptions) (*Token, error) {
 
 	tkn := jwt.New()
 
-	for key, val := range map[string]interface{}{
+	for key, val := range map[string]any{
 		"nonce":          nonce,
 		"scope":          opts.Scope,
 		jwt.IssuedAtKey:  now,
@@ -80,7 +83,7 @@ func NewToken(opts NewTokenOptions) (*Token, error) {
 		}
 	}
 
-	if opts.Issuer != nil {
+	if opts.Issuer.clientID != nil {
 		if err = tkn.Set(jwt.IssuerKey, opts.Issuer.String()); err != nil {
 			return nil, fmt.Errorf("failed to set JWT token field: %w", err)
 		}
@@ -109,7 +112,8 @@ func NewToken(opts NewTokenOptions) (*Token, error) {
 }
 
 // TestToken returns valid random generated token for tests.
-//nolint: gomnd // testing domain can contains non-standart values
+//
+//nolint:gomnd // testing domain can contains non-standart values
 func TestToken(tb testing.TB) *Token {
 	tb.Helper()
 
@@ -130,7 +134,7 @@ func TestToken(tb testing.TB) *Token {
 		ScopeEmail,
 	}
 
-	for key, val := range map[string]interface{}{
+	for key, val := range map[string]any{
 		// NOTE(toby3d): required
 		jwt.IssuerKey:     cid.String(),
 		jwt.SubjectKey:    me.String(),
@@ -154,8 +158,8 @@ func TestToken(tb testing.TB) *Token {
 	return &Token{
 		CreatedAt:    now.Add(-1 * time.Hour),
 		Expiry:       now.Add(1 * time.Hour),
-		ClientID:     cid,
-		Me:           me,
+		ClientID:     *cid,
+		Me:           *me,
 		Scope:        scope,
 		AccessToken:  string(accessToken),
 		RefreshToken: "", // TODO(toby3d)
@@ -168,7 +172,7 @@ func (t Token) SetAuthHeader(r *http.Request) {
 		return
 	}
 
-	r.Header.Set(http.HeaderAuthorization, t.String())
+	r.Header.Set(common.HeaderAuthorization, t.String())
 }
 
 // String returns string representation of token.

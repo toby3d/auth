@@ -3,12 +3,13 @@ package http_test
 import (
 	"bytes"
 	"context"
-	"sync"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
-	"github.com/fasthttp/router"
-	json "github.com/goccy/go-json"
-	http "github.com/valyala/fasthttp"
+	"github.com/goccy/go-json"
 
 	"source.toby3d.me/toby3d/auth/internal/common"
 	"source.toby3d.me/toby3d/auth/internal/domain"
@@ -16,7 +17,6 @@ import (
 	profilerepo "source.toby3d.me/toby3d/auth/internal/profile/repository/memory"
 	"source.toby3d.me/toby3d/auth/internal/session"
 	sessionrepo "source.toby3d.me/toby3d/auth/internal/session/repository/memory"
-	"source.toby3d.me/toby3d/auth/internal/testing/httptest"
 	"source.toby3d.me/toby3d/auth/internal/ticket"
 	ticketrepo "source.toby3d.me/toby3d/auth/internal/ticket/repository/memory"
 	ticketucase "source.toby3d.me/toby3d/auth/internal/ticket/usecase"
@@ -31,7 +31,6 @@ type Dependencies struct {
 	config        *domain.Config
 	profiles      profile.Repository
 	sessions      session.Repository
-	store         *sync.Map
 	tickets       ticket.Repository
 	ticketService ticket.UseCase
 	token         *domain.Token
@@ -50,32 +49,24 @@ func TestIntrospection(t *testing.T) {
 
 	deps := NewDependencies(t)
 
-	r := router.New()
-	delivery.NewRequestHandler(deps.tokenService, deps.ticketService, deps.config).Register(r)
+	req := httptest.NewRequest(http.MethodPost, "https://app.example.com/introspect",
+		strings.NewReader("token="+deps.token.AccessToken))
+	req.Header.Set(common.HeaderAccept, common.MIMEApplicationJSON)
+	req.Header.Set(common.HeaderContentType, common.MIMEApplicationForm)
 
-	client, _, cleanup := httptest.New(t, r.Handler)
-	t.Cleanup(cleanup)
+	w := httptest.NewRecorder()
+	delivery.NewHandler(deps.tokenService, deps.ticketService, deps.config).
+		Handler().
+		ServeHTTP(w, req)
 
-	const requestURL = "https://app.example.com/introspect"
+	resp := w.Result()
 
-	req := httptest.NewRequest(http.MethodPost, requestURL, []byte("token="+deps.token.AccessToken))
-	defer http.ReleaseRequest(req)
-	req.Header.Set(http.HeaderAccept, common.MIMEApplicationJSON)
-	req.Header.SetContentType(common.MIMEApplicationForm)
-
-	resp := http.AcquireResponse()
-	defer http.ReleaseResponse(resp)
-
-	if err := client.Do(req, resp); err != nil {
-		t.Fatal(err)
-	}
-
-	if result := resp.StatusCode(); result != http.StatusOK {
-		t.Errorf("GET %s = %d, want %d", requestURL, result, http.StatusOK)
+	if result := resp.StatusCode; result != http.StatusOK {
+		t.Errorf("%s %s = %d, want %d", req.Method, req.RequestURI, result, http.StatusOK)
 	}
 
 	result := new(delivery.TokenIntrospectResponse)
-	if err := json.Unmarshal(resp.Body(), result); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
 		t.Fatal(err)
 	}
 
@@ -84,7 +75,7 @@ func TestIntrospection(t *testing.T) {
 	if result.ClientID != deps.token.ClientID.String() ||
 		result.Me != deps.token.Me.String() ||
 		result.Scope != deps.token.Scope.String() {
-		t.Errorf("GET %s = %+v, want %+v", requestURL, result, deps.token)
+		t.Errorf("%s %s = %+v, want %+v", req.Method, req.RequestURI, result, deps.token)
 	}
 }
 
@@ -93,33 +84,30 @@ func TestRevocation(t *testing.T) {
 
 	deps := NewDependencies(t)
 
-	r := router.New()
-	delivery.NewRequestHandler(deps.tokenService, deps.ticketService, deps.config).Register(r)
+	req := httptest.NewRequest(http.MethodPost, "https://app.example.com/revocation",
+		strings.NewReader(`token=`+deps.token.AccessToken))
+	req.Header.Set(common.HeaderContentType, common.MIMEApplicationForm)
+	req.Header.Set(common.HeaderAccept, common.MIMEApplicationJSON)
 
-	client, _, cleanup := httptest.New(t, r.Handler)
-	t.Cleanup(cleanup)
+	w := httptest.NewRecorder()
+	delivery.NewHandler(deps.tokenService, deps.ticketService, deps.config).
+		Handler().
+		ServeHTTP(w, req)
 
-	const requestURL = "https://app.example.com/revocation"
+	resp := w.Result()
 
-	req := httptest.NewRequest(http.MethodPost, requestURL, []byte("token="+deps.token.AccessToken))
-	defer http.ReleaseRequest(req)
-	req.Header.Set(http.HeaderAccept, common.MIMEApplicationJSON)
-	req.Header.SetContentType(common.MIMEApplicationForm)
-
-	resp := http.AcquireResponse()
-	defer http.ReleaseResponse(resp)
-
-	if err := client.Do(req, resp); err != nil {
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
 		t.Fatal(err)
 	}
 
-	if result := resp.StatusCode(); result != http.StatusOK {
-		t.Errorf("POST %s = %d, want %d", requestURL, result, http.StatusOK)
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("%s %s = %d, want %d", req.Method, req.RequestURI, resp.StatusCode, http.StatusOK)
 	}
 
-	expBody := []byte("{}") //nolint: ifshort
-	if result := bytes.TrimSpace(resp.Body()); !bytes.Equal(result, expBody) {
-		t.Errorf("POST %s = %s, want %s", requestURL, result, expBody)
+	expBody := []byte("{}") //nolint:ifshort
+	if result := bytes.TrimSpace(body); !bytes.Equal(result, expBody) {
+		t.Errorf("%s %s = %s, want %s", req.Method, req.RequestURI, result, expBody)
 	}
 
 	result, err := deps.tokens.Get(context.Background(), deps.token.AccessToken)
@@ -135,14 +123,13 @@ func TestRevocation(t *testing.T) {
 func NewDependencies(tb testing.TB) Dependencies {
 	tb.Helper()
 
-	store := new(sync.Map)
 	client := new(http.Client)
 	config := domain.TestConfig(tb)
 	token := domain.TestToken(tb)
-	profiles := profilerepo.NewMemoryProfileRepository(store)
-	sessions := sessionrepo.NewMemorySessionRepository(store, config)
-	tickets := ticketrepo.NewMemoryTicketRepository(store, config)
-	tokens := tokenrepo.NewMemoryTokenRepository(store)
+	profiles := profilerepo.NewMemoryProfileRepository()
+	sessions := sessionrepo.NewMemorySessionRepository(*config)
+	tickets := ticketrepo.NewMemoryTicketRepository(*config)
+	tokens := tokenrepo.NewMemoryTokenRepository()
 	ticketService := ticketucase.NewTicketUseCase(tickets, client, config)
 	tokenService := tokenucase.NewTokenUseCase(tokenucase.Config{
 		Config:   config,
@@ -156,7 +143,6 @@ func NewDependencies(tb testing.TB) Dependencies {
 		config:        config,
 		profiles:      profiles,
 		sessions:      sessions,
-		store:         store,
 		tickets:       tickets,
 		ticketService: ticketService,
 		token:         token,

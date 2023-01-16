@@ -30,7 +30,7 @@ func (p *TicketPage) StreamBody(qw422016 *qt422016.Writer) {
 //line web/ticket.qtpl:9
 	p.StreamT(qw422016, "TicketAuth")
 //line web/ticket.qtpl:9
-	qw422016.N().S(`</h1> </header> <main> <form class="" accept-charset="utf-8" action="/api/ticket" autocomplete="off" enctype="application/x-www-form-urlencoded" method="post" target="_self"> `)
+	qw422016.N().S(`</h1> </header> <main> <form class="" accept-charset="utf-8" action="/ticket/send" autocomplete="off" enctype="application/x-www-form-urlencoded" method="post" target="_self"> `)
 //line web/ticket.qtpl:21
 	if p.CSRF != nil {
 //line web/ticket.qtpl:21
@@ -46,7 +46,7 @@ func (p *TicketPage) StreamBody(qw422016 *qt422016.Writer) {
 //line web/ticket.qtpl:28
 	p.StreamT(qw422016, "Recipient")
 //line web/ticket.qtpl:28
-	qw422016.N().S(`</label> <input id="subject" type="url" name="subject" inputmode="url" placeholder="https://bob.example.org" required> </div> <div> <label for="resource">`)
+	qw422016.N().S(`</label> <input id="subject" type="url" name="subject" inputmode="url" placeholder="https://bob.example.org/" required> </div> <div> <label for="resource">`)
 //line web/ticket.qtpl:38
 	p.StreamT(qw422016, "Resource")
 //line web/ticket.qtpl:38

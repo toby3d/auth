@@ -2,23 +2,24 @@ package auth
 
 import (
 	"context"
+	"net/url"
 
 	"source.toby3d.me/toby3d/auth/internal/domain"
 )
 
 type (
 	GenerateOptions struct {
-		ClientID            *domain.ClientID
-		Me                  *domain.Me
-		RedirectURI         *domain.URL
+		ClientID            domain.ClientID
+		Me                  domain.Me
+		RedirectURI         *url.URL
 		CodeChallengeMethod domain.CodeChallengeMethod
 		Scope               domain.Scopes
 		CodeChallenge       string
 	}
 
 	ExchangeOptions struct {
-		ClientID     *domain.ClientID
-		RedirectURI  *domain.URL
+		ClientID     domain.ClientID
+		RedirectURI  *url.URL
 		Code         string
 		CodeVerifier string
 	}

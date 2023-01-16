@@ -53,8 +53,8 @@ func NewSQLite3TokenRepository(db *sqlx.DB) token.Repository {
 	}
 }
 
-func (repo *sqlite3TokenRepository) Create(ctx context.Context, accessToken *domain.Token) error {
-	if _, err := repo.db.NamedExecContext(ctx, QueryCreate, NewToken(accessToken)); err != nil {
+func (repo *sqlite3TokenRepository) Create(ctx context.Context, accessToken domain.Token) error {
+	if _, err := repo.db.NamedExecContext(ctx, QueryCreate, NewToken(&accessToken)); err != nil {
 		return fmt.Errorf("cannot create token record in db: %w", err)
 	}
 
@@ -91,9 +91,11 @@ func NewToken(src *domain.Token) *Token {
 }
 
 func (t *Token) Populate(dst *domain.Token) {
+	cid, _ := domain.ParseClientID(t.ClientID)
+	me, _ := domain.ParseMe(t.Me)
 	dst.AccessToken = t.AccessToken
-	dst.ClientID, _ = domain.ParseClientID(t.ClientID)
-	dst.Me, _ = domain.ParseMe(t.Me)
+	dst.ClientID = *cid
+	dst.Me = *me
 	dst.Scope = make(domain.Scopes, 0)
 
 	for _, scope := range strings.Fields(t.Scope) {

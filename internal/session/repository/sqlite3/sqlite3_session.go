@@ -4,11 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
 
+	"github.com/goccy/go-json"
 	"github.com/jmoiron/sqlx"
 
 	"source.toby3d.me/toby3d/auth/internal/domain"
@@ -53,8 +53,8 @@ func NewSQLite3SessionRepository(db *sqlx.DB) session.Repository {
 	}
 }
 
-func (repo *sqlite3SessionRepository) Create(ctx context.Context, session *domain.Session) error {
-	src, err := NewSession(session)
+func (repo *sqlite3SessionRepository) Create(ctx context.Context, session domain.Session) error {
+	src, err := NewSession(&session)
 	if err != nil {
 		return fmt.Errorf("cannot encode session data for store: %w", err)
 	}
@@ -67,7 +67,7 @@ func (repo *sqlite3SessionRepository) Create(ctx context.Context, session *domai
 }
 
 func (repo *sqlite3SessionRepository) Get(ctx context.Context, code string) (*domain.Session, error) {
-	s := new(Session) //nolint: varnamelen // cannot redaclare import
+	s := new(Session) //nolint:varnamelen // cannot redaclare import
 	if err := repo.db.GetContext(ctx, s, QueryGet, code); err != nil {
 		return nil, fmt.Errorf("cannot find session in db: %w", err)
 	}
@@ -83,7 +83,7 @@ func (repo *sqlite3SessionRepository) Get(ctx context.Context, code string) (*do
 }
 
 func (repo *sqlite3SessionRepository) GetAndDelete(ctx context.Context, code string) (*domain.Session, error) {
-	s := new(Session) //nolint: varnamelen // cannot redaclare import
+	s := new(Session) //nolint:varnamelen // cannot redaclare import
 
 	tx, err := repo.db.Beginx()
 	if err != nil {
@@ -93,7 +93,7 @@ func (repo *sqlite3SessionRepository) GetAndDelete(ctx context.Context, code str
 	}
 
 	if err = tx.GetContext(ctx, s, QueryGet, code); err != nil {
-		//nolint: errcheck // deffered method
+		//nolint:errcheck // deffered method
 		defer tx.Rollback()
 
 		if errors.Is(err, sql.ErrNoRows) {

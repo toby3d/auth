@@ -1,11 +1,16 @@
 package http
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
 
-	http "github.com/valyala/fasthttp"
+	"golang.org/x/exp/slices"
 
+	"source.toby3d.me/toby3d/auth/internal/common"
 	"source.toby3d.me/toby3d/auth/internal/domain"
 	"source.toby3d.me/toby3d/auth/internal/httputil"
 	"source.toby3d.me/toby3d/auth/internal/user"
@@ -37,26 +42,21 @@ func NewHTTPUserRepository(client *http.Client) user.Repository {
 	}
 }
 
-func (repo *httpUserRepository) Get(ctx context.Context, me *domain.Me) (*domain.User, error) {
-	req := http.AcquireRequest()
-	defer http.ReleaseRequest(req)
-	req.Header.SetMethod(http.MethodGet)
-	req.SetRequestURI(me.String())
+// WARN(toby3d): not implemented.
+func (httpUserRepository) Create(_ context.Context, _ domain.User) error {
+	return nil
+}
 
-	resp := http.AcquireResponse()
-	defer http.ReleaseResponse(resp)
-
-	if err := repo.client.DoRedirects(req, resp, DefaultMaxRedirectsCount); err != nil {
+func (repo *httpUserRepository) Get(ctx context.Context, me domain.Me) (*domain.User, error) {
+	resp, err := repo.client.Get(me.String())
+	if err != nil {
 		return nil, fmt.Errorf("cannot fetch user by me: %w", err)
 	}
-
-	// TODO(toby3d): handle error here?
-	resolvedMe, _ := domain.ParseMe(string(resp.Header.Peek(http.HeaderLocation)))
 
 	user := &domain.User{
 		AuthorizationEndpoint: nil,
 		IndieAuthMetadata:     nil,
-		Me:                    resolvedMe,
+		Me:                    &me,
 		Micropub:              nil,
 		Microsub:              nil,
 		Profile:               domain.NewProfile(),
@@ -64,7 +64,7 @@ func (repo *httpUserRepository) Get(ctx context.Context, me *domain.Me) (*domain
 		TokenEndpoint:         nil,
 	}
 
-	if metadata, err := httputil.ExtractMetadata(resp, repo.client); err == nil {
+	if metadata, err := httputil.ExtractFromMetadata(repo.client, me.String()); err == nil {
 		user.AuthorizationEndpoint = metadata.AuthorizationEndpoint
 		user.Micropub = metadata.MicropubEndpoint
 		user.Microsub = metadata.MicrosubEndpoint
@@ -72,89 +72,87 @@ func (repo *httpUserRepository) Get(ctx context.Context, me *domain.Me) (*domain
 		user.TokenEndpoint = metadata.TokenEndpoint
 	}
 
-	extractUser(user, resp)
-	extractProfile(user.Profile, resp)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read response body: %w", err)
+	}
+
+	extractUser(me.URL(), user, body, resp.Header.Get(common.HeaderLink))
+	extractProfile(me.URL(), user.Profile, body)
 
 	return user, nil
 }
 
-//nolint: cyclop
-func extractUser(dst *domain.User, src *http.Response) {
-	if dst.IndieAuthMetadata != nil {
-		if endpoints := httputil.ExtractEndpoints(src, relIndieAuthMetadata); len(endpoints) > 0 {
-			dst.IndieAuthMetadata = endpoints[len(endpoints)-1]
+//nolint:cyclop
+func extractUser(u *url.URL, dst *domain.User, body []byte, header string) {
+	for key, target := range map[string]**url.URL{
+		relAuthorizationEndpoint: &dst.AuthorizationEndpoint,
+		relIndieAuthMetadata:     &dst.IndieAuthMetadata,
+		relMicropub:              &dst.Micropub,
+		relMicrosub:              &dst.Microsub,
+		relTicketEndpoint:        &dst.TicketEndpoint,
+		relTokenEndpoint:         &dst.TokenEndpoint,
+	} {
+		if target == nil {
+			continue
 		}
-	}
 
-	if dst.AuthorizationEndpoint == nil {
-		if endpoints := httputil.ExtractEndpoints(src, relAuthorizationEndpoint); len(endpoints) > 0 {
-			dst.AuthorizationEndpoint = endpoints[len(endpoints)-1]
-		}
-	}
-
-	if dst.Micropub == nil {
-		if endpoints := httputil.ExtractEndpoints(src, relMicropub); len(endpoints) > 0 {
-			dst.Micropub = endpoints[len(endpoints)-1]
-		}
-	}
-
-	if dst.Microsub == nil {
-		if endpoints := httputil.ExtractEndpoints(src, relMicrosub); len(endpoints) > 0 {
-			dst.Microsub = endpoints[len(endpoints)-1]
-		}
-	}
-
-	if dst.TicketEndpoint == nil {
-		if endpoints := httputil.ExtractEndpoints(src, relTicketEndpoint); len(endpoints) > 0 {
-			dst.TicketEndpoint = endpoints[len(endpoints)-1]
-		}
-	}
-
-	if dst.TokenEndpoint == nil {
-		if endpoints := httputil.ExtractEndpoints(src, relTokenEndpoint); len(endpoints) > 0 {
-			dst.TokenEndpoint = endpoints[len(endpoints)-1]
+		if endpoints := httputil.ExtractEndpoints(bytes.NewReader(body), u, header, key); len(endpoints) > 0 {
+			*target = endpoints[len(endpoints)-1]
 		}
 	}
 }
 
-//nolint: cyclop
-func extractProfile(dst *domain.Profile, src *http.Response) {
-	for _, name := range httputil.ExtractProperty(src, hCard, propertyName) {
-		if n, ok := name.(string); ok {
+//nolint:cyclop
+func extractProfile(u *url.URL, dst *domain.Profile, body []byte) {
+	for _, name := range httputil.ExtractProperty(bytes.NewReader(body), u, hCard, propertyName) {
+		if n, ok := name.(string); ok && !slices.Contains(dst.Name, n) {
 			dst.Name = append(dst.Name, n)
 		}
 	}
 
-	for _, rawEmail := range httputil.ExtractProperty(src, hCard, propertyEmail) {
+	for _, rawEmail := range httputil.ExtractProperty(bytes.NewReader(body), u, hCard, propertyEmail) {
 		email, ok := rawEmail.(string)
 		if !ok {
 			continue
 		}
 
-		if e, err := domain.ParseEmail(email); err == nil {
+		if e, err := domain.ParseEmail(email); err == nil && !slices.Contains(dst.Email, e) {
 			dst.Email = append(dst.Email, e)
 		}
 	}
 
-	for _, rawURL := range httputil.ExtractProperty(src, hCard, propertyURL) {
-		url, ok := rawURL.(string)
+	for _, rawURL := range httputil.ExtractProperty(bytes.NewReader(body), u, hCard, propertyURL) {
+		rawURL, ok := rawURL.(string)
 		if !ok {
 			continue
 		}
 
-		if u, err := domain.ParseURL(url); err == nil {
+		if u, err := url.Parse(rawURL); err == nil && !containsUrl(dst.URL, u) {
 			dst.URL = append(dst.URL, u)
 		}
 	}
 
-	for _, rawPhoto := range httputil.ExtractProperty(src, hCard, propertyPhoto) {
+	for _, rawPhoto := range httputil.ExtractProperty(bytes.NewReader(body), u, hCard, propertyPhoto) {
 		photo, ok := rawPhoto.(string)
 		if !ok {
 			continue
 		}
 
-		if p, err := domain.ParseURL(photo); err == nil {
+		if p, err := url.Parse(photo); err == nil && !containsUrl(dst.Photo, p) {
 			dst.Photo = append(dst.Photo, p)
 		}
 	}
+}
+
+func containsUrl(src []*url.URL, find *url.URL) bool {
+	for i := range src {
+		if src[i].String() != find.String() {
+			continue
+		}
+
+		return true
+	}
+
+	return false
 }

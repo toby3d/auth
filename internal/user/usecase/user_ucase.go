@@ -18,7 +18,7 @@ func NewUserUseCase(repo user.Repository) user.UseCase {
 	}
 }
 
-func (useCase *userUseCase) Fetch(ctx context.Context, me *domain.Me) (*domain.User, error) {
+func (useCase *userUseCase) Fetch(ctx context.Context, me domain.Me) (*domain.User, error) {
 	user, err := useCase.repo.Get(ctx, me)
 	if err != nil {
 		return nil, fmt.Errorf("cannot find user by me: %w", err)

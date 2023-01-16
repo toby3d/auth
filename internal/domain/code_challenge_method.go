@@ -1,6 +1,6 @@
 package domain
 
-//nolint: gosec // support old clients
+//nolint:gosec // support old clients
 import (
 	"crypto/md5"
 	"crypto/sha1"
@@ -23,7 +23,7 @@ type CodeChallengeMethod struct {
 	uid string
 }
 
-//nolint: gochecknoglobals // structs cannot be constants
+//nolint:gochecknoglobals // structs cannot be constants
 var (
 	CodeChallengeMethodUnd   = CodeChallengeMethod{uid: ""}      // "und"
 	CodeChallengeMethodPLAIN = CodeChallengeMethod{uid: "plain"} // "PLAIN"
@@ -39,7 +39,7 @@ var ErrCodeChallengeMethodUnknown error = NewError(
 	"https://indieauth.net/source/#authorization-request",
 )
 
-//nolint: gochecknoglobals // maps cannot be constants
+//nolint:gochecknoglobals // maps cannot be constants
 var uidsMethods = map[string]CodeChallengeMethod{
 	CodeChallengeMethodMD5.uid:   CodeChallengeMethodMD5,
 	CodeChallengeMethodPLAIN.uid: CodeChallengeMethodPLAIN,

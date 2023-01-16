@@ -2,17 +2,23 @@ package httputil
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"net/http"
 	"net/url"
 	"strings"
 
+	"github.com/goccy/go-json"
 	"github.com/tomnomnom/linkheader"
-	http "github.com/valyala/fasthttp"
+	"golang.org/x/exp/slices"
 	"willnorris.com/go/microformats"
 
+	"source.toby3d.me/toby3d/auth/internal/common"
 	"source.toby3d.me/toby3d/auth/internal/domain"
 )
+
+const RelIndieauthMetadata = "indieauth-metadata"
 
 var ErrEndpointNotExist = domain.NewError(
 	domain.ErrorCodeServerError,
@@ -20,15 +26,50 @@ var ErrEndpointNotExist = domain.NewError(
 	"https://indieauth.net/source/#discovery-0",
 )
 
-func ExtractEndpoints(resp *http.Response, rel string) []*domain.URL {
-	results := make([]*domain.URL, 0)
+func ExtractFromMetadata(client *http.Client, u string) (*domain.Metadata, error) {
+	req, err := http.NewRequest(http.MethodGet, u, nil)
+	if err != nil {
+		return nil, err
+	}
 
-	urls, err := ExtractEndpointsFromHeader(resp, rel)
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	buf := bytes.NewBuffer(body)
+
+	endpoints := ExtractEndpoints(buf, resp.Request.URL, resp.Header.Get(common.HeaderLink), RelIndieauthMetadata)
+	if len(endpoints) == 0 {
+		return nil, ErrEndpointNotExist
+	}
+
+	if resp, err = client.Get(endpoints[len(endpoints)-1].String()); err != nil {
+		return nil, fmt.Errorf("failed to fetch metadata endpoint configuration: %w", err)
+	}
+
+	result := new(domain.Metadata)
+	if err = json.NewDecoder(resp.Body).Decode(result); err != nil {
+		return nil, fmt.Errorf("cannot unmarshal emtadata configuration: %w", err)
+	}
+
+	return result, nil
+}
+
+func ExtractEndpoints(body io.Reader, u *url.URL, linkHeader, rel string) []*url.URL {
+	results := make([]*url.URL, 0)
+
+	urls, err := ExtractEndpointsFromHeader(linkHeader, rel)
 	if err == nil {
 		results = append(results, urls...)
 	}
 
-	urls, err = ExtractEndpointsFromBody(resp, rel)
+	urls, err = ExtractEndpointsFromBody(body, u, rel)
 	if err == nil {
 		results = append(results, urls...)
 	}
@@ -36,97 +77,62 @@ func ExtractEndpoints(resp *http.Response, rel string) []*domain.URL {
 	return results
 }
 
-func ExtractEndpointsFromHeader(resp *http.Response, rel string) ([]*domain.URL, error) {
-	results := make([]*domain.URL, 0)
+func ExtractEndpointsFromHeader(linkHeader, rel string) ([]*url.URL, error) {
+	results := make([]*url.URL, 0)
 
-	for _, link := range linkheader.Parse(string(resp.Header.Peek(http.HeaderLink))) {
+	for _, link := range linkheader.Parse(linkHeader) {
 		if !strings.EqualFold(link.Rel, rel) {
 			continue
 		}
 
-		u := http.AcquireURI()
-		if err := u.Parse(resp.Header.Peek(http.HeaderHost), []byte(link.URL)); err != nil {
+		u, err := url.Parse(link.URL)
+		if err != nil {
 			return nil, fmt.Errorf("cannot parse header endpoint: %w", err)
 		}
 
-		results = append(results, &domain.URL{URI: u})
+		results = append(results, u)
 	}
 
 	return results, nil
 }
 
-func ExtractEndpointsFromBody(resp *http.Response, rel string) ([]*domain.URL, error) {
-	endpoints, ok := microformats.Parse(bytes.NewReader(resp.Body()), nil).Rels[rel]
+func ExtractEndpointsFromBody(body io.Reader, u *url.URL, rel string) ([]*url.URL, error) {
+	endpoints, ok := microformats.Parse(body, u).Rels[rel]
 	if !ok || len(endpoints) == 0 {
 		return nil, ErrEndpointNotExist
 	}
 
-	results := make([]*domain.URL, 0)
+	results := make([]*url.URL, 0)
 
 	for i := range endpoints {
-		u := http.AcquireURI()
-		if err := u.Parse(resp.Header.Peek(http.HeaderHost), []byte(endpoints[i])); err != nil {
+		u, err := url.Parse(endpoints[i])
+		if err != nil {
 			return nil, fmt.Errorf("cannot parse body endpoint: %w", err)
 		}
 
-		results = append(results, &domain.URL{URI: u})
+		results = append(results, u)
 	}
 
 	return results, nil
 }
 
-func ExtractMetadata(resp *http.Response, client *http.Client) (*domain.Metadata, error) {
-	endpoints := ExtractEndpoints(resp, "indieauth-metadata")
-	if len(endpoints) == 0 {
-		return nil, ErrEndpointNotExist
+func ExtractProperty(body io.Reader, u *url.URL, itemType, key string) []any {
+	if data := microformats.Parse(body, u); data != nil {
+		return FindProperty(data.Items, itemType, key)
 	}
 
-	_, body, err := client.Get(nil, endpoints[len(endpoints)-1].String())
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch metadata endpoint configuration: %w", err)
-	}
-
-	result := new(domain.Metadata)
-	if err = json.Unmarshal(body, result); err != nil {
-		return nil, fmt.Errorf("cannot unmarshal emtadata configuration: %w", err)
-	}
-
-	return result, nil
+	return nil
 }
 
-func ExtractProperty(resp *http.Response, itemType, key string) []interface{} {
-	//nolint: exhaustivestruct // only Host part in url.URL is needed
-	data := microformats.Parse(bytes.NewReader(resp.Body()), &url.URL{
-		Host: string(resp.Header.Peek(http.HeaderHost)),
-	})
-
-	return findProperty(data.Items, itemType, key)
-}
-
-func contains(src []string, find string) bool {
-	for i := range src {
-		if !strings.EqualFold(src[i], find) {
-			continue
-		}
-
-		return true
-	}
-
-	return false
-}
-
-func findProperty(src []*microformats.Microformat, itemType, key string) []interface{} {
+func FindProperty(src []*microformats.Microformat, itemType, key string) []any {
 	for _, item := range src {
-		if contains(item.Type, itemType) {
+		if slices.Contains(item.Type, itemType) {
 			return item.Properties[key]
 		}
 
-		result := findProperty(item.Children, itemType, key)
-		if result == nil {
-			continue
+		if result := FindProperty(item.Children, itemType, key); result != nil {
+			return result
 		}
-
-		return result
 	}
 
 	return nil

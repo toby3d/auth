@@ -7,26 +7,28 @@ import (
 	"strings"
 	"testing"
 
-	http "github.com/valyala/fasthttp"
 	"inet.af/netaddr"
+
+	"source.toby3d.me/toby3d/auth/internal/common"
 )
 
 // ClientID is a URL client identifier.
 type ClientID struct {
-	clientID *http.URI
+	clientID *url.URL
 }
 
-//nolint: gochecknoglobals // slices cannot be constants
+//nolint:gochecknoglobals // slices cannot be constants
 var (
 	localhostIPv4 = netaddr.MustParseIP("127.0.0.1")
 	localhostIPv6 = netaddr.MustParseIP("::1")
 )
 
 // ParseClientID parse string as client ID URL identifier.
-//nolint: funlen, cyclop
+//
+//nolint:funlen,cyclop
 func ParseClientID(src string) (*ClientID, error) {
-	cid := http.AcquireURI()
-	if err := cid.Parse(nil, []byte(src)); err != nil {
+	cid, err := url.Parse(src)
+	if err != nil {
 		return nil, NewError(
 			ErrorCodeInvalidRequest,
 			err.Error(),
@@ -34,46 +36,49 @@ func ParseClientID(src string) (*ClientID, error) {
 		)
 	}
 
-	scheme := string(cid.Scheme())
-	if scheme != "http" && scheme != "https" {
+	if cid.Scheme != "http" && cid.Scheme != "https" {
 		return nil, NewError(
 			ErrorCodeInvalidRequest,
-			"client identifier URL MUST have either an https or http scheme",
+			"client identifier URL MUST have either an https or http scheme, got '"+cid.Scheme+"'",
 			"https://indieauth.net/source/#client-identifier",
 		)
 	}
 
-	path := string(cid.PathOriginal())
-	if path == "" || strings.Contains(path, "/.") || strings.Contains(path, "/..") {
+	if cid.Path == "" {
+		cid.Path = "/"
+	}
+
+	if strings.Contains(cid.Path, "/.") || strings.Contains(cid.Path, "/..") {
 		return nil, NewError(
 			ErrorCodeInvalidRequest,
 			"client identifier URL MUST contain a path component and MUST NOT contain "+
-				"single-dot or double-dot path segments",
+				"single-dot or double-dot path segments, got '"+cid.Path+"'",
 			"https://indieauth.net/source/#client-identifier",
 		)
 	}
 
-	if cid.Hash() != nil {
+	if cid.Fragment != "" {
 		return nil, NewError(
 			ErrorCodeInvalidRequest,
-			"client identifier URL MUST NOT contain a fragment component",
+			"client identifier URL MUST NOT contain a fragment component, got '"+cid.Fragment+"'",
 			"https://indieauth.net/source/#client-identifier",
 		)
 	}
 
-	if cid.Username() != nil || cid.Password() != nil {
+	if cid.User != nil {
 		return nil, NewError(
 			ErrorCodeInvalidRequest,
-			"client identifier URL MUST NOT contain a username or password component",
+			"client identifier URL MUST NOT contain a username or password component, got '"+
+				cid.User.String()+"'",
 			"https://indieauth.net/source/#client-identifier",
 		)
 	}
 
-	domain := string(cid.Host())
+	domain := cid.Hostname()
 	if domain == "" {
 		return nil, NewError(
 			ErrorCodeInvalidRequest,
-			"client host name MUST be domain name or a loopback interface",
+			"client host name MUST be domain name or a loopback interface, got '"+domain+"'",
 			"https://indieauth.net/source/#client-identifier",
 		)
 	}
@@ -82,7 +87,7 @@ func ParseClientID(src string) (*ClientID, error) {
 	if err != nil {
 		ipPort, err := netaddr.ParseIPPort(domain)
 		if err != nil {
-			//nolint: nilerr // ClientID does not contain an IP address, so it is valid
+			//nolint:nilerr // ClientID does not contain an IP address, so it is valid
 			return &ClientID{clientID: cid}, nil
 		}
 
@@ -104,10 +109,15 @@ func ParseClientID(src string) (*ClientID, error) {
 }
 
 // TestClientID returns valid random generated ClientID for tests.
-func TestClientID(tb testing.TB) *ClientID {
+func TestClientID(tb testing.TB, forceURL ...string) *ClientID {
 	tb.Helper()
 
-	clientID, err := ParseClientID("https://example.com/")
+	in := "https://app.example.com/"
+	if len(forceURL) > 0 {
+		in = forceURL[0]
+	}
+
+	clientID, err := ParseClientID(in)
 	if err != nil {
 		tb.Fatal(err)
 	}
@@ -149,33 +159,31 @@ func (cid ClientID) MarshalJSON() ([]byte, error) {
 	return []byte(strconv.Quote(cid.String())), nil
 }
 
-// URI returns copy of parsed *fasthttp.URI.
-//
-// WARN(toby3d): This copy MUST be released via fasthttp.ReleaseURI.
-func (cid ClientID) URI() *http.URI {
-	uri := http.AcquireURI()
-	cid.clientID.CopyTo(uri)
-
-	return uri
+// IsEqual checks what cid is equal to provided v.
+func (cid ClientID) IsEqual(v ClientID) bool {
+	return cid.clientID.String() == v.clientID.String()
 }
 
 // URL returns url.URL representation of client ID.
 func (cid ClientID) URL() *url.URL {
-	return &url.URL{
-		ForceQuery:  false,
-		Fragment:    string(cid.clientID.Hash()),
-		Host:        string(cid.clientID.Host()),
-		Opaque:      "",
-		Path:        string(cid.clientID.Path()),
-		RawFragment: "",
-		RawPath:     string(cid.clientID.PathOriginal()),
-		RawQuery:    string(cid.clientID.QueryString()),
-		Scheme:      string(cid.clientID.Scheme()),
-		User:        nil,
-	}
+	out, _ := url.Parse(cid.clientID.String())
+
+	return out
 }
 
 // String returns string representation of client ID.
 func (cid ClientID) String() string {
+	if cid.clientID == nil {
+		return ""
+	}
+
 	return cid.clientID.String()
+}
+
+func (cid ClientID) GoString() string {
+	if cid.clientID == nil {
+		return "domain.ClientID(" + common.Und + ")"
+	}
+
+	return "domain.ClientID(" + cid.clientID.String() + ")"
 }

@@ -17,7 +17,7 @@ const (
 	Hex          = Numeric + "abcdef"
 )
 
-func Bytes(length int) ([]byte, error) {
+func Bytes(length uint8) ([]byte, error) {
 	bytes := make([]byte, length)
 
 	if _, err := rand.Read(bytes); err != nil {
@@ -27,7 +27,7 @@ func Bytes(length int) ([]byte, error) {
 	return bytes, nil
 }
 
-func String(length int, charsets ...string) (string, error) {
+func String(length uint8, charsets ...string) (string, error) {
 	charset := strings.Join(charsets, "")
 	if charset == "" {
 		charset = Alphabetic

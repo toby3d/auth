@@ -2,10 +2,14 @@
 run:
   tests: true
   skip-dirs:
+    - builtin
+    - examples
+    - Godeps
     - locales
     - testdata
+    - third_party
+    - vendor
     - web
-  skip-dirs-use-default: true
   skip-files:
     - ".*_gen\\.go$"
 output:
@@ -33,6 +37,7 @@ linters-settings:
     ignore-map-index-ok: true
     ignore-chan-recv-ok: true
     ignore-names:
+      - cid # ClientID
       - ctx # context
       - db # dataBase
       - err # error
@@ -43,16 +48,17 @@ linters-settings:
       - ln # listener
       - me
       - ok
+      - r # Request
       - tc # testCase
       - ts # timeStamp
       - tx # transaction
+      - w # ResponseWriter
     ignore-decls:
-      - "cid *domain.ClientID"
-      - "ctx *fasthttp.RequestCtx"
       - "ctx context.Context"
+      - "err error"
       - "i int"
-      - "me *domain.Me"
-      - "r *router.Router"
+      - "r *http.Request"
+      - "w http.ResponseWriter"
 linters:
   enable-all: true
   disable:

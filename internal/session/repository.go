@@ -8,7 +8,7 @@ import (
 
 type Repository interface {
 	Get(ctx context.Context, code string) (*domain.Session, error)
-	Create(ctx context.Context, session *domain.Session) error
+	Create(ctx context.Context, session domain.Session) error
 	GetAndDelete(ctx context.Context, code string) (*domain.Session, error)
 	GC()
 }

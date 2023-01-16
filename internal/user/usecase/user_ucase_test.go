@@ -2,9 +2,7 @@ package usecase_test
 
 import (
 	"context"
-	"path"
 	"reflect"
-	"sync"
 	"testing"
 
 	"source.toby3d.me/toby3d/auth/internal/domain"
@@ -15,19 +13,20 @@ import (
 func TestFetch(t *testing.T) {
 	t.Parallel()
 
-	me := domain.TestMe(t, "https://user.example.net")
 	user := domain.TestUser(t)
+	user.Me = domain.TestMe(t, "https://user.example.net")
+	users := repository.NewMemoryUserRepository()
 
-	store := new(sync.Map)
-	store.Store(path.Join(repository.DefaultPathPrefix, me.String()), user)
+	if err := users.Create(context.Background(), *user); err != nil {
+		t.Fatal(err)
+	}
 
-	result, err := ucase.NewUserUseCase(repository.NewMemoryUserRepository(store)).
-		Fetch(context.Background(), me)
+	result, err := ucase.NewUserUseCase(users).Fetch(context.Background(), *user.Me)
 	if err != nil {
 		t.Error(err)
 	}
 
 	if !reflect.DeepEqual(result, user) {
-		t.Errorf("Fetch(%s) = %+v, want %+v", me, result, user)
+		t.Errorf("Fetch(%s) = %+v, want %+v", user.Me, result, user)
 	}
 }

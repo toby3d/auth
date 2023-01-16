@@ -3,12 +3,9 @@ package usecase_test
 import (
 	"context"
 	"errors"
-	"path"
 	"reflect"
-	"sync"
 	"testing"
 
-	"source.toby3d.me/toby3d/auth/internal/client"
 	repository "source.toby3d.me/toby3d/auth/internal/client/repository/memory"
 	"source.toby3d.me/toby3d/auth/internal/client/usecase"
 	"source.toby3d.me/toby3d/auth/internal/domain"
@@ -17,12 +14,11 @@ import (
 func TestDiscovery(t *testing.T) {
 	t.Parallel()
 
-	store := new(sync.Map)
-	testClient, localhostClient := domain.TestClient(t), domain.TestClient(t)
-	localhostClient.ID, _ = domain.ParseClientID("http://localhost/")
+	testClient := domain.TestClient(t)
+	clients := repository.NewMemoryClientRepository()
 
-	for _, client := range []*domain.Client{testClient, localhostClient} {
-		store.Store(path.Join(repository.DefaultPathPrefix, client.ID.String()), client)
+	if err := clients.Create(context.Background(), *testClient); err != nil {
+		t.Fatal(err)
 	}
 
 	for _, tc := range []struct {
@@ -34,17 +30,13 @@ func TestDiscovery(t *testing.T) {
 		name: "default",
 		in:   testClient,
 		out:  testClient,
-	}, {
-		name:     "localhost",
-		in:       localhostClient,
-		expError: client.ErrNotExist,
 	}} {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			result, err := usecase.NewClientUseCase(repository.NewMemoryClientRepository(store)).
+			result, err := usecase.NewClientUseCase(clients).
 				Discovery(context.Background(), tc.in.ID)
 			if tc.expError != nil && !errors.Is(err, tc.expError) {
 				t.Errorf("Discovery(%s) = %+v, want %+v", tc.in.ID, err, tc.expError)

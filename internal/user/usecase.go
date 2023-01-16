@@ -8,5 +8,5 @@ import (
 
 type UseCase interface {
 	// Fetch discovery all available endpoints and Profile info on Me URL.
-	Fetch(ctx context.Context, me *domain.Me) (*domain.User, error)
+	Fetch(ctx context.Context, me domain.Me) (*domain.User, error)
 }

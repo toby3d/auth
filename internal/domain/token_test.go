@@ -1,13 +1,12 @@
 package domain_test
 
 import (
-	"bytes"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
-	http "github.com/valyala/fasthttp"
-
+	"source.toby3d.me/toby3d/auth/internal/common"
 	"source.toby3d.me/toby3d/auth/internal/domain"
 )
 
@@ -40,16 +39,13 @@ func TestNewToken(t *testing.T) {
 func TestToken_SetAuthHeader(t *testing.T) {
 	t.Parallel()
 
-	token := domain.TestToken(t)
-	expResult := []byte("Bearer " + token.AccessToken)
+	in := domain.TestToken(t)
+	req, _ := http.NewRequest(http.MethodGet, "https://example.com/", nil)
+	in.SetAuthHeader(req)
 
-	req := http.AcquireRequest()
-	defer http.ReleaseRequest(req)
-	token.SetAuthHeader(req)
-
-	result := req.Header.Peek(http.HeaderAuthorization)
-	if result == nil || !bytes.Equal(result, expResult) {
-		t.Errorf("SetAuthHeader(%+v) = %s, want %s", req, result, expResult)
+	exp := "Bearer " + in.AccessToken
+	if out := req.Header.Get(common.HeaderAuthorization); out != exp {
+		t.Errorf("SetAuthHeader(%+v) = %s, want %s", req, out, exp)
 	}
 }
 
@@ -57,9 +53,9 @@ func TestToken_String(t *testing.T) {
 	t.Parallel()
 
 	token := domain.TestToken(t)
-	expResult := "Bearer " + token.AccessToken
+	exp := "Bearer " + token.AccessToken
 
-	if result := token.String(); result != expResult {
-		t.Errorf("String() = %s, want %s", result, expResult)
+	if out := token.String(); out != exp {
+		t.Errorf("String() = %s, want %s", out, exp)
 	}
 }

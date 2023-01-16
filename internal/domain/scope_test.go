@@ -95,7 +95,6 @@ func TestScopes_MarshalJSON(t *testing.T) {
 func TestScope_String(t *testing.T) {
 	t.Parallel()
 
-	//nolint: paralleltest // false positive, in is used
 	for _, tc := range []struct {
 		in  domain.Scope
 		out string
