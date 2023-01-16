@@ -113,11 +113,8 @@ func (r *AuthAuthorizationRequest) bind(req *http.Request) error {
 			return indieAuthError
 		}
 
-		return domain.NewError(
-			domain.ErrorCodeInvalidRequest,
-			err.Error(),
-			"https://indieauth.net/source/#authorization-request",
-		)
+		return domain.NewError(domain.ErrorCodeInvalidRequest, err.Error(),
+			"https://indieauth.net/source/#authorization-request")
 	}
 
 	if r.ResponseType == domain.ResponseTypeID {
@@ -147,11 +144,8 @@ func (r *AuthVerifyRequest) bind(req *http.Request) error {
 	indieAuthError := new(domain.Error)
 
 	if err := req.ParseForm(); err != nil {
-		return domain.NewError(
-			domain.ErrorCodeInvalidRequest,
-			err.Error(),
-			"https://indieauth.net/source/#authorization-request",
-		)
+		return domain.NewError(domain.ErrorCodeInvalidRequest, err.Error(),
+			"https://indieauth.net/source/#authorization-request")
 	}
 
 	if err := form.Unmarshal([]byte(req.PostForm.Encode()), r); err != nil {
@@ -159,11 +153,8 @@ func (r *AuthVerifyRequest) bind(req *http.Request) error {
 			return indieAuthError
 		}
 
-		return domain.NewError(
-			domain.ErrorCodeInvalidRequest,
-			err.Error(),
-			"https://indieauth.net/source/#authorization-request",
-		)
+		return domain.NewError(domain.ErrorCodeInvalidRequest, err.Error(),
+			"https://indieauth.net/source/#authorization-request")
 	}
 
 	// NOTE(toby3d): backwards-compatible support.
@@ -175,11 +166,8 @@ func (r *AuthVerifyRequest) bind(req *http.Request) error {
 	r.Provider = strings.ToLower(r.Provider)
 
 	if !strings.EqualFold(r.Authorize, "allow") && !strings.EqualFold(r.Authorize, "deny") {
-		return domain.NewError(
-			domain.ErrorCodeInvalidRequest,
-			"cannot validate verification request",
-			"https://indieauth.net/source/#authorization-request",
-		)
+		return domain.NewError(domain.ErrorCodeInvalidRequest, "cannot validate verification request",
+			"https://indieauth.net/source/#authorization-request")
 	}
 
 	return nil
@@ -189,11 +177,8 @@ func (r *AuthExchangeRequest) bind(req *http.Request) error {
 	indieAuthError := new(domain.Error)
 
 	if err := req.ParseForm(); err != nil {
-		return domain.NewError(
-			domain.ErrorCodeInvalidRequest,
-			err.Error(),
-			"https://indieauth.net/source/#authorization-request",
-		)
+		return domain.NewError(domain.ErrorCodeInvalidRequest, err.Error(),
+			"https://indieauth.net/source/#authorization-request")
 	}
 
 	if err := form.Unmarshal([]byte(req.PostForm.Encode()), r); err != nil {
@@ -201,11 +186,8 @@ func (r *AuthExchangeRequest) bind(req *http.Request) error {
 			return indieAuthError
 		}
 
-		return domain.NewError(
-			domain.ErrorCodeInvalidRequest,
-			"cannot validate verification request",
-			"https://indieauth.net/source/#redeeming-the-authorization-code",
-		)
+		return domain.NewError(domain.ErrorCodeInvalidRequest, "cannot validate verification request",
+			"https://indieauth.net/source/#redeeming-the-authorization-code")
 	}
 
 	return nil
