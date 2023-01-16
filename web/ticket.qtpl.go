@@ -46,7 +46,7 @@ func (p *TicketPage) StreamBody(qw422016 *qt422016.Writer) {
 //line web/ticket.qtpl:28
 	p.StreamT(qw422016, "Recipient")
 //line web/ticket.qtpl:28
-	qw422016.N().S(`</label> <input id="subject" type="url" name="subject" inputmode="url" placeholder="https://bob.example.org" required> </div> <div> <label for="resource">`)
+	qw422016.N().S(`</label> <input id="subject" type="url" name="subject" inputmode="url" placeholder="https://bob.example.org/" required> </div> <div> <label for="resource">`)
 //line web/ticket.qtpl:38
 	p.StreamT(qw422016, "Resource")
 //line web/ticket.qtpl:38

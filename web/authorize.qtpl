@@ -71,11 +71,11 @@
     {% endif %}
 
     {% for key, val := range map[string]string{
-        "client_id":     p.Client.ID.String(),
-        "redirect_uri":  p.RedirectURI.String(),
-        "response_type": p.ResponseType.String(),
-        "state":         p.State,
-      } %}
+      "client_id":     p.Client.ID.String(),
+      "redirect_uri":  p.RedirectURI.String(),
+      "response_type": p.ResponseType.String(),
+      "state":         p.State,
+    } %}
     <input type="hidden"
            name="{%s key %}"
            value="{%s val %}">
@@ -101,13 +101,14 @@
     {% endif %}
 
     {% if p.CodeChallenge != "" %}
+    {% for key, val := range map[string]string{
+      "code_challenge":        p.CodeChallenge,
+      "code_challenge_method": p.CodeChallengeMethod.String(),
+    } %}
     <input type="hidden"
-           name="code_challenge"
-           value="{%s p.CodeChallenge %}">
-
-    <input type="hidden"
-           name="code_challenge_method"
-           value="{%s p.CodeChallengeMethod.String() %}">
+           name="{%s key %}"
+           value="{%s val %}">
+    {% endfor %}
     {% endif %}
 
     {% if p.Me != nil %}

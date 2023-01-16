@@ -30,7 +30,7 @@
              type="url"
              name="subject"
              inputmode="url"
-             placeholder="https://bob.example.org"
+             placeholder="https://bob.example.org/"
              required>
     </div>
 
