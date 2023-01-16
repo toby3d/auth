@@ -350,17 +350,22 @@ func (app *App) Handler() http.Handler {
 		head, r.URL.Path = urlutil.ShiftPath(r.URL.Path)
 
 		switch head {
-		default:
+		case "", "callback", "token", "introspect", "revocation":
 			r.URL = r.URL.JoinPath(head, r.URL.Path)
+		default:
+			if r.URL.Path != "/" {
+				r.URL = r.URL.JoinPath(head, r.URL.Path)
+			} else {
+				r.URL = r.URL.JoinPath(head)
+			}
+		}
 
+		switch head {
+		default:
 			static.ServeHTTP(w, r)
 		case "", "callback":
-			r.URL = r.URL.JoinPath(head, r.URL.Path)
-
 			client.ServeHTTP(w, r)
 		case "token", "introspect", "revocation":
-			r.URL = r.URL.JoinPath(head, r.URL.Path)
-
 			token.ServeHTTP(w, r)
 		case ".well-known":
 			if head, _ = urlutil.ShiftPath(r.URL.Path); head == "oauth-authorization-server" {
@@ -377,5 +382,5 @@ func (app *App) Handler() http.Handler {
 		case "ticket":
 			ticket.ServeHTTP(w, r)
 		}
-	}).Intercept(middleware.LogFmt()))
+	}) /*.Intercept(middleware.LogFmt())*/)
 }
