@@ -154,11 +154,8 @@ func (h *Handler) handleAuthorize(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		web.WriteTemplate(w, &web.ErrorPage{
 			BaseOf: baseOf,
-			Error: domain.NewError(
-				domain.ErrorCodeInvalidClient,
-				"requested redirect_uri is not registered on client_id side",
-				"",
-			),
+			Error: domain.NewError(domain.ErrorCodeInvalidClient, "requested redirect_uri is not"+
+				" registered on client_id side", ""),
 		})
 
 		return
