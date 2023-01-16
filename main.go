@@ -92,7 +92,8 @@ const (
 //nolint:gochecknoglobals
 var (
 	// NOTE(toby3d): write logs in stdout, see: https://12factor.net/logs
-	logger          = log.New(os.Stdout, "IndieAuth\t", log.Lmsgprefix|log.LstdFlags|log.LUTC)
+	logger = log.New(os.Stdout, "IndieAuth\t", log.Lmsgprefix|log.LstdFlags|log.LUTC)
+	// NOTE(toby3d): read configuration from environment, see: https://12factor.net/config
 	config          = new(domain.Config)
 	indieAuthClient = &domain.Client{
 		URL:         make([]*url.URL, 1),
@@ -101,6 +102,7 @@ var (
 	}
 )
 
+//nolint:gochecknoglobals
 var cpuProfilePath, memProfilePath string
 
 //go:embed assets/*
