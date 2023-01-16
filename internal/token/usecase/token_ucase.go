@@ -41,7 +41,7 @@ func NewTokenUseCase(config Config) token.UseCase {
 	}
 }
 
-//nolint: cyclop
+//nolint:cyclop
 func (uc *tokenUseCase) Exchange(ctx context.Context, opts token.ExchangeOptions) (*domain.Token, *domain.Profile,
 	error,
 ) {
@@ -58,7 +58,7 @@ func (uc *tokenUseCase) Exchange(ctx context.Context, opts token.ExchangeOptions
 		return nil, nil, token.ErrMismatchRedirectURI
 	}
 
-	if session.CodeChallenge != "" && session.CodeChallengeMethod != domain.CodeChallengeMethodUndefined &&
+	if session.CodeChallenge != "" && session.CodeChallengeMethod != domain.CodeChallengeMethodUnd &&
 		!session.CodeChallengeMethod.Validate(session.CodeChallenge, opts.CodeVerifier) {
 		return nil, nil, token.ErrMismatchPKCE
 	}
@@ -107,17 +107,17 @@ func (uc *tokenUseCase) Verify(ctx context.Context, accessToken string) (*domain
 		return nil, nil, fmt.Errorf("cannot validate JWT token: %w", err)
 	}
 
+	cid, _ := domain.ParseClientID(tkn.Issuer())
+	me, _ := domain.ParseMe(tkn.Subject())
 	result := &domain.Token{
 		CreatedAt:    tkn.IssuedAt(),
 		Expiry:       tkn.Expiration(),
-		ClientID:     nil,
-		Me:           nil,
+		ClientID:     *cid,
+		Me:           *me,
 		Scope:        nil,
 		AccessToken:  accessToken,
 		RefreshToken: "", // TODO(toby3d)
 	}
-	result.ClientID, _ = domain.ParseClientID(tkn.Issuer())
-	result.Me, _ = domain.ParseMe(tkn.Subject())
 
 	if scope, ok := tkn.Get("scope"); ok {
 		result.Scope, _ = scope.(domain.Scopes)
@@ -129,7 +129,7 @@ func (uc *tokenUseCase) Verify(ctx context.Context, accessToken string) (*domain
 
 	profile, err := uc.profiles.Get(ctx, result.Me)
 	if err != nil {
-		return result, nil, nil //nolint: nilerr // it's okay to return result without profile
+		return result, nil, nil //nolint:nilerr // it's okay to return result without profile
 	}
 
 	if !result.Scope.Has(domain.ScopeEmail) && len(profile.Email) > 0 {
@@ -149,7 +149,7 @@ func (uc *tokenUseCase) Revoke(ctx context.Context, accessToken string) error {
 		return fmt.Errorf("cannot verify token: %w", err)
 	}
 
-	if err = uc.tokens.Create(ctx, tkn); err != nil && !errors.Is(err, token.ErrExist) {
+	if err = uc.tokens.Create(ctx, *tkn); err != nil && !errors.Is(err, token.ErrExist) {
 		return fmt.Errorf("cannot save token in database: %w", err)
 	}
 

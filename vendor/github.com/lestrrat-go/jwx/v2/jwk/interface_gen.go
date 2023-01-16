@@ -16,7 +16,7 @@ const (
 	KeyOpsKey                 = "key_ops"
 	AlgorithmKey              = "alg"
 	KeyIDKey                  = "kid"
-	X509URLKey                = "x58"
+	X509URLKey                = "x5u"
 	X509CertChainKey          = "x5c"
 	X509CertThumbprintKey     = "x5t"
 	X509CertThumbprintS256Key = "x5t#S256"
@@ -88,7 +88,7 @@ type Key interface {
 	// If the key is already a public key, it returns a new copy minus the disallowed fields as above.
 	PublicKey() (Key, error)
 
-	// KeyType returns the `kid` of a JWK
+	// KeyType returns the `kty` of a JWK
 	KeyType() jwa.KeyType
 	// KeyUsage returns `use` of a JWK
 	KeyUsage() string
@@ -103,7 +103,7 @@ type Key interface {
 	Algorithm() jwa.KeyAlgorithm
 	// KeyID returns `kid` of a JWK
 	KeyID() string
-	// X509URL returns `x58` of a JWK
+	// X509URL returns `x5u` of a JWK
 	X509URL() string
 	// X509CertChain returns `x5c` of a JWK
 	X509CertChain() *cert.Chain

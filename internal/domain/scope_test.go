@@ -95,7 +95,6 @@ func TestScopes_MarshalJSON(t *testing.T) {
 func TestScope_String(t *testing.T) {
 	t.Parallel()
 
-	//nolint: paralleltest // false positive, in is used
 	for _, tc := range []struct {
 		in  domain.Scope
 		out string
@@ -137,7 +136,7 @@ func TestScopes_String(t *testing.T) {
 func TestScopes_IsEmpty(t *testing.T) {
 	t.Parallel()
 
-	scopes := domain.Scopes{domain.ScopeUndefined}
+	scopes := domain.Scopes{domain.ScopeUnd}
 	if result := scopes.IsEmpty(); !result {
 		t.Errorf("IsEmpty() = %t, want %t", result, true)
 	}

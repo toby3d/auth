@@ -2,16 +2,18 @@ package domain
 
 import (
 	"fmt"
+	"net/url"
 	"strconv"
 	"strings"
 
-	http "github.com/valyala/fasthttp"
 	"golang.org/x/xerrors"
+
+	"source.toby3d.me/toby3d/auth/internal/common"
 )
 
 type (
 	// Error describes the format of a typical IndieAuth error.
-	//nolint: tagliatelle // RFC 6749 section 5.2
+	//nolint:tagliatelle // RFC 6749 section 5.2
 	Error struct {
 		// A single error code.
 		Code ErrorCode `json:"error"`
@@ -35,26 +37,19 @@ type (
 
 	// ErrorCode represent error code described in RFC 6749.
 	ErrorCode struct {
-		uid    string
-		status int
+		uid string
 	}
 )
 
 var (
-	// ErrorCodeUndefined describes an unrecognized error code.
-	ErrorCodeUndefined = ErrorCode{
-		uid:    "",
-		status: 0,
-	}
+	// ErrorCodeUnd describes an unrecognized error code.
+	ErrorCodeUnd = ErrorCode{uid: ""} // "und"
 
 	// ErrorCodeAccessDenied describes the access_denied error code.
 	//
 	// RFC 6749 section 4.1.2.1: The resource owner or authorization server
 	// denied the request.
-	ErrorCodeAccessDenied = ErrorCode{
-		uid:    "access_denied",
-		status: 0, // TODO(toby3d)
-	}
+	ErrorCodeAccessDenied = ErrorCode{uid: "access_denied"} // "access_denied"
 
 	// ErrorCodeInvalidClient describes the invalid_client error code.
 	//
@@ -70,10 +65,7 @@ var (
 	// HTTP 401 (Unauthorized) status code and include the
 	// "WWW-Authenticate" response header field matching the authentication
 	// scheme used by the client.
-	ErrorCodeInvalidClient = ErrorCode{
-		uid:    "invalid_client",
-		status: 0, // TODO(toby3d)
-	}
+	ErrorCodeInvalidClient = ErrorCode{uid: "invalid_client"} // "invalid_client"
 
 	// ErrorCodeInvalidGrant describes the invalid_grant error code.
 	//
@@ -81,10 +73,7 @@ var (
 	// authorization code, resource owner credentials) or refresh token is
 	// invalid, expired, revoked, does not match the redirection URI used in
 	// the authorization request, or was issued to another client.
-	ErrorCodeInvalidGrant = ErrorCode{
-		uid:    "invalid_grant",
-		status: 0, // TODO(toby3d)
-	}
+	ErrorCodeInvalidGrant = ErrorCode{uid: "invalid_grant"} // "invalid_grant"
 
 	// ErrorCodeInvalidRequest describes the invalid_request error code.
 	//
@@ -99,10 +88,7 @@ var (
 	// repeats a parameter, includes multiple credentials, utilizes more
 	// than one mechanism for authenticating the client, or is otherwise
 	// malformed.
-	ErrorCodeInvalidRequest = ErrorCode{
-		uid:    "invalid_request",
-		status: http.StatusBadRequest,
-	}
+	ErrorCodeInvalidRequest = ErrorCode{uid: "invalid_request"} // "invalid_request"
 
 	// ErrorCodeInvalidScope describes the invalid_scope error code.
 	//
@@ -111,10 +97,7 @@ var (
 	//
 	// RFC 6749 section 5.2: The requested scope is invalid, unknown,
 	// malformed, or exceeds the scope granted by the resource owner.
-	ErrorCodeInvalidScope = ErrorCode{
-		uid:    "invalid_scope",
-		status: 0, // TODO(toby3d)
-	}
+	ErrorCodeInvalidScope = ErrorCode{uid: "invalid_scope"} // "invalid_scope"
 
 	// ErrorCodeServerError describes the server_error error code.
 	//
@@ -122,10 +105,7 @@ var (
 	// unexpected condition that prevented it from fulfilling the request.
 	// (This error code is needed because a 500 Internal Server Error HTTP
 	// status code cannot be returned to the client via an HTTP redirect.)
-	ErrorCodeServerError = ErrorCode{
-		uid:    "server_error",
-		status: 0, // TODO(toby3d)
-	}
+	ErrorCodeServerError = ErrorCode{uid: "server_error"} // "server_error"
 
 	// ErrorCodeTemporarilyUnavailable describes the temporarily_unavailable error code.
 	//
@@ -134,10 +114,7 @@ var (
 	// maintenance of the server. (This error code is needed because a 503
 	// Service Unavailable HTTP status code cannot be returned to the client
 	// via an HTTP redirect.)
-	ErrorCodeTemporarilyUnavailable = ErrorCode{
-		uid:    "temporarily_unavailable",
-		status: 0, // TODO(toby3d)
-	}
+	ErrorCodeTemporarilyUnavailable = ErrorCode{uid: "temporarily_unavailable"} // "temporarily_unavailable"
 
 	// ErrorCodeUnauthorizedClient describes the unauthorized_client error code.
 	//
@@ -146,49 +123,34 @@ var (
 	//
 	// RFC 6749 section 5.2: The authenticated client is not authorized to
 	// use this authorization grant type.
-	ErrorCodeUnauthorizedClient = ErrorCode{
-		uid:    "unauthorized_client",
-		status: 0, // TODO(toby3d)
-	}
+	ErrorCodeUnauthorizedClient = ErrorCode{uid: "unauthorized_client"} // "unauthorized_client"
 
 	// ErrorCodeUnsupportedGrantType describes the unsupported_grant_type error code.
 	//
 	// RFC 6749 section 5.2: The authorization grant type is not supported
 	// by the authorization server.
-	ErrorCodeUnsupportedGrantType = ErrorCode{
-		uid:    "unsupported_grant_type",
-		status: 0, // TODO(toby3d)
-	}
+	ErrorCodeUnsupportedGrantType = ErrorCode{uid: "unsupported_grant_type"} // "unsupported_grant_type"
 
 	// ErrorCodeUnsupportedResponseType describes the unsupported_response_type error code.
 	//
 	// RFC 6749 section 4.1.2.1: The authorization server does not support
 	// obtaining an authorization code using this method.
-	ErrorCodeUnsupportedResponseType = ErrorCode{
-		uid:    "unsupported_response_type",
-		status: 0, // TODO(toby3d)
-	}
+	ErrorCodeUnsupportedResponseType = ErrorCode{uid: "unsupported_response_type"} // "unsupported_response_type"
 
 	// ErrorCodeInvalidToken describes the invalid_token error code.
 	//
 	// IndieAuth: The access token provided is expired, revoked, or invalid.
-	ErrorCodeInvalidToken = ErrorCode{
-		uid:    "invalid_token",
-		status: http.StatusUnauthorized,
-	}
+	ErrorCodeInvalidToken = ErrorCode{uid: "invalid_token"} // "invalid_token"
 
 	// ErrorCodeInsufficientScope describes the insufficient_scope error code.
 	//
 	// IndieAuth: The request requires higher privileges than provided.
-	ErrorCodeInsufficientScope = ErrorCode{
-		uid:    "insufficient_scope",
-		status: http.StatusForbidden,
-	}
+	ErrorCodeInsufficientScope = ErrorCode{uid: "insufficient_scope"} // "insufficient_scope"
 )
 
 var ErrErrorCodeUnknown error = NewError(ErrorCodeInvalidRequest, "unknown error code", "")
 
-//nolint: gochecknoglobals // maps cannot be constants
+//nolint:gochecknoglobals // maps cannot be constants
 var uidsErrorCodes = map[string]ErrorCode{
 	ErrorCodeAccessDenied.uid:            ErrorCodeAccessDenied,
 	ErrorCodeInsufficientScope.uid:       ErrorCodeInsufficientScope,
@@ -206,7 +168,15 @@ var uidsErrorCodes = map[string]ErrorCode{
 
 // String returns a string representation of the error code.
 func (ec ErrorCode) String() string {
-	return ec.uid
+	if ec.uid != "" {
+		return ec.uid
+	}
+
+	return common.Und
+}
+
+func (ec ErrorCode) GoString() string {
+	return "domain.ErrorCode(" + ec.String() + ")"
 }
 
 // UnmarshalForm implements custom unmarshler for form values.
@@ -256,8 +226,8 @@ func (e Error) FormatError(printer xerrors.Printer) error {
 
 // SetReirectURI sets fasthttp.QueryArgs with the request state, code,
 // description and error URI in the provided fasthttp.URI.
-func (e Error) SetReirectURI(uri *http.URI) {
-	if uri == nil {
+func (e Error) SetReirectURI(u *url.URL) {
+	if u == nil {
 		return
 	}
 
@@ -271,17 +241,17 @@ func (e Error) SetReirectURI(uri *http.URI) {
 			continue
 		}
 
-		uri.QueryArgs().Set(key, val)
+		u.Query().Set(key, val)
 	}
 }
 
 // NewError creates a new Error with the stack pointing to the function call
 // line number.
 //
-// If no code or ErrorCodeUndefined is provided, ErrorCodeAccessDenied will be
+// If no code or ErrorCodeUnd is provided, ErrorCodeAccessDenied will be
 // used instead.
 func NewError(code ErrorCode, description, uri string, requestState ...string) *Error {
-	if code == ErrorCodeUndefined {
+	if code == ErrorCodeUnd {
 		code = ErrorCodeAccessDenied
 	}
 

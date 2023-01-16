@@ -45,7 +45,7 @@ func (uc *authUseCase) Generate(ctx context.Context, opts auth.GenerateOptions) 
 		}
 	}
 
-	if err = uc.sessions.Create(ctx, &domain.Session{
+	if err = uc.sessions.Create(ctx, domain.Session{
 		ClientID:            opts.ClientID,
 		Code:                code,
 		CodeChallenge:       opts.CodeChallenge,
@@ -76,10 +76,10 @@ func (uc *authUseCase) Exchange(ctx context.Context, opts auth.ExchangeOptions) 
 	}
 
 	if session.CodeChallenge != "" &&
-		session.CodeChallengeMethod != domain.CodeChallengeMethodUndefined &&
+		session.CodeChallengeMethod != domain.CodeChallengeMethodUnd &&
 		!session.CodeChallengeMethod.Validate(session.CodeChallenge, opts.CodeVerifier) {
 		return nil, nil, auth.ErrMismatchPKCE
 	}
 
-	return session.Me, session.Profile, nil
+	return &session.Me, session.Profile, nil
 }

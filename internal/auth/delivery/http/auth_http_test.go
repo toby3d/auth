@@ -1,13 +1,14 @@
 package http_test
 
 import (
-	"path"
+	"context"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"strings"
-	"sync"
 	"testing"
 
-	"github.com/fasthttp/router"
-	http "github.com/valyala/fasthttp"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 
@@ -22,7 +23,7 @@ import (
 	profilerepo "source.toby3d.me/toby3d/auth/internal/profile/repository/memory"
 	"source.toby3d.me/toby3d/auth/internal/session"
 	sessionrepo "source.toby3d.me/toby3d/auth/internal/session/repository/memory"
-	"source.toby3d.me/toby3d/auth/internal/testing/httptest"
+	"source.toby3d.me/toby3d/auth/internal/user"
 	userrepo "source.toby3d.me/toby3d/auth/internal/user/repository/memory"
 )
 
@@ -34,36 +35,31 @@ type Dependencies struct {
 	matcher       language.Matcher
 	profiles      profile.Repository
 	sessions      session.Repository
-	store         *sync.Map
+	users         user.Repository
 }
 
 func TestAuthorize(t *testing.T) {
 	t.Parallel()
 
 	deps := NewDependencies(t)
-	me := domain.TestMe(t, "https://user.example.net")
+	me := domain.TestMe(t, "https://user.example.net/")
 	user := domain.TestUser(t)
 	client := domain.TestClient(t)
 
-	deps.store.Store(path.Join(clientrepo.DefaultPathPrefix, client.ID.String()), client)
-	deps.store.Store(path.Join(profilerepo.DefaultPathPrefix, me.String()), user.Profile)
-	deps.store.Store(path.Join(userrepo.DefaultPathPrefix, me.String()), user)
+	if err := deps.clients.Create(context.Background(), *client); err != nil {
+		t.Fatal(err)
+	}
 
-	r := router.New()
-	//nolint: exhaustivestruct
-	delivery.NewRequestHandler(delivery.NewRequestHandlerOptions{
-		Auth:    deps.authService,
-		Clients: deps.clientService,
-		Config:  deps.config,
-		Matcher: deps.matcher,
-	}).Register(r)
+	if err := deps.users.Create(context.Background(), *user); err != nil {
+		t.Fatal(err)
+	}
 
-	httpClient, _, cleanup := httptest.New(t, r.Handler)
-	t.Cleanup(cleanup)
+	if err := deps.profiles.Create(context.Background(), *me, *user.Profile); err != nil {
+		t.Fatal(err)
+	}
 
-	uri := http.AcquireURI()
-	defer http.ReleaseURI(uri)
-	uri.Update("https://example.com/authorize")
+	u := &url.URL{Scheme: "https", Host: "example.com", Path: "/"}
+	q := u.Query()
 
 	for key, val := range map[string]string{
 		"client_id":             client.ID.String(),
@@ -75,26 +71,36 @@ func TestAuthorize(t *testing.T) {
 		"scope":                 "profile email",
 		"state":                 "1234567890",
 	} {
-		uri.QueryArgs().Set(key, val)
+		q.Set(key, val)
 	}
 
-	req := httptest.NewRequest(http.MethodGet, uri.String(), nil)
-	defer http.ReleaseRequest(req)
+	u.RawQuery = q.Encode()
 
-	resp := http.AcquireResponse()
-	defer http.ReleaseResponse(resp)
+	req := httptest.NewRequest(http.MethodGet, u.String(), nil)
+	w := httptest.NewRecorder()
 
-	if err := httpClient.Do(req, resp); err != nil {
+	//nolint:exhaustivestruct
+	delivery.NewHandler(delivery.NewHandlerOptions{
+		Auth:    deps.authService,
+		Clients: deps.clientService,
+		Config:  *deps.config,
+		Matcher: deps.matcher,
+	}).Handler().ServeHTTP(w, req)
+
+	resp := w.Result()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
 		t.Fatal(err)
 	}
 
-	if resp.StatusCode() != http.StatusOK {
-		t.Errorf("GET %s = %d, want %d", uri.String(), resp.StatusCode(), http.StatusOK)
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("%s %s = %d, want %d", req.Method, u.String(), resp.StatusCode, http.StatusOK)
 	}
 
 	const expResult = `Authorize application`
-	if result := string(resp.Body()); !strings.Contains(result, expResult) {
-		t.Errorf("GET %s = %s, want %s", uri.String(), result, expResult)
+	if result := string(body); !strings.Contains(result, expResult) {
+		t.Errorf("%s %s = %s, want %s", req.Method, u.String(), result, expResult)
 	}
 }
 
@@ -103,14 +109,15 @@ func NewDependencies(tb testing.TB) Dependencies {
 
 	config := domain.TestConfig(tb)
 	matcher := language.NewMatcher(message.DefaultCatalog.Languages())
-	store := new(sync.Map)
-	clients := clientrepo.NewMemoryClientRepository(store)
-	sessions := sessionrepo.NewMemorySessionRepository(store, config)
-	profiles := profilerepo.NewMemoryProfileRepository(store)
+	clients := clientrepo.NewMemoryClientRepository()
+	users := userrepo.NewMemoryUserRepository()
+	sessions := sessionrepo.NewMemorySessionRepository(*config)
+	profiles := profilerepo.NewMemoryProfileRepository()
 	authService := ucase.NewAuthUseCase(sessions, profiles, config)
 	clientService := clientucase.NewClientUseCase(clients)
 
 	return Dependencies{
+		users:         users,
 		authService:   authService,
 		clients:       clients,
 		clientService: clientService,
@@ -118,6 +125,5 @@ func NewDependencies(tb testing.TB) Dependencies {
 		matcher:       matcher,
 		sessions:      sessions,
 		profiles:      profiles,
-		store:         store,
 	}
 }

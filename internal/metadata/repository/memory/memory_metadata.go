@@ -2,7 +2,7 @@ package memory
 
 import (
 	"context"
-	"path"
+	"net/url"
 	"sync"
 
 	"source.toby3d.me/toby3d/auth/internal/domain"
@@ -10,27 +10,35 @@ import (
 )
 
 type memoryMetadataRepository struct {
-	store *sync.Map
+	mutex    *sync.RWMutex
+	metadata map[string]domain.Metadata
 }
 
 const DefaultPathPrefix = "metadata"
 
-func NewMemoryMetadataRepository(store *sync.Map) metadata.Repository {
+func NewMemoryMetadataRepository() metadata.Repository {
 	return &memoryMetadataRepository{
-		store: store,
+		mutex:    new(sync.RWMutex),
+		metadata: make(map[string]domain.Metadata),
 	}
 }
 
-func (repo *memoryMetadataRepository) Get(ctx context.Context, me *domain.Me) (*domain.Metadata, error) {
-	src, ok := repo.store.Load(path.Join(DefaultPathPrefix, me.String()))
-	if !ok {
-		return nil, metadata.ErrNotExist
+func (repo *memoryMetadataRepository) Create(ctx context.Context, u *url.URL, metadata domain.Metadata) error {
+	repo.mutex.Lock()
+	defer repo.mutex.Unlock()
+
+	repo.metadata[u.String()] = metadata
+
+	return nil
+}
+
+func (repo *memoryMetadataRepository) Get(ctx context.Context, u *url.URL) (*domain.Metadata, error) {
+	repo.mutex.RLock()
+	defer repo.mutex.RUnlock()
+
+	if out, ok := repo.metadata[u.String()]; ok {
+		return &out, nil
 	}
 
-	result, ok := src.(*domain.Metadata)
-	if !ok {
-		return nil, metadata.ErrNotExist
-	}
-
-	return result, nil
+	return nil, metadata.ErrNotExist
 }

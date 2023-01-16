@@ -127,7 +127,13 @@ func (b *recipientBuilder) Build(cek []byte, calg jwa.ContentEncryptionAlgorithm
 
 		switch key := rawKey.(type) {
 		case x25519.PublicKey:
-			v, err := keyenc.NewECDHESEncrypt(b.alg, calg, keysize, rawKey)
+			var apu, apv []byte
+			if hdrs := b.headers; hdrs != nil {
+				apu = hdrs.AgreementPartyUInfo()
+				apv = hdrs.AgreementPartyVInfo()
+			}
+
+			v, err := keyenc.NewECDHESEncrypt(b.alg, calg, keysize, rawKey, apu, apv)
 			if err != nil {
 				return nil, nil, fmt.Errorf(`failed to create ECDHS key wrap encrypter: %w`, err)
 			}
@@ -137,7 +143,14 @@ func (b *recipientBuilder) Build(cek []byte, calg jwa.ContentEncryptionAlgorithm
 			if err := keyconv.ECDSAPublicKey(&pubkey, rawKey); err != nil {
 				return nil, nil, fmt.Errorf(`failed to generate public key from key (%T): %w`, key, err)
 			}
-			v, err := keyenc.NewECDHESEncrypt(b.alg, calg, keysize, &pubkey)
+
+			var apu, apv []byte
+			if hdrs := b.headers; hdrs != nil {
+				apu = hdrs.AgreementPartyUInfo()
+				apv = hdrs.AgreementPartyVInfo()
+			}
+
+			v, err := keyenc.NewECDHESEncrypt(b.alg, calg, keysize, &pubkey, apu, apv)
 			if err != nil {
 				return nil, nil, fmt.Errorf(`failed to create ECDHS key wrap encrypter: %w`, err)
 			}
@@ -200,8 +213,8 @@ func (b *recipientBuilder) Build(cek []byte, calg jwa.ContentEncryptionAlgorithm
 // You must pass at least one key to `jwe.Encrypt()` by using `jwe.WithKey()`
 // option.
 //
-//   jwe.Encrypt(payload, jwe.WithKey(alg, key))
-//   jwe.Encrypt(payload, jws.WithJSON(), jws.WithKey(alg1, key1), jws.WithKey(alg2, key2))
+//	jwe.Encrypt(payload, jwe.WithKey(alg, key))
+//	jwe.Encrypt(payload, jws.WithJSON(), jws.WithKey(alg1, key1), jws.WithKey(alg2, key2))
 //
 // Note that in the second example the `jws.WithJSON()` option is
 // specified as well. This is because the compact serialization
@@ -592,7 +605,6 @@ func (dctx *decryptCtx) decryptKey(ctx context.Context, alg jwa.KeyEncryptionAlg
 		if apu := h2.AgreementPartyUInfo(); len(apu) > 0 {
 			dec.AgreementPartyUInfo(apu)
 		}
-
 		if apv := h2.AgreementPartyVInfo(); len(apv) > 0 {
 			dec.AgreementPartyVInfo(apv)
 		}
@@ -781,13 +793,13 @@ func parseCompact(buf []byte, storeProtectedHeaders bool) (*Message, error) {
 //
 // In that case you would register a custom field as follows
 //
-//   jwe.RegisterCustomField(`x-birthday`, timeT)
+//	jwe.RegisterCustomField(`x-birthday`, timeT)
 //
 // Then `hdr.Get("x-birthday")` will still return an `interface{}`,
 // but you can convert its type to `time.Time`
 //
-//   bdayif, _ := hdr.Get(`x-birthday`)
-//   bday := bdayif.(time.Time)
+//	bdayif, _ := hdr.Get(`x-birthday`)
+//	bday := bdayif.(time.Time)
 func RegisterCustomField(name string, object interface{}) {
 	registry.Register(name, object)
 }

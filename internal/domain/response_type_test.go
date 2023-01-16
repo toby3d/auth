@@ -1,4 +1,4 @@
-//nolint: dupl
+//nolint:dupl
 package domain_test
 
 import (
@@ -38,7 +38,7 @@ func TestResponseType_UnmarshalForm(t *testing.T) {
 	t.Parallel()
 
 	input := []byte("code")
-	result := domain.ResponseTypeUndefined
+	result := domain.ResponseTypeUnd
 
 	if err := result.UnmarshalForm(input); err != nil {
 		t.Fatalf("%+v", err)
@@ -53,7 +53,7 @@ func TestResponseType_UnmarshalJSON(t *testing.T) {
 	t.Parallel()
 
 	input := []byte(`"code"`)
-	result := domain.ResponseTypeUndefined
+	result := domain.ResponseTypeUnd
 
 	if err := result.UnmarshalJSON(input); err != nil {
 		t.Fatalf("%+v", err)

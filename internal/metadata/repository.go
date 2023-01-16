@@ -2,12 +2,14 @@ package metadata
 
 import (
 	"context"
+	"net/url"
 
 	"source.toby3d.me/toby3d/auth/internal/domain"
 )
 
 type Repository interface {
-	Get(ctx context.Context, me *domain.Me) (*domain.Metadata, error)
+	Create(ctx context.Context, u *url.URL, metadata domain.Metadata) error
+	Get(ctx context.Context, u *url.URL) (*domain.Metadata, error)
 }
 
 var ErrNotExist error = domain.NewError(

@@ -7,7 +7,7 @@ import (
 )
 
 type UseCase interface {
-	Fetch(ctx context.Context, me *domain.Me) (*domain.Profile, error)
+	Fetch(ctx context.Context, me domain.Me) (*domain.Profile, error)
 }
 
 var ErrScopeRequired error = domain.NewError(

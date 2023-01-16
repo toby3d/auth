@@ -1,4 +1,4 @@
-//nolint: dupl
+//nolint:dupl
 package domain_test
 
 import (
@@ -38,7 +38,7 @@ func TestGrantType_UnmarshalForm(t *testing.T) {
 	t.Parallel()
 
 	input := []byte("authorization_code")
-	result := domain.GrantTypeUndefined
+	result := domain.GrantTypeUnd
 
 	if err := result.UnmarshalForm(input); err != nil {
 		t.Fatalf("%+v", err)
@@ -53,7 +53,7 @@ func TestGrantType_UnmarshalJSON(t *testing.T) {
 	t.Parallel()
 
 	input := []byte(`"authorization_code"`)
-	result := domain.GrantTypeUndefined
+	result := domain.GrantTypeUnd
 
 	if err := result.UnmarshalJSON(input); err != nil {
 		t.Fatalf("%+v", err)

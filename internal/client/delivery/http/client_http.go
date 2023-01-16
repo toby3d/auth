@@ -1,48 +1,37 @@
 package http
 
 import (
-	"errors"
+	"net/http"
 	"strings"
 
-	"github.com/fasthttp/router"
-	http "github.com/valyala/fasthttp"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 
 	"source.toby3d.me/toby3d/auth/internal/common"
 	"source.toby3d.me/toby3d/auth/internal/domain"
 	"source.toby3d.me/toby3d/auth/internal/token"
+	"source.toby3d.me/toby3d/auth/internal/urlutil"
 	"source.toby3d.me/toby3d/auth/web"
-	"source.toby3d.me/toby3d/form"
-	"source.toby3d.me/toby3d/middleware"
 )
 
 type (
-	ClientCallbackRequest struct {
-		Error            domain.ErrorCode `form:"error,omitempty"`
-		Iss              *domain.ClientID `form:"iss"`
-		Code             string           `form:"code"`
-		ErrorDescription string           `form:"error_description,omitempty"`
-		State            string           `form:"state"`
-	}
-
-	NewRequestHandlerOptions struct {
+	NewHandlerOptions struct {
 		Matcher language.Matcher
 		Tokens  token.UseCase
-		Client  *domain.Client
-		Config  *domain.Config
+		Client  domain.Client
+		Config  domain.Config
 	}
 
-	RequestHandler struct {
+	Handler struct {
 		matcher language.Matcher
 		tokens  token.UseCase
-		client  *domain.Client
-		config  *domain.Config
+		client  domain.Client
+		config  domain.Config
 	}
 )
 
-func NewRequestHandler(opts NewRequestHandlerOptions) *RequestHandler {
-	return &RequestHandler{
+func NewHandler(opts NewHandlerOptions) *Handler {
+	return &Handler{
 		client:  opts.Client,
 		config:  opts.Config,
 		matcher: opts.Matcher,
@@ -50,59 +39,82 @@ func NewRequestHandler(opts NewRequestHandlerOptions) *RequestHandler {
 	}
 }
 
-func (h *RequestHandler) Register(r *router.Router) {
-	chain := middleware.Chain{
-		middleware.LogFmt(),
-	}
+func (h *Handler) Handler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "" && r.Method != http.MethodGet {
+			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 
-	r.GET("/", chain.RequestHandler(h.handleRender))
-	r.GET("/callback", chain.RequestHandler(h.handleCallback))
+			return
+		}
+
+		var head string
+		head, r.URL.Path = urlutil.ShiftPath(r.URL.Path)
+
+		switch head {
+		default:
+			http.NotFound(w, r)
+		case "":
+			h.handleRender(w, r)
+		case "callback":
+			h.handleCallback(w, r)
+		}
+	})
 }
 
-func (h *RequestHandler) handleRender(ctx *http.RequestCtx) {
+func (h *Handler) handleRender(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "" && r.Method != http.MethodGet {
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+
+		return
+	}
+
 	redirect := make([]string, len(h.client.RedirectURI))
 
 	for i := range h.client.RedirectURI {
 		redirect[i] = h.client.RedirectURI[i].String()
 	}
 
-	ctx.Response.Header.Set(
-		http.HeaderLink, `<`+strings.Join(redirect, `>; rel="redirect_uri", `)+`>; rel="redirect_uri"`,
-	)
+	w.Header().Set(common.HeaderLink, `<`+strings.Join(redirect, `>; rel="redirect_uri", `)+`>; rel="redirect_uri"`)
 
-	tags, _, _ := language.ParseAcceptLanguage(string(ctx.Request.Header.Peek(http.HeaderAcceptLanguage)))
+	tags, _, _ := language.ParseAcceptLanguage(r.Header.Get(common.HeaderAcceptLanguage))
 	tag, _, _ := h.matcher.Match(tags...)
 
 	// TODO(toby3d): generate and store PKCE
 
-	ctx.SetContentType(common.MIMETextHTMLCharsetUTF8)
-	web.WriteTemplate(ctx, &web.HomePage{
+	w.Header().Set(common.HeaderContentType, common.MIMETextHTMLCharsetUTF8)
+	web.WriteTemplate(w, &web.HomePage{
 		BaseOf: web.BaseOf{
-			Config:   h.config,
+			Config:   &h.config,
 			Language: tag,
 			Printer:  message.NewPrinter(tag),
 		},
-		Client: h.client,
+		Client: &h.client,
 		State:  "hackme", // TODO(toby3d): generate and store state
 	})
 }
 
-//nolint: funlen
-func (h *RequestHandler) handleCallback(ctx *http.RequestCtx) {
-	ctx.SetContentType(common.MIMETextHTMLCharsetUTF8)
+//nolint:unlen
+func (h *Handler) handleCallback(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "" && r.Method != http.MethodGet {
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 
-	tags, _, _ := language.ParseAcceptLanguage(string(ctx.Request.Header.Peek(http.HeaderAcceptLanguage)))
+		return
+	}
+
+	w.Header().Set(common.HeaderContentType, common.MIMETextHTMLCharsetUTF8)
+
+	tags, _, _ := language.ParseAcceptLanguage(r.Header.Get(common.HeaderAcceptLanguage))
 	tag, _, _ := h.matcher.Match(tags...)
 	baseOf := web.BaseOf{
-		Config:   h.config,
+		Config:   &h.config,
 		Language: tag,
 		Printer:  message.NewPrinter(tag),
 	}
 
 	req := new(ClientCallbackRequest)
-	if err := req.bind(ctx); err != nil {
-		ctx.SetStatusCode(http.StatusInternalServerError)
-		web.WriteTemplate(ctx, &web.ErrorPage{
+	if err := req.bind(r); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		web.WriteTemplate(w, &web.ErrorPage{
 			BaseOf: baseOf,
 			Error:  err,
 		})
@@ -110,9 +122,9 @@ func (h *RequestHandler) handleCallback(ctx *http.RequestCtx) {
 		return
 	}
 
-	if req.Error != domain.ErrorCodeUndefined {
-		ctx.SetStatusCode(http.StatusUnauthorized)
-		web.WriteTemplate(ctx, &web.ErrorPage{
+	if req.Error != domain.ErrorCodeUnd {
+		w.WriteHeader(http.StatusUnauthorized)
+		web.WriteTemplate(w, &web.ErrorPage{
 			BaseOf: baseOf,
 			Error: domain.NewError(
 				domain.ErrorCodeAccessDenied,
@@ -127,9 +139,9 @@ func (h *RequestHandler) handleCallback(ctx *http.RequestCtx) {
 
 	// TODO(toby3d): load and check state
 
-	if req.Iss == nil || req.Iss.String() != h.client.ID.String() {
-		ctx.SetStatusCode(http.StatusBadRequest)
-		web.WriteTemplate(ctx, &web.ErrorPage{
+	if req.Iss.String() != h.client.ID.String() {
+		w.WriteHeader(http.StatusBadRequest)
+		web.WriteTemplate(w, &web.ErrorPage{
 			BaseOf: baseOf,
 			Error: domain.NewError(
 				domain.ErrorCodeInvalidClient,
@@ -142,15 +154,15 @@ func (h *RequestHandler) handleCallback(ctx *http.RequestCtx) {
 		return
 	}
 
-	token, _, err := h.tokens.Exchange(ctx, token.ExchangeOptions{
+	token, _, err := h.tokens.Exchange(r.Context(), token.ExchangeOptions{
 		ClientID:     h.client.ID,
 		RedirectURI:  h.client.RedirectURI[0],
 		Code:         req.Code,
 		CodeVerifier: "", // TODO(toby3d): validate PKCE here
 	})
 	if err != nil {
-		ctx.SetStatusCode(http.StatusBadRequest)
-		web.WriteTemplate(ctx, &web.ErrorPage{
+		w.WriteHeader(http.StatusBadRequest)
+		web.WriteTemplate(w, &web.ErrorPage{
 			BaseOf: baseOf,
 			Error:  err,
 		})
@@ -158,23 +170,9 @@ func (h *RequestHandler) handleCallback(ctx *http.RequestCtx) {
 		return
 	}
 
-	ctx.SetContentType(common.MIMETextHTMLCharsetUTF8)
-	web.WriteTemplate(ctx, &web.CallbackPage{
+	w.Header().Set(common.HeaderContentType, common.MIMETextHTMLCharsetUTF8)
+	web.WriteTemplate(w, &web.CallbackPage{
 		BaseOf: baseOf,
 		Token:  token,
 	})
-}
-
-func (req *ClientCallbackRequest) bind(ctx *http.RequestCtx) error {
-	indieAuthError := new(domain.Error)
-
-	if err := form.Unmarshal(ctx.QueryArgs().QueryString(), req); err != nil {
-		if errors.As(err, indieAuthError) {
-			return indieAuthError
-		}
-
-		return domain.NewError(domain.ErrorCodeInvalidRequest, err.Error(), "")
-	}
-
-	return nil
 }

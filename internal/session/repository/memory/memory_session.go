@@ -3,7 +3,6 @@ package memory
 import (
 	"context"
 	"fmt"
-	"path"
 	"sync"
 	"time"
 
@@ -14,59 +13,59 @@ import (
 type (
 	Session struct {
 		CreatedAt time.Time
-		*domain.Session
+		domain.Session
 	}
 
 	memorySessionRepository struct {
-		store  *sync.Map
-		config *domain.Config
+		config   domain.Config
+		mutex    *sync.RWMutex
+		sessions map[string]Session
 	}
 )
 
-const DefaultPathPrefix string = "sessions"
-
-func NewMemorySessionRepository(store *sync.Map, config *domain.Config) session.Repository {
+func NewMemorySessionRepository(config domain.Config) session.Repository {
 	return &memorySessionRepository{
-		config: config,
-		store:  store,
+		config:   config,
+		mutex:    new(sync.RWMutex),
+		sessions: make(map[string]Session),
 	}
 }
 
-func (repo *memorySessionRepository) Create(_ context.Context, state *domain.Session) error {
-	repo.store.Store(path.Join(DefaultPathPrefix, state.Code), &Session{
+func (repo *memorySessionRepository) Create(_ context.Context, s domain.Session) error {
+	repo.mutex.Lock()
+	defer repo.mutex.Unlock()
+
+	repo.sessions[s.Code] = Session{
 		CreatedAt: time.Now().UTC(),
-		Session:   state,
-	})
+		Session:   s,
+	}
 
 	return nil
 }
 
 func (repo *memorySessionRepository) Get(_ context.Context, code string) (*domain.Session, error) {
-	src, ok := repo.store.Load(path.Join(DefaultPathPrefix, code))
-	if !ok {
-		return nil, fmt.Errorf("cannot find session in store: %w", session.ErrNotExist)
+	repo.mutex.Lock()
+	defer repo.mutex.Unlock()
+
+	if s, ok := repo.sessions[code]; ok {
+		return &s.Session, nil
 	}
 
-	result, ok := src.(*Session)
-	if !ok {
-		return nil, fmt.Errorf("cannot decode session in store: %w", session.ErrNotExist)
-	}
-
-	return result.Session, nil
+	return nil, session.ErrNotExist
 }
 
-func (repo *memorySessionRepository) GetAndDelete(_ context.Context, code string) (*domain.Session, error) {
-	src, ok := repo.store.LoadAndDelete(path.Join(DefaultPathPrefix, code))
-	if !ok {
-		return nil, fmt.Errorf("cannot find session in store: %w", session.ErrNotExist)
+func (repo *memorySessionRepository) GetAndDelete(ctx context.Context, code string) (*domain.Session, error) {
+	s, err := repo.Get(ctx, code)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get and delete session: %w", err)
 	}
 
-	result, ok := src.(*Session)
-	if !ok {
-		return nil, fmt.Errorf("cannot decode session in store: %w", session.ErrNotExist)
-	}
+	repo.mutex.Lock()
+	defer repo.mutex.Unlock()
 
-	return result.Session, nil
+	delete(repo.sessions, s.Code)
+
+	return s, nil
 }
 
 func (repo *memorySessionRepository) GC() {
@@ -76,29 +75,20 @@ func (repo *memorySessionRepository) GC() {
 	for ts := range ticker.C {
 		ts := ts
 
-		repo.store.Range(func(key, value interface{}) bool {
-			k, ok := key.(string)
-			if !ok {
-				return false
+		repo.mutex.RLock()
+
+		for code, s := range repo.sessions {
+			if s.CreatedAt.Add(repo.config.Code.Expiry).After(ts) {
+				continue
 			}
 
-			matched, err := path.Match(DefaultPathPrefix+"/*", k)
-			if err != nil || !matched {
-				return false
-			}
+			repo.mutex.RUnlock()
+			repo.mutex.Lock()
+			delete(repo.sessions, code)
+			repo.mutex.Unlock()
+			repo.mutex.RLock()
+		}
 
-			val, ok := value.(*Session)
-			if !ok {
-				return false
-			}
-
-			if val.CreatedAt.Add(repo.config.Code.Expiry).After(ts) {
-				return false
-			}
-
-			repo.store.Delete(key)
-
-			return false
-		})
+		repo.mutex.RUnlock()
 	}
 }

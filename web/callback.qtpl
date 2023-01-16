@@ -1,4 +1,6 @@
-{% import "source.toby3d.me/toby3d/auth/internal/domain" %}
+{% import (
+  "source.toby3d.me/toby3d/auth/internal/domain"
+) %}
 
 {% code type CallbackPage struct {
   BaseOf
@@ -7,9 +9,9 @@
 
 {% collapsespace %}
 {% func (p *CallbackPage) Body() %}
-  {% if p.Token != nil %}
-    <h1>{%s p.Token.Me.String() %}</h1>
-    <small>{%s p.Token.AccessToken %}</small>
-  {% endif %}
+{% if p.Token != nil %}
+<h1>{%s p.Token.Me.String() %}</h1>
+<small>{%s p.Token.AccessToken %}</small>
+{% endif %}
 {% endfunc %}
 {% endcollapsespace %}

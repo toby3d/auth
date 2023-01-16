@@ -39,7 +39,7 @@ func TestParseEmail(t *testing.T) {
 func TestEmail_String(t *testing.T) {
 	t.Parallel()
 
-	email := domain.TestEmail(t) //nolint: ifshort
+	email := domain.TestEmail(t) //nolint:ifshort
 	if result := email.String(); result != fmt.Sprint(email) {
 		t.Errorf("String() = %v, want %v", result, email)
 	}

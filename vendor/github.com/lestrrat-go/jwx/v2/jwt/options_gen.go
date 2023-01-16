@@ -137,6 +137,7 @@ type identNumericDateParsePrecision struct{}
 type identPedantic struct{}
 type identSignOption struct{}
 type identToken struct{}
+type identTruncation struct{}
 type identValidate struct{}
 type identValidator struct{}
 type identVerify struct{}
@@ -201,6 +202,10 @@ func (identToken) String() string {
 	return "WithToken"
 }
 
+func (identTruncation) String() string {
+	return "WithTruncation"
+}
+
 func (identValidate) String() string {
 	return "WithValidate"
 }
@@ -247,15 +252,12 @@ func WithFS(v fs.FS) ReadFileOption {
 	return &readFileOption{option.New(identFS{}, v)}
 }
 
-// WithFlattenAudience specifies if the "aud" claim should be flattened
-// to a single string upon the token being serialized to JSON.
+// WithFlattenAudience specifies the the `jwt.FlattenAudience` option on
+// every token defaults to enabled. You can still disable this on a per-object
+// basis using the `jwt.Options().Disable(jwt.FlattenAudience)` method call.
 //
-// This is sometimes important when a JWT consumer does not understand that
-// the "aud" claim can actually take the form of an array of strings.
-//
-// The default value is `false`, which means that "aud" claims are always
-// rendered as a arrays of strings. This setting has a global effect,
-// and will change the behavior for all JWT serialization.
+// See the documentation for `jwt.TokenOptionSet`, `(jwt.Token).Options`, and
+// `jwt.FlattenAudience` for more details
 func WithFlattenAudience(v bool) GlobalOption {
 	return &globalOption{option.New(identFlattenAudience{}, v)}
 }
@@ -329,6 +331,15 @@ func WithToken(v Token) ParseOption {
 	return &parseOption{option.New(identToken{}, v)}
 }
 
+// WithTruncation speficies the amount that should be used when
+// truncating time values used during time-based validation routines.
+// By default time values are truncated down to second accuracy.
+// If you want to use sub-second accuracy, you will need to set
+// this value to 0.
+func WithTruncation(v time.Duration) ValidateOption {
+	return &validateOption{option.New(identTruncation{}, v)}
+}
+
 // WithValidate is passed to `Parse()` method to denote that the
 // validation of the JWT token should be performed (or not) after
 // a successful parsing of the incoming payload.
@@ -345,13 +356,13 @@ func WithValidate(v bool) ParseOption {
 //
 // For example, in order to validate tokens that are only valid during August, you would write
 //
-//    validator := jwt.ValidatorFunc(func(_ context.Context, t jwt.Token) error {
-//      if time.Now().Month() != 8 {
-//        return fmt.Errorf(`tokens are only valid during August!`)
-//      }
-//      return nil
-//    })
-//    err := jwt.Validate(token, jwt.WithValidator(validator))
+//	validator := jwt.ValidatorFunc(func(_ context.Context, t jwt.Token) error {
+//		if time.Now().Month() != 8 {
+//			return fmt.Errorf(`tokens are only valid during August!`)
+//		}
+//		return nil
+//	})
+//	err := jwt.Validate(token, jwt.WithValidator(validator))
 func WithValidator(v Validator) ValidateOption {
 	return &validateOption{option.New(identValidator{}, v)}
 }

@@ -1,8 +1,10 @@
 package domain
 
+import "net/url"
+
 type App struct {
-	Logo []*URL
-	URL  []*URL
+	Logo []*url.URL
+	URL  []*url.URL
 	Name []string
 }
 
@@ -16,7 +18,7 @@ func (a App) GetName() string {
 }
 
 // GetURL safe returns first URL, if any.
-func (a App) GetURL() *URL {
+func (a App) GetURL() *url.URL {
 	if len(a.URL) == 0 {
 		return nil
 	}
@@ -25,7 +27,7 @@ func (a App) GetURL() *URL {
 }
 
 // GetLogo safe returns first logo, if any.
-func (a App) GetLogo() *URL {
+func (a App) GetLogo() *url.URL {
 	if len(a.Logo) == 0 {
 		return nil
 	}

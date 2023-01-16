@@ -30,56 +30,56 @@ func (p *TicketPage) StreamBody(qw422016 *qt422016.Writer) {
 //line web/ticket.qtpl:9
 	p.StreamT(qw422016, "TicketAuth")
 //line web/ticket.qtpl:9
-	qw422016.N().S(`</h1> </header> <main> <form accept-charset="utf-8" action="/api/ticket" autocomplete="off" enctype="application/x-www-form-urlencoded" method="post" target="_self"> `)
+	qw422016.N().S(`</h1> </header> <main> <form class="" accept-charset="utf-8" action="/ticket/send" autocomplete="off" enctype="application/x-www-form-urlencoded" method="post" target="_self"> `)
 //line web/ticket.qtpl:21
 	if p.CSRF != nil {
 //line web/ticket.qtpl:21
 		qw422016.N().S(` <input type="hidden" name="_csrf" value="`)
-//line web/ticket.qtpl:25
+//line web/ticket.qtpl:24
 		qw422016.E().Z(p.CSRF)
-//line web/ticket.qtpl:25
+//line web/ticket.qtpl:24
 		qw422016.N().S(`"> `)
-//line web/ticket.qtpl:26
+//line web/ticket.qtpl:25
 	}
-//line web/ticket.qtpl:26
+//line web/ticket.qtpl:25
 	qw422016.N().S(` <div> <label for="subject">`)
-//line web/ticket.qtpl:29
+//line web/ticket.qtpl:28
 	p.StreamT(qw422016, "Recipient")
-//line web/ticket.qtpl:29
-	qw422016.N().S(`</label> <input id="subject" type="url" name="subject" inputmode="url" placeholder="https://bob.example.org" required> </div> <div> <label for="resource">`)
-//line web/ticket.qtpl:40
+//line web/ticket.qtpl:28
+	qw422016.N().S(`</label> <input id="subject" type="url" name="subject" inputmode="url" placeholder="https://bob.example.org/" required> </div> <div> <label for="resource">`)
+//line web/ticket.qtpl:38
 	p.StreamT(qw422016, "Resource")
-//line web/ticket.qtpl:40
+//line web/ticket.qtpl:38
 	qw422016.N().S(`</label> <input id="resource" type="url" name="resource" inputmode="url" placeholder="https://alice.example.com/private/" required> </div> <button type="submit">`)
-//line web/ticket.qtpl:50
+//line web/ticket.qtpl:47
 	p.StreamT(qw422016, "Send")
-//line web/ticket.qtpl:50
+//line web/ticket.qtpl:47
 	qw422016.N().S(`</button> </form> </main> `)
-//line web/ticket.qtpl:53
+//line web/ticket.qtpl:50
 }
 
-//line web/ticket.qtpl:53
+//line web/ticket.qtpl:50
 func (p *TicketPage) WriteBody(qq422016 qtio422016.Writer) {
-//line web/ticket.qtpl:53
+//line web/ticket.qtpl:50
 	qw422016 := qt422016.AcquireWriter(qq422016)
-//line web/ticket.qtpl:53
+//line web/ticket.qtpl:50
 	p.StreamBody(qw422016)
-//line web/ticket.qtpl:53
+//line web/ticket.qtpl:50
 	qt422016.ReleaseWriter(qw422016)
-//line web/ticket.qtpl:53
+//line web/ticket.qtpl:50
 }
 
-//line web/ticket.qtpl:53
+//line web/ticket.qtpl:50
 func (p *TicketPage) Body() string {
-//line web/ticket.qtpl:53
+//line web/ticket.qtpl:50
 	qb422016 := qt422016.AcquireByteBuffer()
-//line web/ticket.qtpl:53
+//line web/ticket.qtpl:50
 	p.WriteBody(qb422016)
-//line web/ticket.qtpl:53
+//line web/ticket.qtpl:50
 	qs422016 := string(qb422016.B)
-//line web/ticket.qtpl:53
+//line web/ticket.qtpl:50
 	qt422016.ReleaseByteBuffer(qb422016)
-//line web/ticket.qtpl:53
+//line web/ticket.qtpl:50
 	return qs422016
-//line web/ticket.qtpl:53
+//line web/ticket.qtpl:50
 }

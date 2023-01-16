@@ -1,21 +1,22 @@
 package domain
 
 import (
+	"net/url"
 	"testing"
 )
 
 // Profile describes the data about the user.
 type Profile struct {
-	Photo []*URL   `json:"photo,omitempty"`
-	URL   []*URL   `json:"url,omitempty"`
-	Email []*Email `json:"email,omitempty"`
-	Name  []string `json:"name,omitempty"`
+	Photo []*url.URL `json:"photo,omitempty"`
+	URL   []*url.URL `json:"url,omitempty"`
+	Email []*Email   `json:"email,omitempty"`
+	Name  []string   `json:"name,omitempty"`
 }
 
 func NewProfile() *Profile {
 	return &Profile{
-		Photo: make([]*URL, 0),
-		URL:   make([]*URL, 0),
+		Photo: make([]*url.URL, 0),
+		URL:   make([]*url.URL, 0),
 		Email: make([]*Email, 0),
 		Name:  make([]string, 0),
 	}
@@ -28,8 +29,8 @@ func TestProfile(tb testing.TB) *Profile {
 	return &Profile{
 		Email: []*Email{TestEmail(tb)},
 		Name:  []string{"Example User"},
-		Photo: []*URL{TestURL(tb, "https://user.example.net/photo.jpg")},
-		URL:   []*URL{TestURL(tb, "https://user.example.net/")},
+		Photo: []*url.URL{{Scheme: "https", Host: "user.example.net", Path: "/photo.jpg"}},
+		URL:   []*url.URL{{Scheme: "https", Host: "user.example.net", Path: "/"}},
 	}
 }
 
@@ -51,7 +52,7 @@ func (p Profile) HasURL() bool {
 }
 
 // GetURL safe returns first URL, if any.
-func (p Profile) GetURL() *URL {
+func (p Profile) GetURL() *url.URL {
 	if len(p.URL) == 0 {
 		return nil
 	}
@@ -64,7 +65,7 @@ func (p Profile) HasPhoto() bool {
 }
 
 // GetPhoto safe returns first photo, if any.
-func (p Profile) GetPhoto() *URL {
+func (p Profile) GetPhoto() *url.URL {
 	if len(p.Photo) == 0 {
 		return nil
 	}

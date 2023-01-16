@@ -1,7 +1,7 @@
 package domain_test
 
 import (
-	"fmt"
+	"net/url"
 	"testing"
 
 	"source.toby3d.me/toby3d/auth/internal/domain"
@@ -12,20 +12,17 @@ func TestClient_ValidateRedirectURI(t *testing.T) {
 
 	client := domain.TestClient(t)
 
-	for _, tc := range []struct {
-		name string
-		in   *domain.URL
-	}{
-		{name: "client_id prefix", in: domain.TestURL(t, fmt.Sprint(client.ID, "/callback"))},
-		{name: "registered redirect_uri", in: client.RedirectURI[len(client.RedirectURI)-1]},
+	for name, in := range map[string]*url.URL{
+		"client_id prefix":        client.ID.URL().JoinPath("/callback"),
+		"registered redirect_uri": client.RedirectURI[len(client.RedirectURI)-1],
 	} {
-		tc := tc
+		name, in := name, in
 
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			if result := client.ValidateRedirectURI(tc.in); !result {
-				t.Errorf("ValidateRedirectURI(%v) = %t, want %t", tc.in, result, true)
+			if out := client.ValidateRedirectURI(in); !out {
+				t.Errorf("ValidateRedirectURI(%v) = %t, want %t", in, out, true)
 			}
 		})
 	}

@@ -5,50 +5,47 @@
 
 {% collapsespace %}
 {% func (p *TicketPage) Body() %}
-  <header>
-    <h1>{%= p.T("TicketAuth") %}</h1>
-  </header>
+<header>
+  <h1>{%= p.T("TicketAuth") %}</h1>
+</header>
 
-  <main>
-    <form
-      accept-charset="utf-8"
-      action="/api/ticket"
-      autocomplete="off"
-      enctype="application/x-www-form-urlencoded"
-      method="post"
-      target="_self">
+<main>
+  <form class=""
+        accept-charset="utf-8"
+        action="/ticket/send"
+        autocomplete="off"
+        enctype="application/x-www-form-urlencoded"
+        method="post"
+        target="_self">
 
-      {% if p.CSRF != nil %}
-        <input
-          type="hidden"
-          name="_csrf"
-          value="{%z p.CSRF %}">
-      {% endif %}
+    {% if p.CSRF != nil %}
+    <input type="hidden"
+           name="_csrf"
+           value="{%z p.CSRF %}">
+    {% endif %}
 
-      <div>
-        <label for="subject">{%= p.T("Recipient") %}</label>
-        <input
-          id="subject"
-          type="url"
-          name="subject"
-          inputmode="url"
-          placeholder="https://bob.example.org"
-          required>
-      </div>
+    <div>
+      <label for="subject">{%= p.T("Recipient") %}</label>
+      <input id="subject"
+             type="url"
+             name="subject"
+             inputmode="url"
+             placeholder="https://bob.example.org/"
+             required>
+    </div>
 
-      <div>
-        <label for="resource">{%= p.T("Resource") %}</label>
-        <input
-          id="resource"
-          type="url"
-          name="resource"
-          inputmode="url"
-          placeholder="https://alice.example.com/private/"
-          required>
-      </div>
+    <div>
+      <label for="resource">{%= p.T("Resource") %}</label>
+      <input id="resource"
+             type="url"
+             name="resource"
+             inputmode="url"
+             placeholder="https://alice.example.com/private/"
+             required>
+    </div>
 
-      <button type="submit">{%= p.T("Send") %}</button>
-    </form>
-  </main>
+    <button type="submit">{%= p.T("Send") %}</button>
+  </form>
+</main>
 {% endfunc %}
 {% endcollapsespace %}

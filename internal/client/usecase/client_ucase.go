@@ -18,7 +18,7 @@ func NewClientUseCase(repo client.Repository) client.UseCase {
 	}
 }
 
-func (useCase *clientUseCase) Discovery(ctx context.Context, id *domain.ClientID) (*domain.Client, error) {
+func (useCase *clientUseCase) Discovery(ctx context.Context, id domain.ClientID) (*domain.Client, error) {
 	c, err := useCase.repo.Get(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("cannot discovery client by id: %w", err)

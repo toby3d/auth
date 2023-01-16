@@ -1,17 +1,18 @@
 [Unit]
+After=network.target
+After=syslog.target
 Description=Personal IndieAuth server instance
 Documentation=https://indieauth.net/source/
-After=syslog.target
-After=network.target
 
 [Service]
+EnvironmentFile=/etc/indieauth/env
+ExecStart=/usr/local/bin/indieauth
+Group=indieweb
+Restart=always
 RestartSec=2s
 Type=simple
 User=indieweb
-Group=indieweb
 WorkingDirectory=/var/lib/indieauth/
-ExecStart=/usr/local/bin/indieauth --config=/etc/indieauth/config.yml
-Restart=always
 
 [Install]
 Alias=indieauth
