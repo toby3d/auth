@@ -8,7 +8,7 @@ environment:
 
 steps:
   - name: test
-    image: golang:1.18
+    image: golang:latest
     volumes:
       - name: modules
         path: /go/pkg/mod
@@ -16,7 +16,7 @@ steps:
       - make check
 
   - name: build
-    image: golang:1.18
+    image: golang:latest
     volumes:
       - name: modules
         path: /go/pkg/mod
