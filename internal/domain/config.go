@@ -30,7 +30,6 @@ type (
 		Protocol        string `env:"PROTOCOL" envDefault:"http"`
 		RootURL         string `env:"ROOT_URL" envDefault:"{{protocol}}://{{domain}}:{{port}}/"`
 		StaticURLPrefix string `env:"STATIC_URL_PREFIX"`
-		EnablePprof     bool   `env:"ENABLE_PPROF"`
 	}
 
 	ConfigDatabase struct {
@@ -88,7 +87,6 @@ func TestConfig(tb testing.TB) *Config {
 		Server: ConfigServer{
 			CertificateFile: filepath.Join("https", "cert.pem"),
 			Domain:          "localhost",
-			EnablePprof:     false,
 			Host:            "0.0.0.0",
 			KeyFile:         filepath.Join("https", "key.pem"),
 			Port:            "3000",

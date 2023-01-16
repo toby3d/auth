@@ -101,17 +101,13 @@ var (
 	}
 )
 
-var (
-	cpuProfilePath, memProfilePath string
-	enablePprof                    bool
-)
+var cpuProfilePath, memProfilePath string
 
 //go:embed assets/*
 var staticFS embed.FS
 
 //nolint:gochecknoinits
 func init() {
-	flag.BoolVar(&enablePprof, "pprof", false, "enable pprof mode")
 	flag.StringVar(&cpuProfilePath, "cpuprofile", "", "set path to saving CPU memory profile")
 	flag.StringVar(&memProfilePath, "memprofile", "", "set path to saving pprof memory profile")
 	flag.Parse()
