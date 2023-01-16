@@ -71,7 +71,7 @@ func NewToken(opts NewTokenOptions) (*Token, error) {
 
 	tkn := jwt.New()
 
-	for key, val := range map[string]interface{}{
+	for key, val := range map[string]any{
 		"nonce":          nonce,
 		"scope":          opts.Scope,
 		jwt.IssuedAtKey:  now,
@@ -134,7 +134,7 @@ func TestToken(tb testing.TB) *Token {
 		ScopeEmail,
 	}
 
-	for key, val := range map[string]interface{}{
+	for key, val := range map[string]any{
 		// NOTE(toby3d): required
 		jwt.IssuerKey:     cid.String(),
 		jwt.SubjectKey:    me.String(),

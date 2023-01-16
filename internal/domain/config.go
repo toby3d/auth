@@ -127,7 +127,7 @@ func (cs ConfigServer) GetAddress() string {
 
 // GetRootURL returns generated root URL from template RootURL.
 func (cs ConfigServer) GetRootURL() string {
-	return fasttemplate.ExecuteString(cs.RootURL, `{{`, `}}`, map[string]interface{}{
+	return fasttemplate.ExecuteString(cs.RootURL, `{{`, `}}`, map[string]any{
 		"domain":          cs.Domain,
 		"host":            cs.Host,
 		"port":            cs.Port,
