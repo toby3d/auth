@@ -380,5 +380,5 @@ func (app *App) Handler() http.Handler {
 		case "ticket":
 			ticket.ServeHTTP(w, r)
 		}
-	}) /*.Intercept(middleware.LogFmt())*/)
+	}).Intercept(middleware.LogFmt()))
 }
