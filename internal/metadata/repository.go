@@ -8,8 +8,8 @@ import (
 )
 
 type Repository interface {
-	Create(_ context.Context, _ *url.URL, _ domain.Metadata) error
-	Get(_ context.Context, u *url.URL) (*domain.Metadata, error)
+	Create(ctx context.Context, u *url.URL, metadata domain.Metadata) error
+	Get(ctx context.Context, u *url.URL) (*domain.Metadata, error)
 }
 
 var ErrNotExist error = domain.NewError(
