@@ -53,7 +53,6 @@ steps:
       target: "/root/indieauth"
       source:
         - "indieauth"
-        - "assets/*"
       overwrite: true
     # NOTE(toby3d): Just run a previous version of the instance if it failed to deliver the current one.
     failure: ignore
