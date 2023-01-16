@@ -7,7 +7,6 @@ package main
 import (
 	"context"
 	"embed"
-	_ "embed"
 	"errors"
 	"flag"
 	"io/fs"
@@ -96,9 +95,11 @@ var (
 	// NOTE(toby3d): read configuration from environment, see: https://12factor.net/config
 	config          = new(domain.Config)
 	indieAuthClient = &domain.Client{
-		URL:         make([]*url.URL, 1),
+		ID:          domain.ClientID{},
 		Logo:        make([]*url.URL, 1),
 		RedirectURI: make([]*url.URL, 1),
+		URL:         make([]*url.URL, 1),
+		Name:        make([]string, 0),
 	}
 )
 
@@ -115,7 +116,11 @@ func init() {
 	flag.Parse()
 
 	if err := env.Parse(&config, env.Options{
-		Prefix: "INDIEAUTH_",
+		Environment:     nil,
+		OnSet:           nil,
+		Prefix:          "INDIEAUTH_",
+		RequiredIfNoDef: false,
+		TagName:         "",
 	}); err != nil {
 		logger.Fatalln(err)
 	}
@@ -185,12 +190,20 @@ func main() {
 
 	app := NewApp(opts)
 
-	//nolint:exhaustivestruct
 	server := &http.Server{
-		Addr:         config.Server.GetAddress(),
-		Handler:      app.Handler(),
-		ReadTimeout:  DefaultReadTimeout,
-		WriteTimeout: DefaultWriteTimeout,
+		Addr:              config.Server.GetAddress(),
+		BaseContext:       nil,
+		ConnContext:       nil,
+		ConnState:         nil,
+		ErrorLog:          logger,
+		Handler:           app.Handler(),
+		IdleTimeout:       0,
+		MaxHeaderBytes:    0,
+		ReadHeaderTimeout: 0,
+		ReadTimeout:       DefaultReadTimeout,
+		TLSConfig:         nil,
+		TLSNextProto:      nil,
+		WriteTimeout:      DefaultWriteTimeout,
 	}
 
 	done := make(chan os.Signal, 1)
@@ -261,7 +274,10 @@ func NewApp(opts NewAppOptions) *App {
 }
 
 // TODO(toby3d): move module middlewares to here.
+//
+//nolint:funlen
 func (app *App) Handler() http.Handler {
+	//nolint:exhaustivestruct
 	metadata := metadatahttpdelivery.NewHandler(&domain.Metadata{
 		Issuer:                indieAuthClient.ID.URL(),
 		AuthorizationEndpoint: indieAuthClient.ID.URL().JoinPath("authorize"),
@@ -272,7 +288,11 @@ func (app *App) Handler() http.Handler {
 		IntrospectionEndpoint: indieAuthClient.ID.URL().JoinPath("introspect"),
 		RevocationEndpoint:    indieAuthClient.ID.URL().JoinPath("revocation"),
 		UserinfoEndpoint:      indieAuthClient.ID.URL().JoinPath("userinfo"),
-		ServiceDocumentation:  &url.URL{Scheme: "https", Host: "indieauth.net", Path: "/source/"},
+		ServiceDocumentation: &url.URL{
+			Scheme: "https",
+			Host:   "indieauth.net",
+			Path:   "/source/",
+		},
 		IntrospectionEndpointAuthMethodsSupported: []string{"Bearer"},
 		RevocationEndpointAuthMethodsSupported:    []string{"none"},
 		ScopesSupported: domain.Scopes{
