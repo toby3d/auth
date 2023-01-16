@@ -115,7 +115,7 @@ func init() {
 	flag.StringVar(&memProfilePath, "memprofile", "", "set path to saving pprof memory profile")
 	flag.Parse()
 
-	if err := env.Parse(&config, env.Options{
+	if err := env.Parse(config, env.Options{
 		Environment:     nil,
 		OnSet:           nil,
 		Prefix:          "INDIEAUTH_",
