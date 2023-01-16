@@ -17,15 +17,14 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"runtime"
 	"runtime/pprof"
 	"strings"
 	"syscall"
 	"time"
 
+	"github.com/caarlos0/env/v6"
 	"github.com/jmoiron/sqlx"
-	"github.com/spf13/viper"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 	_ "modernc.org/sqlite"
@@ -86,9 +85,8 @@ type (
 )
 
 const (
-	DefaultCacheDuration time.Duration = 8760 * time.Hour // NOTE(toby3d): year
-	DefaultReadTimeout   time.Duration = 5 * time.Second
-	DefaultWriteTimeout  time.Duration = 10 * time.Second
+	DefaultReadTimeout  time.Duration = 5 * time.Second
+	DefaultWriteTimeout time.Duration = 10 * time.Second
 )
 
 //nolint:gochecknoglobals
@@ -96,12 +94,16 @@ var (
 	// NOTE(toby3d): write logs in stdout, see: https://12factor.net/logs
 	logger          = log.New(os.Stdout, "IndieAuth\t", log.Lmsgprefix|log.LstdFlags|log.LUTC)
 	config          = new(domain.Config)
-	indieAuthClient = new(domain.Client)
+	indieAuthClient = &domain.Client{
+		URL:         make([]*url.URL, 1),
+		Logo:        make([]*url.URL, 1),
+		RedirectURI: make([]*url.URL, 1),
+	}
 )
 
 var (
-	configPath, cpuProfilePath, memProfilePath string
-	enablePprof                                bool
+	cpuProfilePath, memProfilePath string
+	enablePprof                    bool
 )
 
 //go:embed assets/*
@@ -109,31 +111,15 @@ var staticFS embed.FS
 
 //nolint:gochecknoinits
 func init() {
-	flag.StringVar(&configPath, "config", filepath.Join(".", "config.yml"), "load specific config")
 	flag.BoolVar(&enablePprof, "pprof", false, "enable pprof mode")
+	flag.StringVar(&cpuProfilePath, "cpuprofile", "", "set path to saving CPU memory profile")
+	flag.StringVar(&memProfilePath, "memprofile", "", "set path to saving pprof memory profile")
 	flag.Parse()
 
-	viper.AddConfigPath(".")
-	viper.AddConfigPath(filepath.Join(".", "configs"))
-	viper.SetConfigName("config")
-	viper.SetConfigType("yml")
-
-	if configPath != "" {
-		viper.SetConfigFile(configPath)
-	}
-
-	viper.SetEnvPrefix("INDIEAUTH_")
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	viper.AutomaticEnv()
-	viper.WatchConfig()
-
-	var err error
-	if err = viper.ReadInConfig(); err != nil {
-		logger.Fatalf("cannot load config from file %s: %v", viper.ConfigFileUsed(), err)
-	}
-
-	if err = viper.Unmarshal(&config); err != nil {
-		logger.Fatalln("failed to read config:", err)
+	if err := env.Parse(&config, env.Options{
+		Prefix: "INDIEAUTH_",
+	}); err != nil {
+		logger.Fatalln(err)
 	}
 
 	// NOTE(toby3d): The server instance itself can be as a client.
@@ -147,24 +133,17 @@ func init() {
 
 	indieAuthClient.ID = *cid
 
-	u, err := url.Parse(rootURL)
-	if err != nil {
+	if indieAuthClient.URL[0], err = url.Parse(rootURL); err != nil {
 		logger.Fatalln("cannot parse root URL as client URL:", err)
 	}
 
-	logo, err := url.Parse(rootURL + config.Server.StaticURLPrefix + "/icon.svg")
-	if err != nil {
+	if indieAuthClient.Logo[0], err = url.Parse(rootURL + config.Server.StaticURLPrefix + "/icon.svg"); err != nil {
 		logger.Fatalln("cannot parse root URL as client URL:", err)
 	}
 
-	redirectURI, err := url.Parse(rootURL + "callback")
-	if err != nil {
+	if indieAuthClient.RedirectURI[0], err = url.Parse(rootURL + "callback"); err != nil {
 		logger.Fatalln("cannot parse root URL as client URL:", err)
 	}
-
-	indieAuthClient.URL = []*url.URL{u}
-	indieAuthClient.Logo = []*url.URL{logo}
-	indieAuthClient.RedirectURI = []*url.URL{redirectURI}
 }
 
 //nolint:funlen,cyclop // "god object" and the entry point of all modules

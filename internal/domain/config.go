@@ -11,68 +11,68 @@ import (
 
 type (
 	Config struct {
-		Code       ConfigCode       `yaml:"code"`
-		Database   ConfigDatabase   `yaml:"database"`
-		IndieAuth  ConfigIndieAuth  `yaml:"indieAuth"`
-		JWT        ConfigJWT        `yaml:"jwt"`
-		Server     ConfigServer     `yaml:"server"`
-		TicketAuth ConfigTicketAuth `yaml:"ticketAuth"`
-		Name       string           `yaml:"name"`
-		RunMode    string           `yaml:"runMode"`
+		Code       ConfigCode       `envPrefix:"CODE_"`
+		Database   ConfigDatabase   `envPrefix:"DATABASE_"`
+		IndieAuth  ConfigIndieAuth  `envPrefix:"INDIEAUTH_"`
+		JWT        ConfigJWT        `envPrefix:"JWT_"`
+		Server     ConfigServer     `envPrefix:"SERVER_"`
+		TicketAuth ConfigTicketAuth `envPrefix:"TICKETAUTH_"`
+		Name       string           `env:"NAME" envDefault:"IndieAuth"`
+		RunMode    string           `env:"RUN_MODE" envDefault:"dev"`
 	}
 
 	ConfigServer struct {
-		CertificateFile string `yaml:"certFile"`
-		Domain          string `yaml:"domain"`
-		Host            string `yaml:"host"`
-		KeyFile         string `yaml:"keyFile"`
-		Port            string `yaml:"port"`
-		Protocol        string `yaml:"protocol"`
-		RootURL         string `yaml:"rootUrl"`
-		StaticURLPrefix string `yaml:"staticUrlPrefix"`
-		EnablePprof     bool   `yaml:"enablePprof"`
+		CertificateFile string `env:"CERT_FILE"`
+		Domain          string `env:"DOMAIN" envDefault:"localhost"`
+		Host            string `env:"HOST" envDefault:"0.0.0.0"`
+		KeyFile         string `env:"KEY_FILE"`
+		Port            string `env:"PORT" envDefault:"3000"`
+		Protocol        string `env:"PROTOCOL" envDefault:"http"`
+		RootURL         string `env:"ROOT_URL" envDefault:"{{protocol}}://{{domain}}:{{port}}/"`
+		StaticURLPrefix string `env:"STATIC_URL_PREFIX"`
+		EnablePprof     bool   `env:"ENABLE_PPROF"`
 	}
 
 	ConfigDatabase struct {
-		Path string `yaml:"path"`
-		Type string `yaml:"type"` // memory
+		Path string `env:"PATH"`
+		Type string `env:"TYPE" envDefault:"memory"` // memory
 	}
 
 	// Configuration of a one-time code after giving permission to an
 	// application. The client needs to request the server with this code to
 	// exchange it for a token or user information.
 	ConfigCode struct {
-		Expiry time.Duration `yaml:"expiry"` // 10m
-		Length uint8         `yaml:"length"` // 32
+		Expiry time.Duration `env:"EXPIRY" envDefault:"10m"` // 10m
+		Length uint8         `env:"LENGTH" envDefault:"32"`  // 32
 	}
 
 	ConfigJWT struct {
-		Expiry      time.Duration `yaml:"expiry"`    // 1h
-		Algorithm   string        `yaml:"algorithm"` // HS256
-		Secret      string        `yaml:"secret"`
-		NonceLength uint8         `yaml:"nonceLength"` // 22
+		Expiry      time.Duration `env:"EXPIRY" envDefault:"1h"`       // 1h
+		Algorithm   string        `env:"ALGORITHM" envDefault:"HS256"` // HS256
+		Secret      string        `env:"SECRET"`
+		NonceLength uint8         `env:"NONCE_LENGTH" envDefault:"22"` // 22
 	}
 
 	ConfigIndieAuth struct {
-		Password string `yaml:"password"`
-		Username string `yaml:"username"`
-		Enabled  bool   `yaml:"enabled"` // true
+		Password string `env:"PASSWORD"`
+		Username string `env:"USERNAME"`
+		Enabled  bool   `env:"ENABLED" envDefault:"true"` // true
 	}
 
 	ConfigTicketAuth struct {
-		Expiry time.Duration `yaml:"expiry"` // 1m
-		Length uint8         `yaml:"length"` // 24
+		Expiry time.Duration `env:"EXPIRY" envDefault:"1m"` // 1m
+		Length uint8         `env:"LENGTH" envDefault:"24"` // 24
 	}
 
 	ConfigRelMeAuth struct {
-		Providers []ConfigRelMeAuthProvider `yaml:"providers"`
-		Enabled   bool                      `yaml:"enabled"` // true
+		Providers []ConfigRelMeAuthProvider `envPrefix:"PROVIDERS_"`
+		Enabled   bool                      `env:"ENABLED" envDefault:"true"` // true
 	}
 
 	ConfigRelMeAuthProvider struct {
-		ID     string `yaml:"id"`
-		Secret string `yaml:"secret"`
-		Type   string `yaml:"type"`
+		ID     string `env:"ID"`
+		Secret string `env:"SECRET"`
+		Type   string `env:"TYPE"`
 	}
 )
 
