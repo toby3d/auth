@@ -29,7 +29,6 @@ type (
 		Port            string `env:"PORT" envDefault:"3000"`
 		Protocol        string `env:"PROTOCOL" envDefault:"http"`
 		RootURL         string `env:"ROOT_URL" envDefault:"{{protocol}}://{{domain}}:{{port}}/"`
-		StaticURLPrefix string `env:"STATIC_URL_PREFIX"`
 	}
 
 	ConfigDatabase struct {
@@ -92,7 +91,6 @@ func TestConfig(tb testing.TB) *Config {
 			Port:            "3000",
 			Protocol:        "http",
 			RootURL:         "{{protocol}}://{{domain}}:{{port}}/",
-			StaticURLPrefix: "/static",
 		},
 		Database: ConfigDatabase{
 			Type: "memory",
@@ -128,10 +126,9 @@ func (cs ConfigServer) GetAddress() string {
 // GetRootURL returns generated root URL from template RootURL.
 func (cs ConfigServer) GetRootURL() string {
 	return fasttemplate.ExecuteString(cs.RootURL, `{{`, `}}`, map[string]any{
-		"domain":          cs.Domain,
-		"host":            cs.Host,
-		"port":            cs.Port,
-		"protocol":        cs.Protocol,
-		"staticUrlPrefix": cs.StaticURLPrefix,
+		"domain":   cs.Domain,
+		"host":     cs.Host,
+		"port":     cs.Port,
+		"protocol": cs.Protocol,
 	})
 }

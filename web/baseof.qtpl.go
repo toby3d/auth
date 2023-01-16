@@ -152,23 +152,7 @@ func (p *BaseOf) StreamHead(qw422016 *qt422016.Writer) {
 //line web/baseof.qtpl:39
 	qw422016.N().S(` `)
 //line web/baseof.qtpl:40
-	qw422016.N().S(` <link rel="icon" href="`)
-//line web/baseof.qtpl:42
-	qw422016.E().S(p.Config.Server.StaticURLPrefix)
-//line web/baseof.qtpl:42
-	qw422016.N().S(`/favicon.ico" sizes="any"> <link rel="icon" href="`)
-//line web/baseof.qtpl:46
-	qw422016.E().S(p.Config.Server.StaticURLPrefix)
-//line web/baseof.qtpl:46
-	qw422016.N().S(`/icon.svg" type="image/svg+xml"> <link rel="apple-touch-icon" href="`)
-//line web/baseof.qtpl:50
-	qw422016.E().S(p.Config.Server.StaticURLPrefix)
-//line web/baseof.qtpl:50
-	qw422016.N().S(`/apple-touch-icon.png"> <link rel="manifest" href="`)
-//line web/baseof.qtpl:53
-	qw422016.E().S(p.Config.Server.StaticURLPrefix)
-//line web/baseof.qtpl:53
-	qw422016.N().S(`/manifest.webmanifest"> `)
+	qw422016.N().S(` <link rel="icon" href="/favicon.ico" sizes="any"> <link rel="icon" href="/icon.svg" type="image/svg+xml"> <link rel="apple-touch-icon" href="/apple-touch-icon.png"> <link rel="manifest" href="/manifest.webmanifest"> `)
 //line web/baseof.qtpl:54
 }
 

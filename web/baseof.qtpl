@@ -39,18 +39,18 @@ en
 {% func (p *BaseOf) Head() %}
 {% comment %}https://evilmartians.com/chronicles/how-to-favicon-in-2021-six-files-that-fit-most-needs{% endcomment %}
 <link rel="icon"
-      href="{%s p.Config.Server.StaticURLPrefix %}/favicon.ico"
+      href="/favicon.ico"
       sizes="any">
 
 <link rel="icon"
-      href="{%s p.Config.Server.StaticURLPrefix %}/icon.svg"
+      href="/icon.svg"
       type="image/svg+xml">
 
 <link rel="apple-touch-icon"
-      href="{%s p.Config.Server.StaticURLPrefix %}/apple-touch-icon.png">
+      href="/apple-touch-icon.png">
 
 <link rel="manifest"
-      href="{%s p.Config.Server.StaticURLPrefix %}/manifest.webmanifest">
+      href="/manifest.webmanifest">
 {% endfunc %}
 
 {% func (p *BaseOf) Body() %}{% endfunc %}

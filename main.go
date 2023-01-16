@@ -133,7 +133,7 @@ func init() {
 		logger.Fatalln("cannot parse root URL as client URL:", err)
 	}
 
-	if indieAuthClient.Logo[0], err = url.Parse(rootURL + config.Server.StaticURLPrefix + "/icon.svg"); err != nil {
+	if indieAuthClient.Logo[0], err = url.Parse(rootURL + "icon.svg"); err != nil {
 		logger.Fatalln("cannot parse root URL as client URL:", err)
 	}
 
