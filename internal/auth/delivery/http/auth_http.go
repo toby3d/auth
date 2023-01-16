@@ -51,7 +51,7 @@ func (h *Handler) Handler() http.Handler {
 			Skipper: func(w http.ResponseWriter, r *http.Request) bool {
 				head, _ := urlutil.ShiftPath(r.URL.Path)
 
-				return r.Method == http.MethodPost && head == "authorize"
+				return r.Method == http.MethodPost && head == ""
 			},
 			CookieMaxAge:   0,
 			CookieSameSite: http.SameSiteStrictMode,
@@ -68,7 +68,7 @@ func (h *Handler) Handler() http.Handler {
 			Skipper: func(w http.ResponseWriter, r *http.Request) bool {
 				head, _ := urlutil.ShiftPath(r.URL.Path)
 
-				return r.Method != http.MethodPost || head != "api"
+				return r.Method != http.MethodPost || head != "verify"
 			},
 			Validator: func(w http.ResponseWriter, r *http.Request, login, password string) (bool, error) {
 				userMatch := subtle.ConstantTimeCompare([]byte(login),
