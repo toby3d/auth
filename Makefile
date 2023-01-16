@@ -17,11 +17,9 @@ all: main.go
 	$(GO) build -v $(GOFLAGS) -o $(EXECUTABLE)
 
 clean: ## Delete all files in the current directory that are normally created by building the program
-	-rm $(srcdir)/internal/testing/httptest/{cert,key}.pem
 	$(GO) clean
 
 check: ## Perform self-tests
-	$(GO) generate $(srcdir)/internal/testing/httptest/...
 	$(GO) test -v -cover -failfast -short -shuffle=on $(GOFLAGS) $(srcdir)/...
 
 .PHONY: help
