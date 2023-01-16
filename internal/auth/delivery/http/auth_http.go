@@ -51,7 +51,7 @@ func (h *Handler) Handler() http.Handler {
 			Skipper: func(w http.ResponseWriter, r *http.Request) bool {
 				head, _ := urlutil.ShiftPath(r.URL.Path)
 
-				return r.Method == http.MethodPost && head == ""
+				return head == ""
 			},
 			CookieMaxAge:   0,
 			CookieSameSite: http.SameSiteStrictMode,
@@ -68,9 +68,11 @@ func (h *Handler) Handler() http.Handler {
 			Skipper: func(w http.ResponseWriter, r *http.Request) bool {
 				head, _ := urlutil.ShiftPath(r.URL.Path)
 
-				return r.Method != http.MethodPost || head != "verify"
+				return r.Method != http.MethodPost ||
+					head != "verify" ||
+					r.PostFormValue("authorize") == "deny"
 			},
-			Validator: func(w http.ResponseWriter, r *http.Request, login, password string) (bool, error) {
+			Validator: func(_ http.ResponseWriter, _ *http.Request, login, password string) (bool, error) {
 				userMatch := subtle.ConstantTimeCompare([]byte(login),
 					[]byte(h.config.IndieAuth.Username))
 				passMatch := subtle.ConstantTimeCompare([]byte(password),
@@ -83,8 +85,7 @@ func (h *Handler) Handler() http.Handler {
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var head string
-		head, r.URL.Path = urlutil.ShiftPath(r.URL.Path)
+		head, _ := urlutil.ShiftPath(r.URL.Path)
 
 		switch r.Method {
 		default:
