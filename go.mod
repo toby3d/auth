@@ -16,7 +16,7 @@ require (
 	github.com/valyala/quicktemplate v1.7.0
 	go.etcd.io/bbolt v1.3.6
 	golang.org/x/exp v0.0.0-20230113213754-f9f960f08ad4
-	golang.org/x/text v0.6.0
+	golang.org/x/text v0.7.0
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2
 	inet.af/netaddr v0.0.0-20220811202034-502d2d690317
 	modernc.org/sqlite v1.20.2
@@ -45,8 +45,8 @@ require (
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20220617031537-928513b29760 // indirect
 	golang.org/x/crypto v0.5.0 // indirect
 	golang.org/x/mod v0.7.0 // indirect
-	golang.org/x/net v0.5.0 // indirect
-	golang.org/x/sys v0.4.0 // indirect
+	golang.org/x/net v0.7.0 // indirect
+	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/tools v0.5.0 // indirect
 	lukechampine.com/uint128 v1.2.0 // indirect
 	modernc.org/cc/v3 v3.40.0 // indirect
