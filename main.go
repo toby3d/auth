@@ -16,6 +16,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"runtime"
 	"runtime/pprof"
 	"strings"
@@ -106,7 +107,7 @@ var (
 //nolint:gochecknoglobals
 var cpuProfilePath, memProfilePath string
 
-//go:embed assets/*
+//go:embed web/static/*
 var staticFS embed.FS
 
 //nolint:gochecknoinits
@@ -156,7 +157,7 @@ func main() {
 	var opts NewAppOptions
 
 	var err error
-	if opts.Static, err = fs.Sub(staticFS, "assets"); err != nil {
+	if opts.Static, err = fs.Sub(staticFS, filepath.Join("web", "static")); err != nil {
 		logger.Fatalln(err)
 	}
 
