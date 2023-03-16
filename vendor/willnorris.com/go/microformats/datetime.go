@@ -63,11 +63,11 @@ const (
 // "YYYY-MM-DD HH:MM:SS+XXYY", but omitting certain values not specified in the
 // creation of d.  For example:
 //
-//     - if no date was specified, d is invalid and an empty string is returned
-//     - if no time was specified, time and timezone are omitted
-//     - if no timezone was specified, timezone is omitted
-//     - if no seconds were specified, seconds are omitted
-//     - if no minutes were specified, 00 is implied
+//   - if no date was specified, d is invalid and an empty string is returned
+//   - if no time was specified, time and timezone are omitted
+//   - if no timezone was specified, timezone is omitted
+//   - if no seconds were specified, seconds are omitted
+//   - if no minutes were specified, 00 is implied
 //
 // Microformat docs: http://microformats.org/wiki/value-class-pattern#Date_and_time_parsing
 func (d *datetime) String() string {
@@ -156,7 +156,7 @@ var (
 func (d *datetime) Parse(s string) {
 	// normalize datetime value
 	s = strings.ToUpper(s)
-	s = strings.Replace(s, " ", "T", -1)
+	s = strings.Replace(s, " ", "T", 1)
 	s = reAMPM.ReplaceAllString(s, "$1$2")
 
 	// datetime formats

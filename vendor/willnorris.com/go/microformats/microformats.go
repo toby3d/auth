@@ -6,7 +6,7 @@
 //
 // Usage:
 //
-//     import "willnorris.com/go/microformats"
+//	import "willnorris.com/go/microformats"
 //
 // Retrieve the HTML contents of a page, and call Parse or ParseNode, depending
 // on what input you have (an io.Reader or an html.Node).
@@ -38,14 +38,14 @@ var (
 // Microformat specifies a single microformat object and its properties.  It
 // may represent a person, an address, a blog post, etc.
 type Microformat struct {
-	ID         string                   `json:"id,omitempty"`
-	Value      string                   `json:"value,omitempty"`
-	HTML       string                   `json:"html,omitempty"`
-	Type       []string                 `json:"type"`
-	Properties map[string][]interface{} `json:"properties"`
-	Shape      string                   `json:"shape,omitempty"`
-	Coords     string                   `json:"coords,omitempty"`
-	Children   []*Microformat           `json:"children,omitempty"`
+	ID         string           `json:"id,omitempty"`
+	Value      string           `json:"value,omitempty"`
+	HTML       string           `json:"html,omitempty"`
+	Type       []string         `json:"type"`
+	Properties map[string][]any `json:"properties"`
+	Shape      string           `json:"shape,omitempty"`
+	Coords     string           `json:"coords,omitempty"`
+	Children   []*Microformat   `json:"children,omitempty"`
 
 	// track whether this microformat has various types of properties or
 	// nested microformats. Used in processing implied property values.
@@ -108,16 +108,22 @@ type parser struct {
 }
 
 // Parse the microformats found in the HTML document read from r.  baseURL is
-// the URL this document was retrieved from and is used to resolve any
-// relative URLs.
+// the URL this document was retrieved from and is used to expand any
+// relative URLs.  If baseURL is nil and the base URL is not referenced in the
+// document, relative URLs are not expanded.
 func Parse(r io.Reader, baseURL *url.URL) *Data {
 	doc, _ := html.Parse(r)
 	return ParseNode(doc, baseURL)
 }
 
 // ParseNode parses the microformats found in doc.  baseURL is the URL this
-// document was retrieved from and is used to resolve any relative URLs.
+// document was retrieved from and is used to expand any relative URLs. If
+// baseURL is nil and the base URL is not referenced in the document,
+// relative URLs are not expanded.
 func ParseNode(doc *html.Node, baseURL *url.URL) *Data {
+	if doc == nil { // makes no sense to go further
+		return nil
+	}
 	p := new(parser)
 	p.curData = &Data{
 		Items:   make([]*Microformat, 0),
@@ -125,6 +131,9 @@ func ParseNode(doc *html.Node, baseURL *url.URL) *Data {
 		RelURLs: make(map[string]*RelURL),
 	}
 	p.base = baseURL
+	if p.base == nil { // can make sense if base can be inferred from contents
+		p.base = &url.URL{}
+	}
 	p.baseFound = false
 	p.root = doc
 	p.walk(doc)
@@ -185,6 +194,8 @@ func expandURL(r string, base *url.URL) string {
 }
 
 // walk the DOM rooted at node, storing parsed microformats in p.
+//
+//nolint:gocyclo,funlen // maybe we'll refactor it one day
 func (p *parser) walk(node *html.Node) {
 	if isAtom(node, atom.Template) {
 		return
@@ -213,7 +224,7 @@ func (p *parser) walk(node *html.Node) {
 		sort.Strings(rootclasses)
 		curItem = &Microformat{
 			Type:       rootclasses,
-			Properties: make(map[string][]interface{}),
+			Properties: make(map[string][]any),
 			backcompat: backcompat,
 		}
 		if !backcompat {
@@ -266,6 +277,7 @@ func (p *parser) walk(node *html.Node) {
 			}
 
 			if _, ok := p.curData.RelURLs[urlVal]; !ok {
+				sort.Strings(rels)
 				p.curData.RelURLs[urlVal] = &RelURL{
 					Text:     getTextContent(node, nil),
 					Rels:     rels,
@@ -300,14 +312,16 @@ func (p *parser) walk(node *html.Node) {
 				}
 			}
 			if _, ok := curItem.Properties["photo"]; !ok {
-				photo, alt := getImpliedPhoto(node, p.base)
-				if alt != "" {
-					curItem.Properties["photo"] = append(curItem.Properties["photo"], map[string]string{
-						"alt":   alt,
-						"value": photo,
-					})
-				} else if photo != "" {
-					curItem.Properties["photo"] = append(curItem.Properties["photo"], photo)
+				if !curItem.hasNestedMicroformats && !curItem.hasUProperties {
+					photo, alt := getImpliedPhoto(node, p.base)
+					if alt != "" {
+						curItem.Properties["photo"] = append(curItem.Properties["photo"], map[string]string{
+							"alt":   alt,
+							"value": photo,
+						})
+					} else if photo != "" {
+						curItem.Properties["photo"] = append(curItem.Properties["photo"], photo)
+					}
 				}
 			}
 			if _, ok := curItem.Properties["url"]; !ok {
@@ -424,15 +438,18 @@ func (p *parser) walk(node *html.Node) {
 
 				for c := node.FirstChild; c != nil; c = c.NextSibling {
 					p.expandAttrURLs(c) // microformats/microformats2-parsing#38
-					html.Render(&buf, c)
+
+					// ignore errors from html.Render which nearly always result from being unable
+					// to write to the underlying io.Writer, which never happens with bytes.Buffer.
+					_ = html.Render(&buf, c)
 				}
 				htmlbody := strings.TrimSpace(buf.String())
 
 				// HTML spec: Serializing HTML Fragments algorithm does not include
 				// a trailing slash, so remove it.  Nor should apostrophes be
 				// encoded, which golang.org/x/net/html is doing.
-				htmlbody = strings.Replace(htmlbody, `/>`, `>`, -1)
-				htmlbody = strings.Replace(htmlbody, `&#39;`, `'`, -1)
+				htmlbody = strings.ReplaceAll(htmlbody, `/>`, `>`)
+				htmlbody = strings.ReplaceAll(htmlbody, `&#39;`, `'`)
 				propData["html"] = htmlbody
 			case "dt":
 				if value == nil {
@@ -521,6 +538,11 @@ func getAttrPtr(node *html.Node, name string) *string {
 		}
 	}
 	return nil
+}
+
+// hasAttr returns whether node has an attribute with the specified name.
+func hasAttr(node *html.Node, name string) bool {
+	return getAttrPtr(node, name) != nil
 }
 
 // isAtom returns whether node's atom is one of atoms.
@@ -616,54 +638,28 @@ func getOnlyChildAtom(node *html.Node, atom atom.Atom) *html.Node {
 	return n
 }
 
-// getOnlyChild returns the sole child of node with the specified atom and
-// attribute.  Returns nil if node has zero or more than one child with that
-// atom and attribute.
-func getOnlyChildAtomWithAttr(node *html.Node, atom atom.Atom, attr string) *html.Node {
-	if node == nil {
-		return nil
-	}
-	var n *html.Node
-	for c := node.FirstChild; c != nil; c = c.NextSibling {
-		if c.Type == html.ElementNode && c.DataAtom == atom && getAttrPtr(c, attr) != nil {
-			if n == nil {
-				n = c
-			} else {
-				return nil
-			}
-		}
-	}
-	return n
-}
-
 // getImpliedName gets the implied name value for node.
 //
 // See http://microformats.org/wiki/microformats2-parsing
 func getImpliedName(node *html.Node) string {
 	var name *string
-	if isAtom(node, atom.Img, atom.Area) {
+
+	switch {
+	case isAtom(node, atom.Img, atom.Area):
 		name = getAttrPtr(node, "alt")
-	}
-	if name == nil && isAtom(node, atom.Abbr) {
+	case isAtom(node, atom.Abbr):
 		name = getAttrPtr(node, "title")
 	}
 
 	if name == nil {
 		subnode := getOnlyChild(node)
-		if subnode != nil && subnode.DataAtom == atom.Img && !hasMatchingClass(subnode, rootClassNames) {
-			name = getAttrPtr(subnode, "alt")
-		}
-	}
-	if name == nil {
-		subnode := getOnlyChild(node)
-		if subnode != nil && subnode.DataAtom == atom.Area && !hasMatchingClass(subnode, rootClassNames) {
-			name = getAttrPtr(subnode, "alt")
-		}
-	}
-	if name == nil {
-		subnode := getOnlyChild(node)
-		if subnode != nil && subnode.DataAtom == atom.Abbr && !hasMatchingClass(subnode, rootClassNames) {
-			name = getAttrPtr(subnode, "title")
+		if subnode != nil && !hasMatchingClass(subnode, rootClassNames) {
+			switch {
+			case isAtom(subnode, atom.Img, atom.Area):
+				name = getAttrPtr(subnode, "alt")
+			case isAtom(subnode, atom.Abbr):
+				name = getAttrPtr(subnode, "title")
+			}
 		}
 	}
 
@@ -671,34 +667,22 @@ func getImpliedName(node *html.Node) string {
 		subnode := getOnlyChild(node)
 		if subnode != nil && !hasMatchingClass(subnode, rootClassNames) {
 			subsubnode := getOnlyChild(subnode)
-			if subsubnode != nil && subsubnode.DataAtom == atom.Img && !hasMatchingClass(subsubnode, rootClassNames) {
-				name = getAttrPtr(subsubnode, "alt")
-			}
-		}
-	}
-	if name == nil {
-		subnode := getOnlyChild(node)
-		if subnode != nil && !hasMatchingClass(subnode, rootClassNames) {
-			subsubnode := getOnlyChild(subnode)
-			if subsubnode != nil && subsubnode.DataAtom == atom.Area && !hasMatchingClass(subsubnode, rootClassNames) {
-				name = getAttrPtr(subsubnode, "alt")
-			}
-		}
-	}
-	if name == nil {
-		subnode := getOnlyChild(node)
-		if subnode != nil && !hasMatchingClass(subnode, rootClassNames) {
-			subsubnode := getOnlyChild(subnode)
-			if subsubnode != nil && subsubnode.DataAtom == atom.Abbr {
-				name = getAttrPtr(subsubnode, "title")
+			if subsubnode != nil && !hasMatchingClass(subsubnode, rootClassNames) {
+				switch {
+				case isAtom(subsubnode, atom.Img, atom.Area):
+					name = getAttrPtr(subsubnode, "alt")
+				case isAtom(subsubnode, atom.Abbr):
+					name = getAttrPtr(subsubnode, "title")
+				}
 			}
 		}
 	}
 
 	if name == nil {
 		name = new(string)
-		*name = strings.TrimSpace(getTextContent(node, imageAltValue))
+		*name = getTextContent(node, imageAltValue)
 	}
+
 	return strings.TrimSpace(*name)
 }
 
@@ -707,23 +691,24 @@ func getImpliedName(node *html.Node) string {
 // See http://microformats.org/wiki/microformats2-parsing
 func getImpliedPhoto(node *html.Node, baseURL *url.URL) (src, alt string) {
 	var photo *string
-	if photo == nil && isAtom(node, atom.Img) {
+
+	switch {
+	case isAtom(node, atom.Img):
 		photo = getAttrPtr(node, "src")
 		alt = getAttr(node, "alt")
-	}
-	if photo == nil && isAtom(node, atom.Object) {
+	case isAtom(node, atom.Object):
 		photo = getAttrPtr(node, "data")
 	}
 
 	if photo == nil {
-		subnode := getOnlyChildAtomWithAttr(node, atom.Img, "src")
-		if subnode != nil && !hasMatchingClass(subnode, rootClassNames) {
+		subnode := getOnlyChildAtom(node, atom.Img)
+		if subnode != nil && hasAttr(subnode, "src") && !hasMatchingClass(subnode, rootClassNames) {
 			photo = getAttrPtr(subnode, "src")
 			alt = getAttr(subnode, "alt")
 		}
 	}
 	if photo == nil {
-		subnode := getOnlyChildAtomWithAttr(node, atom.Object, "data")
+		subnode := getOnlyChildAtom(node, atom.Object)
 		if subnode != nil && !hasMatchingClass(subnode, rootClassNames) {
 			photo = getAttrPtr(subnode, "data")
 		}
@@ -732,8 +717,8 @@ func getImpliedPhoto(node *html.Node, baseURL *url.URL) (src, alt string) {
 	if photo == nil {
 		subnode := getOnlyChild(node)
 		if subnode != nil && !hasMatchingClass(subnode, rootClassNames) {
-			subsubnode := getOnlyChildAtomWithAttr(subnode, atom.Img, "src")
-			if subsubnode != nil && !hasMatchingClass(subsubnode, rootClassNames) {
+			subsubnode := getOnlyChildAtom(subnode, atom.Img)
+			if subsubnode != nil && hasAttr(subsubnode, "src") && !hasMatchingClass(subsubnode, rootClassNames) {
 				photo = getAttrPtr(subsubnode, "src")
 				alt = getAttr(subsubnode, "alt")
 			}
@@ -742,7 +727,7 @@ func getImpliedPhoto(node *html.Node, baseURL *url.URL) (src, alt string) {
 	if photo == nil {
 		subnode := getOnlyChild(node)
 		if subnode != nil && !hasMatchingClass(subnode, rootClassNames) {
-			subsubnode := getOnlyChildAtomWithAttr(subnode, atom.Object, "data")
+			subsubnode := getOnlyChildAtom(subnode, atom.Object)
 			if subsubnode != nil && !hasMatchingClass(subsubnode, rootClassNames) {
 				photo = getAttrPtr(subsubnode, "data")
 			}
@@ -755,7 +740,7 @@ func getImpliedPhoto(node *html.Node, baseURL *url.URL) (src, alt string) {
 	return expandURL(*photo, baseURL), alt
 }
 
-// getImpliedName gets the implied url value for node.
+// getImpliedURL gets the implied url value for node.
 //
 // See http://microformats.org/wiki/microformats2-parsing
 func getImpliedURL(node *html.Node, baseURL *url.URL) string {
@@ -765,13 +750,13 @@ func getImpliedURL(node *html.Node, baseURL *url.URL) string {
 	}
 
 	if value == nil {
-		subnode := getOnlyChildAtomWithAttr(node, atom.A, "href")
+		subnode := getOnlyChildAtom(node, atom.A)
 		if subnode != nil && !hasMatchingClass(subnode, rootClassNames) {
 			value = getAttrPtr(subnode, "href")
 		}
 	}
 	if value == nil {
-		subnode := getOnlyChildAtomWithAttr(node, atom.Area, "href")
+		subnode := getOnlyChildAtom(node, atom.Area)
 		if subnode != nil && !hasMatchingClass(subnode, rootClassNames) {
 			value = getAttrPtr(subnode, "href")
 		}
@@ -780,7 +765,7 @@ func getImpliedURL(node *html.Node, baseURL *url.URL) string {
 	if value == nil {
 		subnode := getOnlyChild(node)
 		if subnode != nil && !hasMatchingClass(subnode, rootClassNames) {
-			subsubnode := getOnlyChildAtomWithAttr(subnode, atom.A, "href")
+			subsubnode := getOnlyChildAtom(subnode, atom.A)
 			if subsubnode != nil && !hasMatchingClass(subsubnode, rootClassNames) {
 				value = getAttrPtr(subsubnode, "href")
 			}
@@ -789,7 +774,7 @@ func getImpliedURL(node *html.Node, baseURL *url.URL) string {
 	if value == nil {
 		subnode := getOnlyChild(node)
 		if subnode != nil && !hasMatchingClass(subnode, rootClassNames) {
-			subsubnode := getOnlyChildAtomWithAttr(subnode, atom.Area, "href")
+			subsubnode := getOnlyChildAtom(subnode, atom.Area)
 			if subsubnode != nil && !hasMatchingClass(subsubnode, rootClassNames) {
 				value = getAttrPtr(subsubnode, "href")
 			}
@@ -833,17 +818,18 @@ func parseValueClassPattern(node *html.Node, dt bool) []string {
 			}
 		}
 		if valueTitleClass {
-			values = append(values, *getAttrPtr(c, "title"))
+			values = append(values, getAttr(c, "title"))
 		} else if valueClass {
-			if isAtom(c, atom.Img, atom.Area) && getAttrPtr(c, "alt") != nil {
-				values = append(values, *getAttrPtr(c, "alt"))
-			} else if isAtom(c, atom.Data) && getAttrPtr(c, "value") != nil {
-				values = append(values, *getAttrPtr(c, "value"))
-			} else if isAtom(c, atom.Abbr) && getAttrPtr(c, "title") != nil {
-				values = append(values, *getAttrPtr(c, "title"))
-			} else if dt && isAtom(c, atom.Del, atom.Ins, atom.Time) && getAttrPtr(c, "datetime") != nil {
-				values = append(values, *getAttrPtr(c, "datetime"))
-			} else {
+			switch {
+			case isAtom(c, atom.Img, atom.Area) && hasAttr(c, "alt"):
+				values = append(values, getAttr(c, "alt"))
+			case isAtom(c, atom.Data) && hasAttr(c, "value"):
+				values = append(values, getAttr(c, "value"))
+			case isAtom(c, atom.Abbr) && hasAttr(c, "title"):
+				values = append(values, getAttr(c, "title"))
+			case dt && isAtom(c, atom.Del, atom.Ins, atom.Time) && hasAttr(c, "datetime"):
+				values = append(values, getAttr(c, "datetime"))
+			default:
 				values = append(values, strings.TrimSpace(getTextContent(c, nil)))
 			}
 		}
