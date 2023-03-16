@@ -117,11 +117,9 @@ func init() {
 	flag.Parse()
 
 	if err := env.Parse(config, env.Options{
-		Environment:     nil,
-		OnSet:           nil,
-		Prefix:          "INDIEAUTH_",
-		RequiredIfNoDef: false,
-		TagName:         "",
+		Prefix:                "AUTH_",
+		TagName:               "env",
+		UseFieldNameByDefault: true,
 	}); err != nil {
 		logger.Fatalln(err)
 	}
