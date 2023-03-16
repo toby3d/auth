@@ -7,7 +7,7 @@ srcdir = .
 
 GO ?= go
 GOFLAGS ?= -buildvcs=true
-EXECUTABLE ?= indieauth
+EXECUTABLE ?= auth
 
 #### End of system configuration section. ####
 
