@@ -1,79 +1,45 @@
 ---
-kind: pipeline
-type: docker
-name: default
+kind: "pipeline"
+type: "docker"
+name: "default"
 
 environment:
   CGO_ENABLED: 0
 
 steps:
-  - name: test
-    image: golang:latest
+  - name: "test"
+    image: "golang:1.20"
     volumes:
-      - name: modules
-        path: /go/pkg/mod
+      - name: "modules"
+        path: "/go/pkg/mod"
     commands:
-      - make check
+      - "make check"
 
-  - name: build
-    image: golang:latest
+  - name: "build"
+    image: "golang:1.20"
     volumes:
-      - name: modules
-        path: /go/pkg/mod
+      - name: "modules"
+        path: "/go/pkg/mod"
     commands:
-      - make
+      - "make"
     depends_on:
-      - test
+      - "test"
 
-  - name: stop-service
-    image: appleboy/drone-ssh
+  - name: "delivery"
+    image: "drillster/drone-rsync"
     settings:
-      host:
-        from_secret: SSH_HOST
-      username: root
+      hosts:
+        from_secret: "SSH_HOST_IP"
       key:
-        from_secret: SSH_PRIVATE_KEY
+        from_secret: "SSH_PRIVATE_KEY"
+      source: "./auth"
+      target: "/etc/auth/auth"
+      prescript:
+        - "systemctl stop auth"
       script:
-        - "systemctl stop indieauth"
+        - "systemctl start auth"
     depends_on:
       - build
-    when:
-      branch:
-        - master
-
-  - name: delivery
-    image: appleboy/drone-scp
-    settings:
-      host:
-        from_secret: SSH_HOST
-      username: root
-      password: ""
-      key:
-        from_secret: SSH_PRIVATE_KEY
-      target: "/root/indieauth"
-      source:
-        - "indieauth"
-      overwrite: true
-    # NOTE(toby3d): Just run a previous version of the instance if it failed to deliver the current one.
-    failure: ignore
-    depends_on:
-      - stop-service
-    when:
-      branch:
-        - master
-
-  - name: start-service
-    image: appleboy/drone-ssh
-    settings:
-      host:
-        from_secret: SSH_HOST
-      username: root
-      key:
-        from_secret: SSH_PRIVATE_KEY
-      script:
-        - "systemctl start indieauth"
-    depends_on:
-      - delivery
     when:
       branch:
         - master
