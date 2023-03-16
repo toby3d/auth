@@ -16,11 +16,11 @@ import (
 
 type (
 	Token struct {
-		CreatedAt   sql.NullTime `db:"created_at"`
 		AccessToken string       `db:"access_token"`
 		ClientID    string       `db:"client_id"`
 		Me          string       `db:"me"`
 		Scope       string       `db:"scope"`
+		CreatedAt   sql.NullTime `db:"created_at"`
 	}
 
 	sqlite3TokenRepository struct {

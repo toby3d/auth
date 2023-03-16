@@ -18,18 +18,18 @@ type (
 	}
 
 	TokenRefreshRequest struct {
-		GrantType domain.GrantType `form:"grant_type"` // refresh_token
-
 		// The client ID that was used when the refresh token was issued.
 		ClientID domain.ClientID `form:"client_id"`
+
+		GrantType domain.GrantType `form:"grant_type"` // refresh_token
+
+		// The refresh token previously offered to the client.
+		RefreshToken string `form:"refresh_token"`
 
 		// The client may request a token with the same or fewer scopes
 		// than the original access token. If omitted, is treated as
 		// equal to the original scopes granted.
 		Scope domain.Scopes `form:"scope"`
-
-		// The refresh token previously offered to the client.
-		RefreshToken string `form:"refresh_token"`
 	}
 
 	TokenRevocationRequest struct {

@@ -13,35 +13,35 @@ import (
 // NOTE(toby3d): Encapsulate enums in structs for extra compile-time safety:
 // https://threedots.tech/post/safer-enums-in-go/#struct-based-enums
 type Scope struct {
-	uid string
+	scope string
 }
 
 var ErrScopeUnknown error = NewError(ErrorCodeInvalidRequest, "unknown scope", "https://indieweb.org/scope")
 
 //nolint:gochecknoglobals // structs cannot be constants
 var (
-	ScopeUnd = Scope{uid: ""} // "und"
+	ScopeUnd = Scope{scope: ""} // "und"
 
 	// https://indieweb.org/scope#Micropub_Scopes
-	ScopeCreate   = Scope{uid: "create"}   // "create"
-	ScopeDelete   = Scope{uid: "delete"}   // "delete"
-	ScopeDraft    = Scope{uid: "draft"}    // "draft"
-	ScopeMedia    = Scope{uid: "media"}    // "media"
-	ScopeUndelete = Scope{uid: "undelete"} // "undelete"
-	ScopeUpdate   = Scope{uid: "update"}   // "update"
+	ScopeCreate   = Scope{scope: "create"}   // "create"
+	ScopeDelete   = Scope{scope: "delete"}   // "delete"
+	ScopeDraft    = Scope{scope: "draft"}    // "draft"
+	ScopeMedia    = Scope{scope: "media"}    // "media"
+	ScopeUndelete = Scope{scope: "undelete"} // "undelete"
+	ScopeUpdate   = Scope{scope: "update"}   // "update"
 
 	// https://indieweb.org/scope#Microsub_Scopes
-	ScopeBlock    = Scope{uid: "block"}    // "block"
-	ScopeChannels = Scope{uid: "channels"} // "channels"
-	ScopeFollow   = Scope{uid: "follow"}   // "follow"
-	ScopeMute     = Scope{uid: "mute"}     // "mute"
-	ScopeRead     = Scope{uid: "read"}     // "read"
+	ScopeBlock    = Scope{scope: "block"}    // "block"
+	ScopeChannels = Scope{scope: "channels"} // "channels"
+	ScopeFollow   = Scope{scope: "follow"}   // "follow"
+	ScopeMute     = Scope{scope: "mute"}     // "mute"
+	ScopeRead     = Scope{scope: "read"}     // "read"
 
 	// This scope requests access to the user's default profile information
 	// which include the following properties: name, photo, url.
 	//
 	// NOTE(toby3d): https://indieauth.net/source/#profile-information
-	ScopeProfile = Scope{uid: "profile"} // "profile"
+	ScopeProfile = Scope{scope: "profile"} // "profile"
 
 	// This scope requests access to the user's email address in the
 	// following property: email.
@@ -51,24 +51,24 @@ var (
 	// and must be requested along with the profile scope if desired.
 	//
 	// NOTE(toby3d): https://indieauth.net/source/#profile-information
-	ScopeEmail = Scope{uid: "email"} // "email"
+	ScopeEmail = Scope{scope: "email"} // "email"
 )
 
 //nolint:gochecknoglobals // maps cannot be constants
 var uidsScopes = map[string]Scope{
-	ScopeBlock.uid:    ScopeBlock,
-	ScopeChannels.uid: ScopeChannels,
-	ScopeCreate.uid:   ScopeCreate,
-	ScopeDelete.uid:   ScopeDelete,
-	ScopeDraft.uid:    ScopeDraft,
-	ScopeEmail.uid:    ScopeEmail,
-	ScopeFollow.uid:   ScopeFollow,
-	ScopeMedia.uid:    ScopeMedia,
-	ScopeMute.uid:     ScopeMute,
-	ScopeProfile.uid:  ScopeProfile,
-	ScopeRead.uid:     ScopeRead,
-	ScopeUndelete.uid: ScopeUndelete,
-	ScopeUpdate.uid:   ScopeUpdate,
+	ScopeBlock.scope:    ScopeBlock,
+	ScopeChannels.scope: ScopeChannels,
+	ScopeCreate.scope:   ScopeCreate,
+	ScopeDelete.scope:   ScopeDelete,
+	ScopeDraft.scope:    ScopeDraft,
+	ScopeEmail.scope:    ScopeEmail,
+	ScopeFollow.scope:   ScopeFollow,
+	ScopeMedia.scope:    ScopeMedia,
+	ScopeMute.scope:     ScopeMute,
+	ScopeProfile.scope:  ScopeProfile,
+	ScopeRead.scope:     ScopeRead,
+	ScopeUndelete.scope: ScopeUndelete,
+	ScopeUpdate.scope:   ScopeUpdate,
 }
 
 // ParseScope parses scope slug into Scope domain.
@@ -97,13 +97,13 @@ func (s *Scope) UnmarshalJSON(v []byte) error {
 }
 
 func (s Scope) MarshalJSON() ([]byte, error) {
-	return []byte(strconv.Quote(s.uid)), nil
+	return []byte(strconv.Quote(s.scope)), nil
 }
 
 // String returns string representation of scope.
 func (s Scope) String() string {
-	if s.uid != "" {
-		return s.uid
+	if s.scope != "" {
+		return s.scope
 	}
 
 	return common.Und

@@ -19,22 +19,22 @@ import (
 
 //nolint:lll,tagliatelle
 type Response struct {
-	CodeChallengeMethodsSupported              []string `json:"code_challenge_methods_supported"`
-	GrantTypesSupported                        []string `json:"grant_types_supported,omitempty"`
-	ResponseTypesSupported                     []string `json:"response_types_supported,omitempty"`
-	ScopesSupported                            []string `json:"scopes_supported,omitempty"`
-	IntrospectionEndpointAuthMethodsSupported  []string `json:"introspection_endpoint_auth_methods_supported,omitempty"`
-	RevocationEndpointAuthMethodsSupported     []string `json:"revocation_endpoint_auth_methods_supported,omitempty"`
-	Issuer                                     string   `json:"issuer"`
+	UserinfoEndpoint                           string   `json:"userinfo_endpoint,omitempty"`
 	AuthorizationEndpoint                      string   `json:"authorization_endpoint"`
 	IntrospectionEndpoint                      string   `json:"introspection_endpoint"`
-	RevocationEndpoint                         string   `json:"revocation_endpoint,omitempty"`
-	ServiceDocumentation                       string   `json:"service_documentation,omitempty"`
-	TokenEndpoint                              string   `json:"token_endpoint"`
-	UserinfoEndpoint                           string   `json:"userinfo_endpoint,omitempty"`
-	TicketEndpoint                             string   `json:"ticket_endpoint"`
-	Micropub                                   string   `json:"micropub"`
 	Microsub                                   string   `json:"microsub"`
+	RevocationEndpoint                         string   `json:"revocation_endpoint,omitempty"`
+	Micropub                                   string   `json:"micropub"`
+	Issuer                                     string   `json:"issuer"`
+	ServiceDocumentation                       string   `json:"service_documentation,omitempty"`
+	TicketEndpoint                             string   `json:"ticket_endpoint"`
+	TokenEndpoint                              string   `json:"token_endpoint"`
+	RevocationEndpointAuthMethodsSupported     []string `json:"revocation_endpoint_auth_methods_supported,omitempty"`
+	IntrospectionEndpointAuthMethodsSupported  []string `json:"introspection_endpoint_auth_methods_supported,omitempty"`
+	CodeChallengeMethodsSupported              []string `json:"code_challenge_methods_supported"`
+	ResponseTypesSupported                     []string `json:"response_types_supported,omitempty"`
+	GrantTypesSupported                        []string `json:"grant_types_supported,omitempty"`
+	ScopesSupported                            []string `json:"scopes_supported,omitempty"`
 	AuthorizationResponseIssParameterSupported bool     `json:"authorization_response_iss_parameter_supported,omitempty"`
 }
 

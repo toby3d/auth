@@ -164,7 +164,7 @@ func main() {
 	case "sqlite3":
 		store, err := sqlx.Open("sqlite", config.Database.Path)
 		if err != nil {
-			panic(err)
+			logger.Fatalln(err)
 		}
 
 		if err = store.Ping(); err != nil {
@@ -226,7 +226,7 @@ func main() {
 		logger.Printf("started at %s, available at %s", config.Server.GetAddress(),
 			config.Server.GetRootURL())
 
-		err := server.ListenAndServe()
+		err = server.ListenAndServe()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logger.Fatalln("cannot listen and serve:", err)
 		}
@@ -234,7 +234,7 @@ func main() {
 
 	<-done
 
-	if err := server.Shutdown(ctx); err != nil {
+	if err = server.Shutdown(ctx); err != nil {
 		logger.Fatalln("failed shutdown of server:", err)
 	}
 

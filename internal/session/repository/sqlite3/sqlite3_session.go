@@ -17,9 +17,9 @@ import (
 
 type (
 	Session struct {
-		CreatedAt sql.NullTime `db:"created_at"`
 		Code      string       `db:"code"`
 		Data      string       `db:"data"`
+		CreatedAt sql.NullTime `db:"created_at"`
 	}
 
 	sqlite3SessionRepository struct {

@@ -11,14 +11,14 @@ import (
 
 type (
 	Config struct {
-		Code       ConfigCode       `envPrefix:"CODE_"`
-		Database   ConfigDatabase   `envPrefix:"DATABASE_"`
-		IndieAuth  ConfigIndieAuth  `envPrefix:"INDIEAUTH_"`
-		JWT        ConfigJWT        `envPrefix:"JWT_"`
 		Server     ConfigServer     `envPrefix:"SERVER_"`
-		TicketAuth ConfigTicketAuth `envPrefix:"TICKETAUTH_"`
+		Database   ConfigDatabase   `envPrefix:"DATABASE_"`
 		Name       string           `env:"NAME" envDefault:"IndieAuth"`
 		RunMode    string           `env:"RUN_MODE" envDefault:"dev"`
+		IndieAuth  ConfigIndieAuth  `envPrefix:"INDIEAUTH_"`
+		JWT        ConfigJWT        `envPrefix:"JWT_"`
+		Code       ConfigCode       `envPrefix:"CODE_"`
+		TicketAuth ConfigTicketAuth `envPrefix:"TICKETAUTH_"`
 	}
 
 	ConfigServer struct {
@@ -45,10 +45,10 @@ type (
 	}
 
 	ConfigJWT struct {
-		Expiry      time.Duration `env:"EXPIRY" envDefault:"1h"`       // 1h
-		Algorithm   string        `env:"ALGORITHM" envDefault:"HS256"` // HS256
+		Algorithm   string        `env:"ALGORITHM" envDefault:"HS256"`
 		Secret      string        `env:"SECRET"`
-		NonceLength uint8         `env:"NONCE_LENGTH" envDefault:"22"` // 22
+		Expiry      time.Duration `env:"EXPIRY" envDefault:"1h"`
+		NonceLength uint8         `env:"NONCE_LENGTH" envDefault:"22"`
 	}
 
 	ConfigIndieAuth struct {

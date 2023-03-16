@@ -15,6 +15,8 @@ type (
 	// Error describes the format of a typical IndieAuth error.
 	//nolint:tagliatelle // RFC 6749 section 5.2
 	Error struct {
+		frame xerrors.Frame `json:"-"`
+
 		// A single error code.
 		Code ErrorCode `json:"error"`
 
@@ -31,25 +33,23 @@ type (
 		// authorization request. The exact value received from the
 		// client.
 		State string `json:"-"`
-
-		frame xerrors.Frame `json:"-"`
 	}
 
 	// ErrorCode represent error code described in RFC 6749.
 	ErrorCode struct {
-		uid string
+		errorCode string
 	}
 )
 
 var (
 	// ErrorCodeUnd describes an unrecognized error code.
-	ErrorCodeUnd = ErrorCode{uid: ""} // "und"
+	ErrorCodeUnd = ErrorCode{errorCode: ""} // "und"
 
 	// ErrorCodeAccessDenied describes the access_denied error code.
 	//
 	// RFC 6749 section 4.1.2.1: The resource owner or authorization server
 	// denied the request.
-	ErrorCodeAccessDenied = ErrorCode{uid: "access_denied"} // "access_denied"
+	ErrorCodeAccessDenied = ErrorCode{errorCode: "access_denied"} // "access_denied"
 
 	// ErrorCodeInvalidClient describes the invalid_client error code.
 	//
@@ -65,7 +65,7 @@ var (
 	// HTTP 401 (Unauthorized) status code and include the
 	// "WWW-Authenticate" response header field matching the authentication
 	// scheme used by the client.
-	ErrorCodeInvalidClient = ErrorCode{uid: "invalid_client"} // "invalid_client"
+	ErrorCodeInvalidClient = ErrorCode{errorCode: "invalid_client"} // "invalid_client"
 
 	// ErrorCodeInvalidGrant describes the invalid_grant error code.
 	//
@@ -73,7 +73,7 @@ var (
 	// authorization code, resource owner credentials) or refresh token is
 	// invalid, expired, revoked, does not match the redirection URI used in
 	// the authorization request, or was issued to another client.
-	ErrorCodeInvalidGrant = ErrorCode{uid: "invalid_grant"} // "invalid_grant"
+	ErrorCodeInvalidGrant = ErrorCode{errorCode: "invalid_grant"} // "invalid_grant"
 
 	// ErrorCodeInvalidRequest describes the invalid_request error code.
 	//
@@ -88,7 +88,7 @@ var (
 	// repeats a parameter, includes multiple credentials, utilizes more
 	// than one mechanism for authenticating the client, or is otherwise
 	// malformed.
-	ErrorCodeInvalidRequest = ErrorCode{uid: "invalid_request"} // "invalid_request"
+	ErrorCodeInvalidRequest = ErrorCode{errorCode: "invalid_request"} // "invalid_request"
 
 	// ErrorCodeInvalidScope describes the invalid_scope error code.
 	//
@@ -97,7 +97,7 @@ var (
 	//
 	// RFC 6749 section 5.2: The requested scope is invalid, unknown,
 	// malformed, or exceeds the scope granted by the resource owner.
-	ErrorCodeInvalidScope = ErrorCode{uid: "invalid_scope"} // "invalid_scope"
+	ErrorCodeInvalidScope = ErrorCode{errorCode: "invalid_scope"} // "invalid_scope"
 
 	// ErrorCodeServerError describes the server_error error code.
 	//
@@ -105,7 +105,7 @@ var (
 	// unexpected condition that prevented it from fulfilling the request.
 	// (This error code is needed because a 500 Internal Server Error HTTP
 	// status code cannot be returned to the client via an HTTP redirect.)
-	ErrorCodeServerError = ErrorCode{uid: "server_error"} // "server_error"
+	ErrorCodeServerError = ErrorCode{errorCode: "server_error"} // "server_error"
 
 	// ErrorCodeTemporarilyUnavailable describes the temporarily_unavailable error code.
 	//
@@ -114,7 +114,7 @@ var (
 	// maintenance of the server. (This error code is needed because a 503
 	// Service Unavailable HTTP status code cannot be returned to the client
 	// via an HTTP redirect.)
-	ErrorCodeTemporarilyUnavailable = ErrorCode{uid: "temporarily_unavailable"} // "temporarily_unavailable"
+	ErrorCodeTemporarilyUnavailable = ErrorCode{errorCode: "temporarily_unavailable"} // "temporarily_unavailable"
 
 	// ErrorCodeUnauthorizedClient describes the unauthorized_client error code.
 	//
@@ -123,53 +123,53 @@ var (
 	//
 	// RFC 6749 section 5.2: The authenticated client is not authorized to
 	// use this authorization grant type.
-	ErrorCodeUnauthorizedClient = ErrorCode{uid: "unauthorized_client"} // "unauthorized_client"
+	ErrorCodeUnauthorizedClient = ErrorCode{errorCode: "unauthorized_client"} // "unauthorized_client"
 
 	// ErrorCodeUnsupportedGrantType describes the unsupported_grant_type error code.
 	//
 	// RFC 6749 section 5.2: The authorization grant type is not supported
 	// by the authorization server.
-	ErrorCodeUnsupportedGrantType = ErrorCode{uid: "unsupported_grant_type"} // "unsupported_grant_type"
+	ErrorCodeUnsupportedGrantType = ErrorCode{errorCode: "unsupported_grant_type"} // "unsupported_grant_type"
 
 	// ErrorCodeUnsupportedResponseType describes the unsupported_response_type error code.
 	//
 	// RFC 6749 section 4.1.2.1: The authorization server does not support
 	// obtaining an authorization code using this method.
-	ErrorCodeUnsupportedResponseType = ErrorCode{uid: "unsupported_response_type"} // "unsupported_response_type"
+	ErrorCodeUnsupportedResponseType = ErrorCode{errorCode: "unsupported_response_type"} // "unsupported_response_type"
 
 	// ErrorCodeInvalidToken describes the invalid_token error code.
 	//
 	// IndieAuth: The access token provided is expired, revoked, or invalid.
-	ErrorCodeInvalidToken = ErrorCode{uid: "invalid_token"} // "invalid_token"
+	ErrorCodeInvalidToken = ErrorCode{errorCode: "invalid_token"} // "invalid_token"
 
 	// ErrorCodeInsufficientScope describes the insufficient_scope error code.
 	//
 	// IndieAuth: The request requires higher privileges than provided.
-	ErrorCodeInsufficientScope = ErrorCode{uid: "insufficient_scope"} // "insufficient_scope"
+	ErrorCodeInsufficientScope = ErrorCode{errorCode: "insufficient_scope"} // "insufficient_scope"
 )
 
 var ErrErrorCodeUnknown error = NewError(ErrorCodeInvalidRequest, "unknown error code", "")
 
 //nolint:gochecknoglobals // maps cannot be constants
 var uidsErrorCodes = map[string]ErrorCode{
-	ErrorCodeAccessDenied.uid:            ErrorCodeAccessDenied,
-	ErrorCodeInsufficientScope.uid:       ErrorCodeInsufficientScope,
-	ErrorCodeInvalidClient.uid:           ErrorCodeInvalidClient,
-	ErrorCodeInvalidGrant.uid:            ErrorCodeInvalidGrant,
-	ErrorCodeInvalidRequest.uid:          ErrorCodeInvalidRequest,
-	ErrorCodeInvalidScope.uid:            ErrorCodeInvalidScope,
-	ErrorCodeInvalidToken.uid:            ErrorCodeInvalidToken,
-	ErrorCodeServerError.uid:             ErrorCodeServerError,
-	ErrorCodeTemporarilyUnavailable.uid:  ErrorCodeTemporarilyUnavailable,
-	ErrorCodeUnauthorizedClient.uid:      ErrorCodeUnauthorizedClient,
-	ErrorCodeUnsupportedGrantType.uid:    ErrorCodeUnsupportedGrantType,
-	ErrorCodeUnsupportedResponseType.uid: ErrorCodeUnsupportedResponseType,
+	ErrorCodeAccessDenied.errorCode:            ErrorCodeAccessDenied,
+	ErrorCodeInsufficientScope.errorCode:       ErrorCodeInsufficientScope,
+	ErrorCodeInvalidClient.errorCode:           ErrorCodeInvalidClient,
+	ErrorCodeInvalidGrant.errorCode:            ErrorCodeInvalidGrant,
+	ErrorCodeInvalidRequest.errorCode:          ErrorCodeInvalidRequest,
+	ErrorCodeInvalidScope.errorCode:            ErrorCodeInvalidScope,
+	ErrorCodeInvalidToken.errorCode:            ErrorCodeInvalidToken,
+	ErrorCodeServerError.errorCode:             ErrorCodeServerError,
+	ErrorCodeTemporarilyUnavailable.errorCode:  ErrorCodeTemporarilyUnavailable,
+	ErrorCodeUnauthorizedClient.errorCode:      ErrorCodeUnauthorizedClient,
+	ErrorCodeUnsupportedGrantType.errorCode:    ErrorCodeUnsupportedGrantType,
+	ErrorCodeUnsupportedResponseType.errorCode: ErrorCodeUnsupportedResponseType,
 }
 
 // String returns a string representation of the error code.
 func (ec ErrorCode) String() string {
-	if ec.uid != "" {
-		return ec.uid
+	if ec.errorCode != "" {
+		return ec.errorCode
 	}
 
 	return common.Und
@@ -193,7 +193,7 @@ func (ec *ErrorCode) UnmarshalForm(v []byte) error {
 
 // MarshalJSON encodes the error code into its string representation in JSON.
 func (ec ErrorCode) MarshalJSON() ([]byte, error) {
-	return []byte(strconv.QuoteToASCII(ec.uid)), nil
+	return []byte(strconv.QuoteToASCII(ec.errorCode)), nil
 }
 
 // Error returns a string representation of the error, satisfying the error
@@ -231,6 +231,8 @@ func (e Error) SetReirectURI(u *url.URL) {
 		return
 	}
 
+	q := u.Query()
+
 	for key, val := range map[string]string{
 		"error":             e.Code.String(),
 		"error_description": e.Description,
@@ -241,8 +243,10 @@ func (e Error) SetReirectURI(u *url.URL) {
 			continue
 		}
 
-		u.Query().Set(key, val)
+		q.Set(key, val)
 	}
+
+	u.RawQuery = q.Encode()
 }
 
 // NewError creates a new Error with the stack pointing to the function call

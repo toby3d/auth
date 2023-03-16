@@ -15,25 +15,6 @@ import (
 type (
 	// JWTConfig defines the config for JWT middleware.
 	JWTConfig struct {
-		// Skipper defines a function to skip middleware.
-		Skipper Skipper
-
-		// BeforeFunc defines a function which is executed just before
-		// the middleware.
-		BeforeFunc BeforeFunc
-
-		// SuccessHandler defines a function which is executed for a
-		// valid token.
-		SuccessHandler JWTSuccessHandler
-
-		// ErrorHandler defines a function which is executed for an
-		// invalid token. It may be used to define a custom JWT error.
-		ErrorHandler JWTErrorHandler
-
-		// ErrorHandlerWithContext is almost identical to ErrorHandler,
-		// but it's passed the current context.
-		ErrorHandlerWithContext JWTErrorHandlerWithContext
-
 		// Signing key to validate token.
 		// This is one of the three options to provide a token
 		// validation key. The order of precedence is a user-defined
@@ -52,49 +33,24 @@ type (
 		// provided.
 		SigningKeys map[string]any
 
-		// Signing method used to check the token's signing algorithm.
-		//
-		// Optional. Default value HS256.
-		SigningMethod jwa.SignatureAlgorithm
+		// SuccessHandler defines a function which is executed for a
+		// valid token.
+		SuccessHandler JWTSuccessHandler
 
-		// Context key to store user information from the token into
-		// context.
-		//
-		// Optional. Default value "user".
-		ContextKey string
+		// ErrorHandler defines a function which is executed for an
+		// invalid token. It may be used to define a custom JWT error.
+		ErrorHandler JWTErrorHandler
 
-		// Claims are extendable claims data defining token content.
-		// Used by default ParseTokenFunc implementation. Not used if
-		// custom ParseTokenFunc is set.
-		//
-		// Optional. Default value []jwt.ClaimPair
-		Claims []jwt.ClaimPair
+		// ErrorHandlerWithContext is almost identical to ErrorHandler,
+		// but it's passed the current context.
+		ErrorHandlerWithContext JWTErrorHandlerWithContext
 
-		// TokenLookup is a string in the form of "<source>:<name>" or
-		// "<source>:<name>,<source>:<name>" that is used to extract
-		// token from the request.
-		// Optional. Default value "header:Authorization".
-		// Possible values:
-		// - "header:<name>"
-		// - "query:<name>"
-		// - "cookie:<name>"
-		// - "form:<name>"
-		// Multiply sources example:
-		// - "header: Authorization,cookie: myowncookie"
-		TokenLookup string
+		// BeforeFunc defines a function which is executed just before
+		// the middleware.
+		BeforeFunc BeforeFunc
 
-		// TokenLookupFuncs defines a list of user-defined functions
-		// that extract JWT token from the given context.
-		// This is one of the two options to provide a token extractor.
-		// The order of precedence is user-defined TokenLookupFuncs, and
-		// TokenLookup.
-		// You can also provide both if you want.
-		TokenLookupFuncs []ValuesExtractor
-
-		// AuthScheme to be used in the Authorization header.
-		//
-		// Optional. Default value "Bearer".
-		AuthScheme string
+		// Skipper defines a function to skip middleware.
+		Skipper Skipper
 
 		// KeyFunc defines a user-defined function that supplies the
 		// public key for a token validation. The function shall take
@@ -118,6 +74,50 @@ type (
 		// fails or parsed token is invalid. Defaults to implementation
 		// using `github.com/golang-jwt/jwt` as JWT implementation library
 		ParseTokenFunc func(auth []byte, w http.ResponseWriter, r *http.Request) (any, error)
+
+		// Context key to store user information from the token into
+		// context.
+		//
+		// Optional. Default value "user".
+		ContextKey string
+
+		// TokenLookup is a string in the form of "<source>:<name>" or
+		// "<source>:<name>,<source>:<name>" that is used to extract
+		// token from the request.
+		// Optional. Default value "header:Authorization".
+		// Possible values:
+		// - "header:<name>"
+		// - "query:<name>"
+		// - "cookie:<name>"
+		// - "form:<name>"
+		// Multiply sources example:
+		// - "header: Authorization,cookie: myowncookie"
+		TokenLookup string
+
+		// AuthScheme to be used in the Authorization header.
+		//
+		// Optional. Default value "Bearer".
+		AuthScheme string
+
+		// Signing method used to check the token's signing algorithm.
+		//
+		// Optional. Default value HS256.
+		SigningMethod jwa.SignatureAlgorithm
+
+		// Claims are extendable claims data defining token content.
+		// Used by default ParseTokenFunc implementation. Not used if
+		// custom ParseTokenFunc is set.
+		//
+		// Optional. Default value []jwt.ClaimPair
+		Claims []jwt.ClaimPair
+
+		// TokenLookupFuncs defines a list of user-defined functions
+		// that extract JWT token from the given context.
+		// This is one of the two options to provide a token extractor.
+		// The order of precedence is user-defined TokenLookupFuncs, and
+		// TokenLookup.
+		// You can also provide both if you want.
+		TokenLookupFuncs []ValuesExtractor
 
 		// ContinueOnIgnoredError allows the next middleware/handler to
 		// be called when ErrorHandlerWithContext decides to ignore the

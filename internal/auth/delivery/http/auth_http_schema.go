@@ -11,10 +11,6 @@ import (
 
 type (
 	AuthAuthorizationRequest struct {
-		// Indicates to the authorization server that an authorization
-		// code should be returned as the response.
-		ResponseType domain.ResponseType `form:"response_type"` // code
-
 		// The client URL.
 		ClientID domain.ClientID `form:"client_id"`
 
@@ -28,12 +24,9 @@ type (
 		// The hashing method used to calculate the code challenge.
 		CodeChallengeMethod *domain.CodeChallengeMethod `form:"code_challenge_method,omitempty"`
 
-		// A space-separated list of scopes the client is requesting,
-		// e.g. "profile", or "profile create". If the client omits this
-		// value, the authorization server MUST NOT issue an access
-		// token for this authorization code. Only the user's profile
-		// URL may be returned without any scope requested.
-		Scope domain.Scopes `form:"scope,omitempty"`
+		// Indicates to the authorization server that an authorization
+		// code should be returned as the response.
+		ResponseType domain.ResponseType `form:"response_type"` // code
 
 		// A parameter set by the client which will be included when the
 		// user is redirected back to the client. This is used to
@@ -43,19 +36,26 @@ type (
 
 		// The code challenge as previously described.
 		CodeChallenge string `form:"code_challenge,omitempty"`
+
+		// A space-separated list of scopes the client is requesting,
+		// e.g. "profile", or "profile create". If the client omits this
+		// value, the authorization server MUST NOT issue an access
+		// token for this authorization code. Only the user's profile
+		// URL may be returned without any scope requested.
+		Scope domain.Scopes `form:"scope,omitempty"`
 	}
 
 	AuthVerifyRequest struct {
 		ClientID            domain.ClientID             `form:"client_id"`
 		Me                  domain.Me                   `form:"me"`
 		RedirectURI         domain.URL                  `form:"redirect_uri"`
-		ResponseType        domain.ResponseType         `form:"response_type"`
 		CodeChallengeMethod *domain.CodeChallengeMethod `form:"code_challenge_method,omitempty"`
-		Scope               domain.Scopes               `form:"scope[],omitempty"`
+		ResponseType        domain.ResponseType         `form:"response_type"`
 		Authorize           string                      `form:"authorize"`
 		CodeChallenge       string                      `form:"code_challenge,omitempty"`
 		State               string                      `form:"state"`
 		Provider            string                      `form:"provider"`
+		Scope               domain.Scopes               `form:"scope[],omitempty"`
 	}
 
 	AuthExchangeRequest struct {

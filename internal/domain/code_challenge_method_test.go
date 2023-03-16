@@ -1,6 +1,7 @@
 package domain_test
 
 //nolint:gosec // support old clients
+
 import (
 	"crypto/md5"
 	"crypto/sha1"
