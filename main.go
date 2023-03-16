@@ -108,7 +108,7 @@ var (
 var cpuProfilePath, memProfilePath string
 
 //go:embed web/static/*
-var staticFS embed.FS
+var static embed.FS
 
 //nolint:gochecknoinits
 func init() {
@@ -155,7 +155,7 @@ func main() {
 	var opts NewAppOptions
 
 	var err error
-	if opts.Static, err = fs.Sub(staticFS, filepath.Join("web", "static")); err != nil {
+	if opts.Static, err = fs.Sub(static, filepath.Join("web", "static")); err != nil {
 		logger.Fatalln(err)
 	}
 
@@ -342,41 +342,41 @@ func (app *App) Handler() http.Handler {
 	}).Handler()
 	user := userhttpdelivery.NewHandler(app.tokens, config).Handler()
 	ticket := tickethttpdelivery.NewHandler(app.tickets, app.matcher, *config).Handler()
-	static := http.FileServer(http.FS(app.static))
+	staticHandler := http.FileServer(http.FS(app.static))
 
 	return http.HandlerFunc(middleware.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var head string
-		head, r.URL.Path = urlutil.ShiftPath(r.URL.Path)
-
-		switch head {
-		case "", "callback", "token", "introspect", "revocation":
-			if r.URL.Path != "/" {
-				r.URL = r.URL.JoinPath(head, r.URL.Path)
-			} else {
-				r.URL = r.URL.JoinPath(head)
-			}
-		}
+		head, tail := urlutil.ShiftPath(r.URL.Path)
 
 		switch head {
 		default:
-			static.ServeHTTP(w, r)
+			staticHandler.ServeHTTP(w, r)
 		case "", "callback":
 			client.ServeHTTP(w, r)
 		case "token", "introspect", "revocation":
 			token.ServeHTTP(w, r)
 		case ".well-known":
+			r.URL.Path = tail
+
 			if head, _ = urlutil.ShiftPath(r.URL.Path); head == "oauth-authorization-server" {
 				metadata.ServeHTTP(w, r)
 			} else {
 				http.NotFound(w, r)
 			}
 		case "authorize":
+			r.URL.Path = tail
+
 			auth.ServeHTTP(w, r)
 		case "health":
+			r.URL.Path = tail
+
 			health.ServeHTTP(w, r)
 		case "userinfo":
+			r.URL.Path = tail
+
 			user.ServeHTTP(w, r)
 		case "ticket":
+			r.URL.Path = tail
+
 			ticket.ServeHTTP(w, r)
 		}
 	}).Intercept(middleware.LogFmt()))
