@@ -58,6 +58,7 @@ func (h *Handler) handleFunc(w http.ResponseWriter, r *http.Request) {
 		// WARN(toby3d): If the token is not valid, the endpoint still
 		// MUST return a 200 Response.
 		_ = encoder.Encode(err) //nolint:errchkjson
+
 		w.WriteHeader(http.StatusOK)
 
 		return
@@ -70,34 +71,15 @@ func (h *Handler) handleFunc(w http.ResponseWriter, r *http.Request) {
 			"token with 'profile' scope is required to view profile data",
 			"https://indieauth.net/source/#user-information",
 		))
+
 		w.WriteHeader(http.StatusForbidden)
 
 		return
 	}
 
-	resp := new(UserInformationResponse)
-	if userInfo == nil {
-		_ = encoder.Encode(resp) //nolint:errchkjson
+	//nolint:errchkjson
+	_ = encoder.Encode(NewUserInformationResponse(userInfo,
+		userInfo.HasEmail() && tkn.Scope.Has(domain.ScopeEmail)))
 
-		return
-	}
-
-	if userInfo.HasName() {
-		resp.Name = userInfo.GetName()
-	}
-
-	if userInfo.HasURL() {
-		resp.URL = userInfo.GetURL().String()
-	}
-
-	if userInfo.HasPhoto() {
-		resp.Photo = userInfo.GetPhoto().String()
-	}
-
-	if tkn.Scope.Has(domain.ScopeEmail) && userInfo.HasEmail() {
-		resp.Email = userInfo.GetEmail().String()
-	}
-
-	_ = encoder.Encode(resp) //nolint:errchkjson
 	w.WriteHeader(http.StatusOK)
 }

@@ -17,9 +17,8 @@ type (
 		// Skipper defines a function to skip middleware.
 		Skipper Skipper
 
-		// TokenLength is the length of the generated token.
-		TokenLength uint8
-		// Optional. Default value 32.
+		// ErrorHandler defines a function which is executed for returning custom errors.
+		ErrorHandler CSRFErrorHandler
 
 		// TokenLookup is a string in the form of "<source>:<name>" or "<source>:<name>,<source>:<name>" that
 		// is used to extract token from the request.
@@ -52,6 +51,14 @@ type (
 		// Optional. Default value 86400 (24hr).
 		CookieMaxAge int
 
+		// Indicates SameSite mode of the CSRF cookie.
+		// Optional. Default value SameSiteDefaultMode.
+		CookieSameSite http.SameSite
+
+		// TokenLength is the length of the generated token.
+		// Optional. Default value 32.
+		TokenLength uint8
+
 		// Indicates if CSRF cookie is secure.
 		// Optional. Default value false.
 		CookieSecure bool
@@ -59,13 +66,6 @@ type (
 		// Indicates if CSRF cookie is HTTP only.
 		// Optional. Default value false.
 		CookieHTTPOnly bool
-
-		// Indicates SameSite mode of the CSRF cookie.
-		// Optional. Default value SameSiteDefaultMode.
-		CookieSameSite http.SameSite
-
-		// ErrorHandler defines a function which is executed for returning custom errors.
-		ErrorHandler CSRFErrorHandler
 	}
 
 	// CSRFErrorHandler is a function which is executed for creating custom errors.

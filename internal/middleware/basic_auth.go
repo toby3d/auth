@@ -23,7 +23,7 @@ const DefaultRealm string = "Restricted"
 
 const basic string = "basic"
 
-//nolint: gochecknoglobals
+// nolint: gochecknoglobals
 var DefaultBasicAuthConfig = BasicAuthConfig{
 	Skipper: DefaultSkipper,
 	Realm:   DefaultRealm,

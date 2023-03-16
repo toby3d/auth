@@ -19,7 +19,7 @@ func New(tb testing.TB) (*bolt.DB, func()) {
 
 	filePath := tempFile.Name()
 
-	if err := tempFile.Close(); err != nil {
+	if err = tempFile.Close(); err != nil {
 		tb.Fatal(err)
 	}
 

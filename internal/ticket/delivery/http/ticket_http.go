@@ -19,9 +19,9 @@ import (
 )
 
 type Handler struct {
-	config  domain.Config
 	matcher language.Matcher
 	tickets ticket.UseCase
+	config  domain.Config
 }
 
 func NewHandler(tickets ticket.UseCase, matcher language.Matcher, config domain.Config) *Handler {
@@ -36,7 +36,7 @@ func (h *Handler) Handler() http.Handler {
 	//nolint:exhaustivestruct
 	chain := middleware.Chain{
 		middleware.CSRFWithConfig(middleware.CSRFConfig{
-			Skipper: func(w http.ResponseWriter, r *http.Request) bool {
+			Skipper: func(_ http.ResponseWriter, r *http.Request) bool {
 				head, _ := urlutil.ShiftPath(r.URL.Path)
 
 				return r.Method == http.MethodPost && head == "ticket"

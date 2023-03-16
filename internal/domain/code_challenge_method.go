@@ -1,6 +1,7 @@
 package domain
 
 //nolint:gosec // support old clients
+
 import (
 	"crypto/md5"
 	"crypto/sha1"
@@ -20,17 +21,17 @@ import (
 // NOTE(toby3d): Encapsulate enums in structs for extra compile-time safety:
 // https://threedots.tech/post/safer-enums-in-go/#struct-based-enums
 type CodeChallengeMethod struct {
-	uid string
+	codeChallengeMethod string
 }
 
 //nolint:gochecknoglobals // structs cannot be constants
 var (
-	CodeChallengeMethodUnd   = CodeChallengeMethod{uid: ""}      // "und"
-	CodeChallengeMethodPLAIN = CodeChallengeMethod{uid: "plain"} // "PLAIN"
-	CodeChallengeMethodMD5   = CodeChallengeMethod{uid: "md5"}   // "MD5"
-	CodeChallengeMethodS1    = CodeChallengeMethod{uid: "s1"}    // "S1"
-	CodeChallengeMethodS256  = CodeChallengeMethod{uid: "s256"}  // "S256"
-	CodeChallengeMethodS512  = CodeChallengeMethod{uid: "s512"}  // "S512"
+	CodeChallengeMethodUnd   = CodeChallengeMethod{codeChallengeMethod: ""}      // "und"
+	CodeChallengeMethodPLAIN = CodeChallengeMethod{codeChallengeMethod: "plain"} // "PLAIN"
+	CodeChallengeMethodMD5   = CodeChallengeMethod{codeChallengeMethod: "md5"}   // "MD5"
+	CodeChallengeMethodS1    = CodeChallengeMethod{codeChallengeMethod: "s1"}    // "S1"
+	CodeChallengeMethodS256  = CodeChallengeMethod{codeChallengeMethod: "s256"}  // "S256"
+	CodeChallengeMethodS512  = CodeChallengeMethod{codeChallengeMethod: "s512"}  // "S512"
 )
 
 var ErrCodeChallengeMethodUnknown error = NewError(
@@ -41,11 +42,11 @@ var ErrCodeChallengeMethodUnknown error = NewError(
 
 //nolint:gochecknoglobals // maps cannot be constants
 var uidsMethods = map[string]CodeChallengeMethod{
-	CodeChallengeMethodMD5.uid:   CodeChallengeMethodMD5,
-	CodeChallengeMethodPLAIN.uid: CodeChallengeMethodPLAIN,
-	CodeChallengeMethodS1.uid:    CodeChallengeMethodS1,
-	CodeChallengeMethodS256.uid:  CodeChallengeMethodS256,
-	CodeChallengeMethodS512.uid:  CodeChallengeMethodS512,
+	CodeChallengeMethodMD5.codeChallengeMethod:   CodeChallengeMethodMD5,
+	CodeChallengeMethodPLAIN.codeChallengeMethod: CodeChallengeMethodPLAIN,
+	CodeChallengeMethodS1.codeChallengeMethod:    CodeChallengeMethodS1,
+	CodeChallengeMethodS256.codeChallengeMethod:  CodeChallengeMethodS256,
+	CodeChallengeMethodS512.codeChallengeMethod:  CodeChallengeMethodS512,
 }
 
 // ParseCodeChallengeMethod parse string identifier of code challenge method
@@ -85,13 +86,13 @@ func (ccm *CodeChallengeMethod) UnmarshalJSON(v []byte) error {
 }
 
 func (ccm CodeChallengeMethod) MarshalJSON() ([]byte, error) {
-	return []byte(strconv.Quote(ccm.uid)), nil
+	return []byte(strconv.Quote(ccm.codeChallengeMethod)), nil
 }
 
 // String returns string representation of code challenge method.
 func (ccm CodeChallengeMethod) String() string {
-	if ccm.uid != "" {
-		return strings.ToUpper(ccm.uid)
+	if ccm.codeChallengeMethod != "" {
+		return strings.ToUpper(ccm.codeChallengeMethod)
 	}
 
 	return common.Und

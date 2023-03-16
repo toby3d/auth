@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/goccy/go-json"
+	"github.com/google/go-cmp/cmp"
 
 	"source.toby3d.me/toby3d/auth/internal/common"
 	"source.toby3d.me/toby3d/auth/internal/domain"
@@ -57,14 +58,15 @@ func TestUserInfo(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if result.Name != deps.profile.GetName() ||
-		result.Photo != deps.profile.GetPhoto().String() {
-		t.Errorf("GET /userinfo = %+v, want %+v", result, &delivery.UserInformationResponse{
-			Name:  deps.profile.GetName(),
-			URL:   deps.profile.GetURL().String(),
-			Photo: deps.profile.GetPhoto().String(),
-			Email: deps.profile.GetEmail().String(),
-		})
+	exp := &delivery.UserInformationResponse{
+		Name:  deps.profile.GetName(),
+		URL:   &domain.URL{URL: deps.profile.GetURL()},
+		Photo: &domain.URL{URL: deps.profile.GetPhoto()},
+		Email: deps.profile.GetEmail(),
+	}
+
+	if diff := cmp.Diff(result, exp, cmp.AllowUnexported(domain.URL{}, domain.Email{})); diff != "" {
+		t.Errorf("%s %s = %+v, want %+v", req.Method, req.RequestURI, result, exp)
 	}
 }
 

@@ -16,9 +16,9 @@ type (
 	}
 
 	memoryTicketRepository struct {
-		config  domain.Config
 		mutex   *sync.RWMutex
 		tickets map[string]Ticket
+		config  domain.Config
 	}
 )
 
@@ -65,7 +65,7 @@ func (repo *memoryTicketRepository) GC() {
 	defer ticker.Stop()
 
 	for ts := range ticker.C {
-		ts := ts.UTC()
+		ts = ts.UTC()
 
 		repo.mutex.RLock()
 

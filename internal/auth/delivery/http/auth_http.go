@@ -48,7 +48,7 @@ func NewHandler(opts NewHandlerOptions) *Handler {
 func (h *Handler) Handler() http.Handler {
 	chain := middleware.Chain{
 		middleware.CSRFWithConfig(middleware.CSRFConfig{
-			Skipper: func(w http.ResponseWriter, r *http.Request) bool {
+			Skipper: func(_ http.ResponseWriter, r *http.Request) bool {
 				head, _ := urlutil.ShiftPath(r.URL.Path)
 
 				return head == ""
@@ -65,7 +65,7 @@ func (h *Handler) Handler() http.Handler {
 			CookieHTTPOnly: true,
 		}),
 		middleware.BasicAuthWithConfig(middleware.BasicAuthConfig{
-			Skipper: func(w http.ResponseWriter, r *http.Request) bool {
+			Skipper: func(_ http.ResponseWriter, r *http.Request) bool {
 				head, _ := urlutil.ShiftPath(r.URL.Path)
 
 				return r.Method != http.MethodPost ||
@@ -154,11 +154,8 @@ func (h *Handler) handleAuthorize(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		web.WriteTemplate(w, &web.ErrorPage{
 			BaseOf: baseOf,
-			Error: domain.NewError(
-				domain.ErrorCodeInvalidClient,
-				"requested redirect_uri is not registered on client_id side",
-				"",
-			),
+			Error: domain.NewError(domain.ErrorCodeInvalidClient, "requested redirect_uri is not"+
+				" registered on client_id side", ""),
 		})
 
 		return

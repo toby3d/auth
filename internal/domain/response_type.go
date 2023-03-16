@@ -11,23 +11,23 @@ import (
 // NOTE(toby3d): Encapsulate enums in structs for extra compile-time safety:
 // https://threedots.tech/post/safer-enums-in-go/#struct-based-enums
 type ResponseType struct {
-	uid string
+	responseType string
 }
 
 //nolint:gochecknoglobals // structs cannot be constants
 var (
-	ResponseTypeUnd = ResponseType{uid: ""} // "und"
+	ResponseTypeUnd = ResponseType{responseType: ""} // "und"
 
 	// Deprecated(toby3d): Only accept response_type=code requests, and for
 	// backwards-compatible support, treat response_type=id requests as
 	// response_type=code requests:
 	// https://aaronparecki.com/2020/12/03/1/indieauth-2020#response-type
-	ResponseTypeID = ResponseType{uid: "id"} // "id"
+	ResponseTypeID = ResponseType{responseType: "id"} // "id"
 
 	// Indicates to the authorization server that an authorization code
 	// should be returned as the response:
 	// https://indieauth.net/source/#authorization-request-li-1
-	ResponseTypeCode = ResponseType{uid: "code"} // "code"
+	ResponseTypeCode = ResponseType{responseType: "code"} // "code"
 )
 
 var ErrResponseTypeUnknown error = NewError(
@@ -39,9 +39,9 @@ var ErrResponseTypeUnknown error = NewError(
 // ParseResponseType parse string as response type struct enum.
 func ParseResponseType(uid string) (ResponseType, error) {
 	switch strings.ToLower(uid) {
-	case ResponseTypeCode.uid:
+	case ResponseTypeCode.responseType:
 		return ResponseTypeCode, nil
-	case ResponseTypeID.uid:
+	case ResponseTypeID.responseType:
 		return ResponseTypeID, nil
 	}
 
@@ -78,13 +78,13 @@ func (rt *ResponseType) UnmarshalJSON(v []byte) error {
 }
 
 func (rt ResponseType) MarshalJSON() ([]byte, error) {
-	return []byte(strconv.Quote(rt.uid)), nil
+	return []byte(strconv.Quote(rt.responseType)), nil
 }
 
 // String returns string representation of response type.
 func (rt ResponseType) String() string {
-	if rt.uid != "" {
-		return rt.uid
+	if rt.responseType != "" {
+		return rt.responseType
 	}
 
 	return common.Und

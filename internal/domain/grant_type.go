@@ -13,17 +13,17 @@ import (
 // NOTE(toby3d): Encapsulate enums in structs for extra compile-time safety:
 // https://threedots.tech/post/safer-enums-in-go/#struct-based-enums
 type GrantType struct {
-	uid string
+	grantType string
 }
 
 //nolint:gochecknoglobals // structs cannot be constants
 var (
-	GrantTypeUnd               = GrantType{uid: ""}                   // "und"
-	GrantTypeAuthorizationCode = GrantType{uid: "authorization_code"} // "authorization_code"
-	GrantTypeRefreshToken      = GrantType{uid: "refresh_token"}      // "refresh_token"
+	GrantTypeUnd               = GrantType{grantType: ""}                   // "und"
+	GrantTypeAuthorizationCode = GrantType{grantType: "authorization_code"} // "authorization_code"
+	GrantTypeRefreshToken      = GrantType{grantType: "refresh_token"}      // "refresh_token"
 
 	// TicketAuth extension.
-	GrantTypeTicket = GrantType{uid: "ticket"}
+	GrantTypeTicket = GrantType{grantType: "ticket"}
 )
 
 var ErrGrantTypeUnknown error = NewError(
@@ -34,9 +34,9 @@ var ErrGrantTypeUnknown error = NewError(
 
 //nolint:gochecknoglobals // maps cannot be constants
 var uidsGrantTypes = map[string]GrantType{
-	GrantTypeAuthorizationCode.uid: GrantTypeAuthorizationCode,
-	GrantTypeRefreshToken.uid:      GrantTypeRefreshToken,
-	GrantTypeTicket.uid:            GrantTypeTicket,
+	GrantTypeAuthorizationCode.grantType: GrantTypeAuthorizationCode,
+	GrantTypeRefreshToken.grantType:      GrantTypeRefreshToken,
+	GrantTypeTicket.grantType:            GrantTypeTicket,
 }
 
 // ParseGrantType parse grant_type value as GrantType struct enum.
@@ -78,13 +78,13 @@ func (gt *GrantType) UnmarshalJSON(v []byte) error {
 }
 
 func (gt GrantType) MarshalJSON() ([]byte, error) {
-	return []byte(strconv.Quote(gt.uid)), nil
+	return []byte(strconv.Quote(gt.grantType)), nil
 }
 
 // String returns string representation of grant type.
 func (gt GrantType) String() string {
-	if gt.uid != "" {
-		return gt.uid
+	if gt.grantType != "" {
+		return gt.grantType
 	}
 
 	return common.Und

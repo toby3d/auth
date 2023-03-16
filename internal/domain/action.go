@@ -12,26 +12,26 @@ import (
 // NOTE(toby3d): Encapsulate enums in structs for extra compile-time safety:
 // https://threedots.tech/post/safer-enums-in-go/#struct-based-enums
 type Action struct {
-	uid string
+	action string
 }
 
 //nolint:gochecknoglobals // structs cannot be constants
 var (
-	ActionUnd = Action{uid: ""} // "und"
+	ActionUnd = Action{action: ""} // "und"
 
 	// ActionRevoke represent action for revoke token.
-	ActionRevoke = Action{uid: "revoke"} // "revoke"
+	ActionRevoke = Action{action: "revoke"} // "revoke"
 
 	// ActionTicket represent action for TicketAuth extension.
-	ActionTicket = Action{uid: "ticket"} // "ticket"
+	ActionTicket = Action{action: "ticket"} // "ticket"
 )
 
 var ErrActionSyntax error = NewError(ErrorCodeInvalidRequest, "unknown action method", "")
 
 //nolint:gochecknoglobals
 var uidsActions = map[string]Action{
-	ActionRevoke.uid: ActionRevoke,
-	ActionTicket.uid: ActionTicket,
+	ActionRevoke.action: ActionRevoke,
+	ActionTicket.action: ActionTicket,
 }
 
 // ParseAction parse string identifier of action into struct enum.
@@ -74,8 +74,8 @@ func (a *Action) UnmarshalJSON(v []byte) error {
 
 // String returns string representation of action.
 func (a Action) String() string {
-	if a.uid != "" {
-		return a.uid
+	if a.action != "" {
+		return a.action
 	}
 
 	return common.Und

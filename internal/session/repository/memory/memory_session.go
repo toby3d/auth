@@ -17,9 +17,9 @@ type (
 	}
 
 	memorySessionRepository struct {
-		config   domain.Config
 		mutex    *sync.RWMutex
 		sessions map[string]Session
+		config   domain.Config
 	}
 )
 

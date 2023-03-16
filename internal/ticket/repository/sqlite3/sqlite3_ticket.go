@@ -16,10 +16,10 @@ import (
 
 type (
 	Ticket struct {
-		CreatedAt sql.NullTime `db:"created_at"`
 		Resource  string       `db:"resource"`
 		Subject   string       `db:"subject"`
 		Ticket    string       `db:"ticket"`
+		CreatedAt sql.NullTime `db:"created_at"`
 	}
 
 	sqlite3TicketRepository struct {

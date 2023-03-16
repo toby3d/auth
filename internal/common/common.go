@@ -1,7 +1,5 @@
 package common
 
-const charsetUTF8 = "charset=UTF-8"
-
 const (
 	MIMEApplicationForm            string = "application/x-www-form-urlencoded"
 	MIMEApplicationJSON            string = "application/json"
@@ -10,6 +8,8 @@ const (
 	MIMETextHTMLCharsetUTF8        string = MIMETextHTML + "; " + charsetUTF8
 	MIMETextPlain                  string = "text/plain"
 	MIMETextPlainCharsetUTF8       string = MIMETextPlain + "; " + charsetUTF8
+
+	charsetUTF8 = "charset=UTF-8"
 )
 
 const (

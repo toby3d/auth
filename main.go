@@ -16,13 +16,14 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"runtime"
 	"runtime/pprof"
 	"strings"
 	"syscall"
 	"time"
 
-	"github.com/caarlos0/env/v6"
+	"github.com/caarlos0/env/v7"
 	"github.com/jmoiron/sqlx"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
@@ -106,8 +107,8 @@ var (
 //nolint:gochecknoglobals
 var cpuProfilePath, memProfilePath string
 
-//go:embed assets/*
-var staticFS embed.FS
+//go:embed web/static/*
+var static embed.FS
 
 //nolint:gochecknoinits
 func init() {
@@ -116,11 +117,9 @@ func init() {
 	flag.Parse()
 
 	if err := env.Parse(config, env.Options{
-		Environment:     nil,
-		OnSet:           nil,
-		Prefix:          "INDIEAUTH_",
-		RequiredIfNoDef: false,
-		TagName:         "",
+		Prefix:                "AUTH_",
+		TagName:               "env",
+		UseFieldNameByDefault: true,
 	}); err != nil {
 		logger.Fatalln(err)
 	}
@@ -156,7 +155,7 @@ func main() {
 	var opts NewAppOptions
 
 	var err error
-	if opts.Static, err = fs.Sub(staticFS, "assets"); err != nil {
+	if opts.Static, err = fs.Sub(static, filepath.Join("web", "static")); err != nil {
 		logger.Fatalln(err)
 	}
 
@@ -164,7 +163,7 @@ func main() {
 	case "sqlite3":
 		store, err := sqlx.Open("sqlite", config.Database.Path)
 		if err != nil {
-			panic(err)
+			logger.Fatalln(err)
 		}
 
 		if err = store.Ping(); err != nil {
@@ -226,7 +225,7 @@ func main() {
 		logger.Printf("started at %s, available at %s", config.Server.GetAddress(),
 			config.Server.GetRootURL())
 
-		err := server.ListenAndServe()
+		err = server.ListenAndServe()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logger.Fatalln("cannot listen and serve:", err)
 		}
@@ -234,7 +233,7 @@ func main() {
 
 	<-done
 
-	if err := server.Shutdown(ctx); err != nil {
+	if err = server.Shutdown(ctx); err != nil {
 		logger.Fatalln("failed shutdown of server:", err)
 	}
 
@@ -343,42 +342,42 @@ func (app *App) Handler() http.Handler {
 	}).Handler()
 	user := userhttpdelivery.NewHandler(app.tokens, config).Handler()
 	ticket := tickethttpdelivery.NewHandler(app.tickets, app.matcher, *config).Handler()
-	static := http.FileServer(http.FS(app.static))
+	staticHandler := http.FileServer(http.FS(app.static))
 
 	return http.HandlerFunc(middleware.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var head string
-		head, r.URL.Path = urlutil.ShiftPath(r.URL.Path)
-
-		switch head {
-		case "", "callback", "token", "introspect", "revocation":
-			if r.URL.Path != "/" {
-				r.URL = r.URL.JoinPath(head, r.URL.Path)
-			} else {
-				r.URL = r.URL.JoinPath(head)
-			}
-		}
+		head, tail := urlutil.ShiftPath(r.URL.Path)
 
 		switch head {
 		default:
-			static.ServeHTTP(w, r)
+			staticHandler.ServeHTTP(w, r)
 		case "", "callback":
 			client.ServeHTTP(w, r)
 		case "token", "introspect", "revocation":
 			token.ServeHTTP(w, r)
 		case ".well-known":
+			r.URL.Path = tail
+
 			if head, _ = urlutil.ShiftPath(r.URL.Path); head == "oauth-authorization-server" {
 				metadata.ServeHTTP(w, r)
 			} else {
 				http.NotFound(w, r)
 			}
 		case "authorize":
+			r.URL.Path = tail
+
 			auth.ServeHTTP(w, r)
 		case "health":
+			r.URL.Path = tail
+
 			health.ServeHTTP(w, r)
 		case "userinfo":
+			r.URL.Path = tail
+
 			user.ServeHTTP(w, r)
 		case "ticket":
+			r.URL.Path = tail
+
 			ticket.ServeHTTP(w, r)
 		}
-	}) /*.Intercept(middleware.LogFmt())*/)
+	}).Intercept(middleware.LogFmt()))
 }

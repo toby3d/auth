@@ -18,25 +18,23 @@ import (
 type (
 	//nolint:tagliatelle,lll
 	Response struct {
-		Issuer                                     domain.URL                   `json:"issuer"`
+		TicketEndpoint                             domain.URL                   `json:"ticket_endpoint"`
 		AuthorizationEndpoint                      domain.URL                   `json:"authorization_endpoint"`
 		IntrospectionEndpoint                      domain.URL                   `json:"introspection_endpoint"`
 		RevocationEndpoint                         domain.URL                   `json:"revocation_endpoint,omitempty"`
 		ServiceDocumentation                       domain.URL                   `json:"service_documentation,omitempty"`
 		TokenEndpoint                              domain.URL                   `json:"token_endpoint"`
 		UserinfoEndpoint                           domain.URL                   `json:"userinfo_endpoint,omitempty"`
-		CodeChallengeMethodsSupported              []domain.CodeChallengeMethod `json:"code_challenge_methods_supported"`
+		Microsub                                   domain.URL                   `json:"microsub"`
+		Issuer                                     domain.URL                   `json:"issuer"`
+		Micropub                                   domain.URL                   `json:"micropub"`
 		GrantTypesSupported                        []domain.GrantType           `json:"grant_types_supported,omitempty"`
-		ResponseTypesSupported                     []domain.ResponseType        `json:"response_types_supported,omitempty"`
-		ScopesSupported                            []domain.Scope               `json:"scopes_supported,omitempty"`
 		IntrospectionEndpointAuthMethodsSupported  []string                     `json:"introspection_endpoint_auth_methods_supported,omitempty"`
 		RevocationEndpointAuthMethodsSupported     []string                     `json:"revocation_endpoint_auth_methods_supported,omitempty"`
+		ScopesSupported                            []domain.Scope               `json:"scopes_supported,omitempty"`
+		ResponseTypesSupported                     []domain.ResponseType        `json:"response_types_supported,omitempty"`
+		CodeChallengeMethodsSupported              []domain.CodeChallengeMethod `json:"code_challenge_methods_supported"`
 		AuthorizationResponseIssParameterSupported bool                         `json:"authorization_response_iss_parameter_supported,omitempty"`
-
-		// Extensions
-		TicketEndpoint domain.URL `json:"ticket_endpoint"`
-		Micropub       domain.URL `json:"micropub"`
-		Microsub       domain.URL `json:"microsub"`
 	}
 
 	httpMetadataRepository struct {
@@ -150,29 +148,16 @@ func (r Response) populate(dst *domain.Metadata) {
 	dst.TicketEndpoint = r.TicketEndpoint.URL
 	dst.TokenEndpoint = r.TokenEndpoint.URL
 	dst.UserinfoEndpoint = r.UserinfoEndpoint.URL
+	dst.RevocationEndpointAuthMethodsSupported = append(dst.RevocationEndpointAuthMethodsSupported,
+		r.RevocationEndpointAuthMethodsSupported...)
+	dst.ResponseTypesSupported = append(dst.ResponseTypesSupported, r.ResponseTypesSupported...)
+	dst.IntrospectionEndpointAuthMethodsSupported = append(dst.IntrospectionEndpointAuthMethodsSupported,
+		r.IntrospectionEndpointAuthMethodsSupported...)
+	dst.GrantTypesSupported = append(dst.GrantTypesSupported, r.GrantTypesSupported...)
+	dst.CodeChallengeMethodsSupported = append(dst.CodeChallengeMethodsSupported,
+		r.CodeChallengeMethodsSupported...)
 
 	for _, scope := range r.ScopesSupported {
 		dst.ScopesSupported = append(dst.ScopesSupported, scope)
-	}
-
-	for _, method := range r.RevocationEndpointAuthMethodsSupported {
-		dst.RevocationEndpointAuthMethodsSupported = append(dst.RevocationEndpointAuthMethodsSupported, method)
-	}
-
-	for _, responseType := range r.ResponseTypesSupported {
-		dst.ResponseTypesSupported = append(dst.ResponseTypesSupported, responseType)
-	}
-
-	for _, method := range r.IntrospectionEndpointAuthMethodsSupported {
-		dst.IntrospectionEndpointAuthMethodsSupported = append(dst.IntrospectionEndpointAuthMethodsSupported,
-			method)
-	}
-
-	for _, grantType := range r.GrantTypesSupported {
-		dst.GrantTypesSupported = append(dst.GrantTypesSupported, grantType)
-	}
-
-	for _, method := range r.CodeChallengeMethodsSupported {
-		dst.CodeChallengeMethodsSupported = append(dst.CodeChallengeMethodsSupported, method)
 	}
 }
