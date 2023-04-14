@@ -1,0 +1,19 @@
+---
+name: "Go"
+on: "push"
+
+jobs:
+  build:
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: "https://gitea.com/actions/checkout@v3"
+      - name: "Setup Go"
+        uses: "https://gitea.com/actions/setup-go@v3"
+        with:
+          cache-dependency-path: "go.sum"
+          cache: true
+          go-version-file: "go.mod"
+      - name: "Test"
+        run: "make check"
+      - name: "Build"
+        run: "make"
