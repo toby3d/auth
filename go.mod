@@ -6,7 +6,6 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/brianvoe/gofakeit/v6 v6.22.0
 	github.com/caarlos0/env/v7 v7.1.0
-	github.com/go-logfmt/logfmt v0.6.0
 	github.com/goccy/go-json v0.10.2
 	github.com/google/go-cmp v0.5.9
 	github.com/jmoiron/sqlx v1.3.5
