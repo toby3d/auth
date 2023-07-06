@@ -59,6 +59,12 @@ linters-settings:
       - "i int"
       - "r *http.Request"
       - "w http.ResponseWriter"
+  depguard:
+    rules:
+      main:
+        allow:
+          - $gostd
+          - source.toby3d.me
 linters:
   enable-all: true
   disable:
