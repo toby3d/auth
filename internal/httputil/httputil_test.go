@@ -1,7 +1,7 @@
 package httputil_test
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -32,10 +32,7 @@ func TestExtractEndpointsFromBody(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	in := &http.Response{
-		Body:    ioutil.NopCloser(strings.NewReader(testBody)),
-		Request: req,
-	}
+	in := &http.Response{Body: io.NopCloser(strings.NewReader(testBody))}
 
 	out, err := httputil.ExtractEndpointsFromBody(in.Body, req.URL, "lipsum")
 	if err != nil {
@@ -60,10 +57,7 @@ func TestExtractProperty(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	in := &http.Response{
-		Body:    ioutil.NopCloser(strings.NewReader(testBody)),
-		Request: req,
-	}
+	in := &http.Response{Body: io.NopCloser(strings.NewReader(testBody))}
 
 	if out := httputil.ExtractProperty(in.Body, req.URL, "h-app", "name"); out == nil || out[0] != "Sample Name" {
 		t.Errorf(`ExtractProperty(%s, %s, %s) = %+s, want %+s`, req.URL, "h-app", "name", out,

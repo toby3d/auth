@@ -79,7 +79,7 @@ func (useCase *ticketUseCase) Generate(ctx context.Context, tkt domain.Ticket) e
 		return ticket.ErrTicketEndpointNotExist
 	}
 
-	if err := useCase.tickets.Create(ctx, tkt); err != nil {
+	if err = useCase.tickets.Create(ctx, tkt); err != nil {
 		return fmt.Errorf("cannot save ticket in store: %w", err)
 	}
 

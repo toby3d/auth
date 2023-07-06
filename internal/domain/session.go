@@ -13,10 +13,10 @@ type Session struct {
 	RedirectURI         *url.URL            `json:"redirect_uri"`
 	Me                  Me                  `json:"me"`
 	Profile             *Profile            `json:"profile,omitempty"`
-	Scope               Scopes              `json:"scope"`
 	CodeChallengeMethod CodeChallengeMethod `json:"code_challenge_method,omitempty"`
 	CodeChallenge       string              `json:"code_challenge,omitempty"`
 	Code                string              `json:"-"`
+	Scope               Scopes              `json:"scope"`
 }
 
 // TestSession returns valid random generated session for tests.

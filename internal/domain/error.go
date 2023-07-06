@@ -15,8 +15,6 @@ type (
 	// Error describes the format of a typical IndieAuth error.
 	//nolint:tagliatelle // RFC 6749 section 5.2
 	Error struct {
-		frame xerrors.Frame `json:"-"`
-
 		// A single error code.
 		Code ErrorCode `json:"error"`
 
@@ -33,6 +31,8 @@ type (
 		// authorization request. The exact value received from the
 		// client.
 		State string `json:"-"`
+
+		frame xerrors.Frame `json:"-"`
 	}
 
 	// ErrorCode represent error code described in RFC 6749.
@@ -135,7 +135,9 @@ var (
 	//
 	// RFC 6749 section 4.1.2.1: The authorization server does not support
 	// obtaining an authorization code using this method.
-	ErrorCodeUnsupportedResponseType = ErrorCode{errorCode: "unsupported_response_type"} // "unsupported_response_type"
+	ErrorCodeUnsupportedResponseType = ErrorCode{
+		errorCode: "unsupported_response_type",
+	} // "unsupported_response_type"
 
 	// ErrorCodeInvalidToken describes the invalid_token error code.
 	//

@@ -55,10 +55,10 @@ func TestGet(t *testing.T) {
 	testMetadata := domain.TestMetadata(t)
 
 	for _, tc := range []struct {
-		name   string
 		header map[string]string
 		body   map[string]string
 		out    *domain.Metadata
+		name   string
 	}{
 		{
 			name: "header",
@@ -83,11 +83,11 @@ func TestGet(t *testing.T) {
 			t.Parallel()
 
 			mux := http.NewServeMux()
-			mux.HandleFunc("/metadata", func(w http.ResponseWriter, r *http.Request) {
+			mux.HandleFunc("/metadata", func(w http.ResponseWriter, _ *http.Request) {
 				w.Header().Set(common.HeaderContentType, common.MIMEApplicationJSONCharsetUTF8)
 				_ = json.NewEncoder(w).Encode(NewResponse(t, *testMetadata))
 			})
-			mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
 				links := make([]string, 0)
 				for k, v := range tc.header {
 					links = append(links, `<`+v+`>; rel="`+k+`"`)
@@ -170,14 +170,11 @@ func NewResponse(tb testing.TB, src domain.Metadata) *Response {
 		out.ScopesSupported = append(out.ScopesSupported, scope.String())
 	}
 
-	for _, method := range src.IntrospectionEndpointAuthMethodsSupported {
-		out.IntrospectionEndpointAuthMethodsSupported = append(out.IntrospectionEndpointAuthMethodsSupported,
-			method)
-	}
+	out.IntrospectionEndpointAuthMethodsSupported = append(out.IntrospectionEndpointAuthMethodsSupported,
+		src.IntrospectionEndpointAuthMethodsSupported...)
 
-	for _, method := range src.RevocationEndpointAuthMethodsSupported {
-		out.RevocationEndpointAuthMethodsSupported = append(out.RevocationEndpointAuthMethodsSupported, method)
-	}
+	out.RevocationEndpointAuthMethodsSupported = append(out.RevocationEndpointAuthMethodsSupported,
+		src.RevocationEndpointAuthMethodsSupported...)
 
 	return out
 }

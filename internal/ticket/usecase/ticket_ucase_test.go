@@ -36,7 +36,7 @@ func TestRedeem(t *testing.T) {
 	}))
 	t.Cleanup(tokenServer.Close)
 
-	subjectServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	subjectServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set(common.HeaderContentType, common.MIMETextHTMLCharsetUTF8)
 		fmt.Fprint(w, `<link rel="token_endpoint" href="`+tokenServer.URL+`/token">`)
 	}))

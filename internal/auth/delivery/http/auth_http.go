@@ -23,16 +23,16 @@ type (
 	NewHandlerOptions struct {
 		Auth     auth.UseCase
 		Clients  client.UseCase
-		Config   domain.Config
 		Matcher  language.Matcher
 		Profiles profile.UseCase
+		Config   domain.Config
 	}
 
 	Handler struct {
 		clients client.UseCase
-		config  domain.Config
 		matcher language.Matcher
 		useCase auth.UseCase
+		config  domain.Config
 	}
 )
 

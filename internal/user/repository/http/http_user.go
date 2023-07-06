@@ -64,7 +64,8 @@ func (repo *httpUserRepository) Get(ctx context.Context, me domain.Me) (*domain.
 		TokenEndpoint:         nil,
 	}
 
-	if metadata, err := httputil.ExtractFromMetadata(repo.client, me.String()); err == nil {
+	var metadata *domain.Metadata
+	if metadata, err = httputil.ExtractFromMetadata(repo.client, me.String()); err == nil {
 		user.AuthorizationEndpoint = metadata.AuthorizationEndpoint
 		user.Micropub = metadata.MicropubEndpoint
 		user.Microsub = metadata.MicrosubEndpoint
@@ -128,8 +129,8 @@ func extractProfile(u *url.URL, dst *domain.Profile, body []byte) {
 			continue
 		}
 
-		if u, err := url.Parse(rawURL); err == nil && !containsUrl(dst.URL, u) {
-			dst.URL = append(dst.URL, u)
+		if parsedURL, err := url.Parse(rawURL); err == nil && !containsUrl(dst.URL, u) {
+			dst.URL = append(dst.URL, parsedURL)
 		}
 	}
 

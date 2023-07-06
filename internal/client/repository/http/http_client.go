@@ -83,8 +83,10 @@ func extract(r io.Reader, u *url.URL, dst *domain.Client, header string) {
 		}
 
 		for _, logo := range httputil.ExtractProperty(bytes.NewReader(body), u, itemType, propertyLogo) {
-			var logoURL *url.URL
-			var err error
+			var (
+				logoURL *url.URL
+				err     error
+			)
 
 			switch l := logo.(type) {
 			case string:

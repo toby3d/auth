@@ -22,10 +22,10 @@ func TestDiscovery(t *testing.T) {
 	}
 
 	for _, tc := range []struct {
-		name     string
+		expError error
 		in       *domain.Client
 		out      *domain.Client
-		expError error
+		name     string
 	}{{
 		name: "default",
 		in:   testClient,

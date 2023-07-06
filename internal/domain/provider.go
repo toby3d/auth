@@ -8,7 +8,6 @@ import (
 
 // Provider represent 3rd party RelMeAuth provider.
 type Provider struct {
-	Scopes       []string
 	AuthURL      string
 	ClientID     string
 	ClientSecret string
@@ -18,6 +17,7 @@ type Provider struct {
 	TokenURL     string
 	UID          string
 	URL          string
+	Scopes       []string
 }
 
 //nolint:gochecknoglobals // structs cannot be contants
@@ -95,6 +95,8 @@ func (p Provider) AuthCodeURL(state string) string {
 		return ""
 	}
 
+	q := u.Query()
+
 	for key, val := range map[string]string{
 		"client_id":     p.ClientID,
 		"redirect_uri":  p.RedirectURL,
@@ -102,8 +104,10 @@ func (p Provider) AuthCodeURL(state string) string {
 		"scope":         strings.Join(p.Scopes, " "),
 		"state":         state,
 	} {
-		u.Query().Set(key, val)
+		q.Set(key, val)
 	}
+
+	u.RawQuery = q.Encode()
 
 	return u.String()
 }

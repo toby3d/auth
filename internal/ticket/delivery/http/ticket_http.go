@@ -89,7 +89,6 @@ func (h *Handler) handleFunc(w http.ResponseWriter, r *http.Request) {
 
 		h.handleRender(w, r)
 	case http.MethodPost:
-
 		switch head {
 		default:
 			http.NotFound(w, r)

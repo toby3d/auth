@@ -13,8 +13,8 @@ type (
 	Config struct {
 		Server     ConfigServer     `envPrefix:"SERVER_"`
 		Database   ConfigDatabase   `envPrefix:"DATABASE_"`
-		Name       string           `env:"NAME" envDefault:"IndieAuth"`
-		RunMode    string           `env:"RUN_MODE" envDefault:"dev"`
+		Name       string           `env:"NAME"              envDefault:"IndieAuth"`
+		RunMode    string           `env:"RUN_MODE"          envDefault:"dev"`
 		IndieAuth  ConfigIndieAuth  `envPrefix:"INDIEAUTH_"`
 		JWT        ConfigJWT        `envPrefix:"JWT_"`
 		Code       ConfigCode       `envPrefix:"CODE_"`
@@ -23,12 +23,12 @@ type (
 
 	ConfigServer struct {
 		CertificateFile string `env:"CERT_FILE"`
-		Domain          string `env:"DOMAIN" envDefault:"localhost"`
-		Host            string `env:"HOST" envDefault:"0.0.0.0"`
+		Domain          string `env:"DOMAIN"    envDefault:"localhost"`
+		Host            string `env:"HOST"      envDefault:"0.0.0.0"`
 		KeyFile         string `env:"KEY_FILE"`
-		Port            string `env:"PORT" envDefault:"3000"`
-		Protocol        string `env:"PROTOCOL" envDefault:"http"`
-		RootURL         string `env:"ROOT_URL" envDefault:"{{protocol}}://{{domain}}:{{port}}/"`
+		Port            string `env:"PORT"      envDefault:"3000"`
+		Protocol        string `env:"PROTOCOL"  envDefault:"http"`
+		RootURL         string `env:"ROOT_URL"  envDefault:"{{protocol}}://{{domain}}:{{port}}/"`
 	}
 
 	ConfigDatabase struct {
@@ -45,16 +45,16 @@ type (
 	}
 
 	ConfigJWT struct {
-		Algorithm   string        `env:"ALGORITHM" envDefault:"HS256"`
+		Algorithm   string        `env:"ALGORITHM"    envDefault:"HS256"`
 		Secret      string        `env:"SECRET"`
-		Expiry      time.Duration `env:"EXPIRY" envDefault:"1h"`
+		Expiry      time.Duration `env:"EXPIRY"       envDefault:"1h"`
 		NonceLength uint8         `env:"NONCE_LENGTH" envDefault:"22"`
 	}
 
 	ConfigIndieAuth struct {
 		Password string `env:"PASSWORD"`
 		Username string `env:"USERNAME"`
-		Enabled  bool   `env:"ENABLED" envDefault:"true"` // true
+		Enabled  bool   `env:"ENABLED"  envDefault:"true"` // true
 	}
 
 	ConfigTicketAuth struct {
@@ -64,7 +64,7 @@ type (
 
 	ConfigRelMeAuth struct {
 		Providers []ConfigRelMeAuthProvider `envPrefix:"PROVIDERS_"`
-		Enabled   bool                      `env:"ENABLED" envDefault:"true"` // true
+		Enabled   bool                      `env:"ENABLED"          envDefault:"true"` // true
 	}
 
 	ConfigRelMeAuthProvider struct {

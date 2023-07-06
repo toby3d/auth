@@ -60,7 +60,7 @@ func testHandler(tb testing.TB, user *domain.User) http.Handler {
 	tb.Helper()
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set(common.HeaderLink, strings.Join([]string{
 			`<` + user.AuthorizationEndpoint.String() + `>; rel="authorization_endpoint"`,
 			`<` + user.IndieAuthMetadata.String() + `>; rel="indieauth-metadata"`,
@@ -72,7 +72,7 @@ func testHandler(tb testing.TB, user *domain.User) http.Handler {
 		w.Header().Set(common.HeaderContentType, common.MIMETextHTMLCharsetUTF8)
 		fmt.Fprintf(w, testBody, user.Name[0], user.URL[0].String(), user.Photo[0].String(), user.Email[0])
 	})
-	mux.HandleFunc(user.IndieAuthMetadata.Path, func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc(user.IndieAuthMetadata.Path, func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set(common.HeaderContentType, common.MIMEApplicationJSONCharsetUTF8)
 		fmt.Fprint(w, `{
 			"issuer": "`+user.Me.String()+`",

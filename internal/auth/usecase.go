@@ -13,8 +13,8 @@ type (
 		Me                  domain.Me
 		RedirectURI         *url.URL
 		CodeChallengeMethod domain.CodeChallengeMethod
-		Scope               domain.Scopes
 		CodeChallenge       string
+		Scope               domain.Scopes
 	}
 
 	ExchangeOptions struct {
