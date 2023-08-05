@@ -12,7 +12,7 @@
   Head()
   Lang()
   Title()
-  T(format string, args ...interface{})
+  T(format message.Reference, args ...any)
 } %}
 
 {% code type BaseOf struct {
@@ -104,7 +104,7 @@ en
 </html>
 {% endfunc %}
 
-{% func (p *BaseOf) T(format string, args ...interface{}) %}
-{%s p.Printer.Sprintf(format, args...) %}
+{% func (p BaseOf) T(format message.Reference, args ...any) %}
+{%s= p.Printer.Sprintf(format, args...) %}
 {% endfunc %}
 {% endcollapsespace %}

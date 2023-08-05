@@ -55,6 +55,35 @@
 </header>
 
 <main>
+  <aside>
+    {% if p.CodeChallengeMethod != domain.CodeChallengeMethodUnd && p.CodeChallenge != "" %}
+    <p class="with-icon">
+      <span class="icon"
+            role="img"
+            aria-label="closed lock with key">🔐</span>
+
+      {%= p.T(`This client uses %sPKCE%s with the %s%s%s method.`, `<abbr title="Proof of Key Code Exchange">`,
+        `</abbr>`, `<code>`, p.CodeChallengeMethod, `</code>`) %}
+    </p>
+    {% else %}
+    <details>
+      <summary class="with-icon">
+        <span class="icon"
+              role="img"
+              aria-label="unlock">🔓</span>
+
+        {%= p.T(`This client does not use %sPKCE%s!`, `<abbr title="Proof of Key Code Exchange">`, `</abbr>`) %}
+      </summary>
+      <p>
+        {%= p.T(`%sProof of Key Code Exchange%s is a mechanism that protects against attackers in the middle hijacking `+
+        `your application's authentication process. You can still authorize this application without this protection, `+
+        `but you must independently verify the security of this connection. If you have any doubts - stop the process `+
+        ` and contact the developers.`, `<dfn id="PKCE">`, `</dfn>`) %}
+      </p>
+    </details>
+    {% endif %}
+  </aside>
+
   <form class=""
         accept-charset="utf-8"
         action="/authorize/verify"
@@ -83,7 +112,7 @@
 
     {% if len(p.Scope) > 0 %}
     <fieldset>
-      <legend>{%= p.T("Choose your scopes") %}</legend>
+      <legend>{%= p.T("Scopes") %}</legend>
 
       {% for _, scope := range p.Scope %}
       <div>
@@ -98,6 +127,10 @@
       </div>
       {% endfor %}
     </fieldset>
+    {% else %}
+    <aside>
+      <p>{%= p.T(`No scopes is requested: the application will only get your profile URL.`) %}</p>
+    </aside>
     {% endif %}
 
     {% if p.CodeChallenge != "" %}
@@ -149,6 +182,10 @@
 
       {%= p.T("Allow") %}
     </button>
+
+    <aside>
+      <p>{%= p.T(`You will be redirected to %s%s%s`, `<code>`, p.RedirectURI, `</code>`) %}</p>
+    </aside>
   </form>
 </main>
 {% endfunc %}

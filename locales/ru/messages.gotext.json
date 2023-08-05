@@ -24,9 +24,107 @@
             "translatorComment": "Заголовок страницы авторизации безымянного приложения"
         },
         {
-            "id": "Choose your scopes",
-            "message": "Choose your scopes",
-            "translation": "Выбери предоставляемые разрешения"
+            "id": "This client uses {Abbr_titleProof_of_Key_Code_Exchange}PKCE{Abbr} with the {Code}{CodeChallengeMethod}{Code_1} method.",
+            "message": "This client uses {Abbr_titleProof_of_Key_Code_Exchange}PKCE{Abbr} with the {Code}{CodeChallengeMethod}{Code_1} method.",
+            "translation": "Клиент использует {Abbr_titleProof_of_Key_Code_Exchange}PKCE{Abbr} с методом {Code}{CodeChallengeMethod}{Code_1}.",
+            "placeholders": [
+                {
+                    "id": "Abbr_titleProof_of_Key_Code_Exchange",
+                    "string": "%[1]s",
+                    "type": "string",
+                    "underlyingType": "string",
+                    "argNum": 1,
+                    "expr": "`\u003cabbr title=\"Proof of Key Code Exchange\"\u003e`"
+                },
+                {
+                    "id": "Abbr",
+                    "string": "%[2]s",
+                    "type": "string",
+                    "underlyingType": "string",
+                    "argNum": 2,
+                    "expr": "`\u003c/abbr\u003e`"
+                },
+                {
+                    "id": "Code",
+                    "string": "%[3]s",
+                    "type": "string",
+                    "underlyingType": "string",
+                    "argNum": 3,
+                    "expr": "`\u003ccode\u003e`"
+                },
+                {
+                    "id": "CodeChallengeMethod",
+                    "string": "%[4]s",
+                    "type": "source.toby3d.me/toby3d/auth/internal/domain.CodeChallengeMethod",
+                    "underlyingType": "struct{codeChallengeMethod string}",
+                    "argNum": 4,
+                    "expr": "p.CodeChallengeMethod"
+                },
+                {
+                    "id": "Code_1",
+                    "string": "%[5]s",
+                    "type": "string",
+                    "underlyingType": "string",
+                    "argNum": 5,
+                    "expr": "`\u003c/code\u003e`"
+                }
+            ]
+        },
+        {
+            "id": "This client does not use {Abbr_titleProof_of_Key_Code_Exchange}PKCE{Abbr}!",
+            "message": "This client does not use {Abbr_titleProof_of_Key_Code_Exchange}PKCE{Abbr}!",
+            "translation": "Клиент не использует {Abbr_titleProof_of_Key_Code_Exchange}PKCE{Abbr}!",
+            "placeholders": [
+                {
+                    "id": "Abbr_titleProof_of_Key_Code_Exchange",
+                    "string": "%[1]s",
+                    "type": "string",
+                    "underlyingType": "string",
+                    "argNum": 1,
+                    "expr": "`\u003cabbr title=\"Proof of Key Code Exchange\"\u003e`"
+                },
+                {
+                    "id": "Abbr",
+                    "string": "%[2]s",
+                    "type": "string",
+                    "underlyingType": "string",
+                    "argNum": 2,
+                    "expr": "`\u003c/abbr\u003e`"
+                }
+            ]
+        },
+        {
+            "id": "{Dfn_idPKCE}Proof of Key Code Exchange{Dfn} is a mechanism that protects against attackers in the middle hijacking your application's authentication process. You can still authorize this application without this protection, but you must independently verify the security of this connection. If you have any doubts - stop the process  and contact the developers.",
+            "message": "{Dfn_idPKCE}Proof of Key Code Exchange{Dfn} is a mechanism that protects against attackers in the middle hijacking your application's authentication process. You can still authorize this application without this protection, but you must independently verify the security of this connection. If you have any doubts - stop the process  and contact the developers.",
+            "translation": "{Dfn_idPKCE}Proof of Key Code Exchange{Dfn} это механизм, защищающий от злоумышленников, перехватывающих процесс аутентификации вашего приложения. Вы можете авторизовать данное приложение и без этой защиты, но при этом вы должны самостоятельно проверить безопасность этого соединения. Если у вас есть сомнения - прервите процесс и свяжитесь с разработчиками.",
+            "placeholders": [
+                {
+                    "id": "Dfn_idPKCE",
+                    "string": "%[1]s",
+                    "type": "string",
+                    "underlyingType": "string",
+                    "argNum": 1,
+                    "expr": "`\u003cdfn id=\"PKCE\"\u003e`"
+                },
+                {
+                    "id": "Dfn",
+                    "string": "%[2]s",
+                    "type": "string",
+                    "underlyingType": "string",
+                    "argNum": 2,
+                    "expr": "`\u003c/dfn\u003e`"
+                }
+            ]
+        },
+        {
+            "id": "Scopes",
+            "message": "Scopes",
+            "translation": "Области"
+        },
+        {
+            "id": "No scopes is requested: the application will only get your profile URL.",
+            "message": "No scopes is requested: the application will only get your profile URL.",
+            "translation": "Никакие разрешения не запрашиваются: приложение получит только URL вашего профиля."
         },
         {
             "id": "Deny",
@@ -41,9 +139,35 @@
             "translatorComment": "Название кнопки продолжения процесса авторизациии приложения"
         },
         {
-            "id": "version",
-            "message": "version",
-            "translation": "версия"
+            "id": "You will be redirected to {Code}{RedirectURI}{Code_1}",
+            "message": "You will be redirected to {Code}{RedirectURI}{Code_1}",
+            "translation": "Вы будете перенаправлены на {Code}{RedirectURI}{Code_1}",
+            "placeholders": [
+                {
+                    "id": "Code",
+                    "string": "%[1]s",
+                    "type": "string",
+                    "underlyingType": "string",
+                    "argNum": 1,
+                    "expr": "`\u003ccode\u003e`"
+                },
+                {
+                    "id": "RedirectURI",
+                    "string": "%[2]s",
+                    "type": "*source.toby3d.me/toby3d/auth/internal/domain.URL",
+                    "underlyingType": "*source.toby3d.me/toby3d/auth/internal/domain.URL",
+                    "argNum": 2,
+                    "expr": "p.RedirectURI"
+                },
+                {
+                    "id": "Code_1",
+                    "string": "%[3]s",
+                    "type": "string",
+                    "underlyingType": "string",
+                    "argNum": 3,
+                    "expr": "`\u003c/code\u003e`"
+                }
+            ]
         },
         {
             "id": "Error",

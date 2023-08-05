@@ -54,11 +54,11 @@ type Page interface {
 //line web/baseof.qtpl:10
 	WriteTitle(qq422016 qtio422016.Writer)
 //line web/baseof.qtpl:10
-	T(format string, args ...interface{}) string
+	T(format message.Reference, args ...any) string
 //line web/baseof.qtpl:10
-	StreamT(qw422016 *qt422016.Writer, format string, args ...interface{})
+	StreamT(qw422016 *qt422016.Writer, format message.Reference, args ...any)
 //line web/baseof.qtpl:10
-	WriteT(qq422016 qtio422016.Writer, format string, args ...interface{})
+	WriteT(qq422016 qtio422016.Writer, format message.Reference, args ...any)
 //line web/baseof.qtpl:10
 }
 
@@ -304,18 +304,18 @@ func Template(p Page) string {
 }
 
 //line web/baseof.qtpl:107
-func (p *BaseOf) StreamT(qw422016 *qt422016.Writer, format string, args ...interface{}) {
+func (p BaseOf) StreamT(qw422016 *qt422016.Writer, format message.Reference, args ...any) {
 //line web/baseof.qtpl:107
 	qw422016.N().S(` `)
 //line web/baseof.qtpl:108
-	qw422016.E().S(p.Printer.Sprintf(format, args...))
+	qw422016.N().S(p.Printer.Sprintf(format, args...))
 //line web/baseof.qtpl:108
 	qw422016.N().S(` `)
 //line web/baseof.qtpl:109
 }
 
 //line web/baseof.qtpl:109
-func (p *BaseOf) WriteT(qq422016 qtio422016.Writer, format string, args ...interface{}) {
+func (p BaseOf) WriteT(qq422016 qtio422016.Writer, format message.Reference, args ...any) {
 //line web/baseof.qtpl:109
 	qw422016 := qt422016.AcquireWriter(qq422016)
 //line web/baseof.qtpl:109
@@ -326,7 +326,7 @@ func (p *BaseOf) WriteT(qq422016 qtio422016.Writer, format string, args ...inter
 }
 
 //line web/baseof.qtpl:109
-func (p *BaseOf) T(format string, args ...interface{}) string {
+func (p BaseOf) T(format message.Reference, args ...any) string {
 //line web/baseof.qtpl:109
 	qb422016 := qt422016.AcquireByteBuffer()
 //line web/baseof.qtpl:109
