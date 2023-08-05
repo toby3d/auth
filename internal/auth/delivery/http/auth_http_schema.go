@@ -2,6 +2,7 @@ package http
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -121,6 +122,21 @@ func (r *AuthAuthorizationRequest) bind(req *http.Request) error {
 		r.ResponseType = domain.ResponseTypeCode
 	}
 
+	if req.URL.Query().Has("scope[]") {
+		for _, k := range req.URL.Query()["scope[]"] {
+			scope, err := domain.ParseScope(k)
+			if err != nil {
+				return fmt.Errorf("cannot parse requested scope: %w", err)
+			}
+
+			if r.Scope.Has(scope) {
+				continue
+			}
+
+			r.Scope = append(r.Scope, scope)
+		}
+	}
+
 	return nil
 }
 
@@ -139,7 +155,7 @@ func NewAuthVerifyRequest() *AuthVerifyRequest {
 	}
 }
 
-//nolint:funlen,cyclop
+//nolint:cyclop
 func (r *AuthVerifyRequest) bind(req *http.Request) error {
 	indieAuthError := new(domain.Error)
 
