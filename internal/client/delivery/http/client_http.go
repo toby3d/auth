@@ -91,7 +91,7 @@ func (h *Handler) handleRender(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-//nolint:unlen
+//nolint:funlen
 func (h *Handler) handleCallback(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "" && r.Method != http.MethodGet {
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
