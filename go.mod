@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/brianvoe/gofakeit/v6 v6.22.0
-	github.com/caarlos0/env/v7 v7.1.0
+	github.com/caarlos0/env/v9 v9.0.0
 	github.com/goccy/go-json v0.10.2
 	github.com/google/go-cmp v0.5.9
 	github.com/jmoiron/sqlx v1.3.5
@@ -14,11 +14,11 @@ require (
 	github.com/valyala/fasttemplate v1.2.2
 	github.com/valyala/quicktemplate v1.7.0
 	go.etcd.io/bbolt v1.3.7
-	golang.org/x/exp v0.0.0-20230626212559-97b1e661b5df
-	golang.org/x/text v0.11.0
+	golang.org/x/exp v0.0.0-20230801115018-d63ba01acd4b
+	golang.org/x/text v0.12.0
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2
 	inet.af/netaddr v0.0.0-20230525184311-b8eac61e914a
-	modernc.org/sqlite v1.23.1
+	modernc.org/sqlite v1.25.0
 	source.toby3d.me/toby3d/form v0.3.0
 	willnorris.com/go/microformats v1.2.0
 )
@@ -43,11 +43,11 @@ require (
 	github.com/valyala/fasthttp v1.48.0 // indirect
 	go4.org/intern v0.0.0-20230525184215-6c62f75575cb // indirect
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20230525183740-e7c30c78aeb2 // indirect
-	golang.org/x/crypto v0.10.0 // indirect
+	golang.org/x/crypto v0.12.0 // indirect
 	golang.org/x/mod v0.12.0 // indirect
-	golang.org/x/net v0.11.0 // indirect
-	golang.org/x/sys v0.10.0 // indirect
-	golang.org/x/tools v0.10.0 // indirect
+	golang.org/x/net v0.14.0 // indirect
+	golang.org/x/sys v0.11.0 // indirect
+	golang.org/x/tools v0.11.1 // indirect
 	lukechampine.com/uint128 v1.3.0 // indirect
 	modernc.org/cc/v3 v3.41.0 // indirect
 	modernc.org/ccgo/v3 v3.16.14 // indirect

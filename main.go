@@ -23,7 +23,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/caarlos0/env/v7"
+	"github.com/caarlos0/env/v9"
 	"github.com/jmoiron/sqlx"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
@@ -116,11 +116,7 @@ func init() {
 	flag.StringVar(&memProfilePath, "memprofile", "", "set path to saving pprof memory profile")
 	flag.Parse()
 
-	if err := env.Parse(config, env.Options{
-		Prefix:                "AUTH_",
-		TagName:               "env",
-		UseFieldNameByDefault: true,
-	}); err != nil {
+	if err := env.ParseWithOptions(config, env.Options{Prefix: "AUTH_"}); err != nil {
 		logger.Fatalln(err)
 	}
 
