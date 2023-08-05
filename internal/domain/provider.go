@@ -35,19 +35,6 @@ var (
 		URL:          "/",
 	}
 
-	ProviderTwitter = Provider{
-		AuthURL:      "https://twitter.com/i/oauth2/authorize",
-		ClientID:     "",
-		ClientSecret: "",
-		Name:         "Twitter",
-		Photo:        path.Join("static", "providers", "twitter.svg"),
-		RedirectURL:  path.Join("callback", "twitter"),
-		Scopes:       []string{"tweet.read", "users.read"},
-		TokenURL:     "https://api.twitter.com/2/oauth2/token",
-		UID:          "twitter",
-		URL:          "https://twitter.com/",
-	}
-
 	ProviderGitHub = Provider{
 		AuthURL:      "https://github.com/login/oauth/authorize",
 		ClientID:     "",
