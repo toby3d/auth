@@ -13,7 +13,7 @@
                     "type": "string",
                     "underlyingType": "string",
                     "argNum": 1,
-                    "expr": "p.Client.GetName()"
+                    "expr": "name"
                 }
             ],
             "fuzzy": true
@@ -44,6 +44,13 @@
             "message": "Allow",
             "translation": "Allow",
             "translatorComment": "The name of the button to continue the application authorization process",
+            "fuzzy": true
+        },
+        {
+            "id": "version",
+            "message": "version",
+            "translation": "version",
+            "translatorComment": "Copied from source.",
             "fuzzy": true
         },
         {

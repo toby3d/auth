@@ -17,8 +17,8 @@
 } %}
 
 {% func (p *AuthorizePage) Title() %}
-{% if p.Client.GetName() == "" %}
-{%= p.T("Authorize %s", p.Client.GetName()) %}
+{% if name := p.Client.GetName(); name != "" %}
+{%= p.T("Authorize %s", name) %}
 {% else %}
 {%= p.T("Authorize application") %}
 {% endif %}

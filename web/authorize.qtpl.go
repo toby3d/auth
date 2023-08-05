@@ -43,12 +43,12 @@ func (p *AuthorizePage) StreamTitle(qw422016 *qt422016.Writer) {
 	qw422016.N().S(`
 `)
 //line web/authorize.qtpl:20
-	if p.Client.GetName() == "" {
+	if name := p.Client.GetName(); name != "" {
 //line web/authorize.qtpl:20
 		qw422016.N().S(`
 `)
 //line web/authorize.qtpl:21
-		p.StreamT(qw422016, "Authorize %s", p.Client.GetName())
+		p.StreamT(qw422016, "Authorize %s", name)
 //line web/authorize.qtpl:21
 		qw422016.N().S(`
 `)

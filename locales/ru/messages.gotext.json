@@ -13,7 +13,7 @@
                     "type": "string",
                     "underlyingType": "string",
                     "argNum": 1,
-                    "expr": "p.Client.GetName()"
+                    "expr": "name"
                 }
             ]
         },
