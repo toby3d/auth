@@ -22,7 +22,7 @@ type (
 		Me domain.Me `form:"me"`
 
 		// The hashing method used to calculate the code challenge.
-		CodeChallengeMethod *domain.CodeChallengeMethod `form:"code_challenge_method,omitempty"`
+		CodeChallengeMethod domain.CodeChallengeMethod `form:"code_challenge_method,omitempty"`
 
 		// Indicates to the authorization server that an authorization
 		// code should be returned as the response.
@@ -46,16 +46,16 @@ type (
 	}
 
 	AuthVerifyRequest struct {
-		ClientID            domain.ClientID             `form:"client_id"`
-		Me                  domain.Me                   `form:"me"`
-		RedirectURI         domain.URL                  `form:"redirect_uri"`
-		CodeChallengeMethod *domain.CodeChallengeMethod `form:"code_challenge_method,omitempty"`
-		ResponseType        domain.ResponseType         `form:"response_type"`
-		Authorize           string                      `form:"authorize"`
-		CodeChallenge       string                      `form:"code_challenge,omitempty"`
-		State               string                      `form:"state"`
-		Provider            string                      `form:"provider"`
-		Scope               domain.Scopes               `form:"scope[],omitempty"`
+		ClientID            domain.ClientID            `form:"client_id"`
+		Me                  domain.Me                  `form:"me"`
+		RedirectURI         domain.URL                 `form:"redirect_uri"`
+		CodeChallengeMethod domain.CodeChallengeMethod `form:"code_challenge_method,omitempty"`
+		ResponseType        domain.ResponseType        `form:"response_type"`
+		Authorize           string                     `form:"authorize"`
+		CodeChallenge       string                     `form:"code_challenge,omitempty"`
+		State               string                     `form:"state"`
+		Provider            string                     `form:"provider"`
+		Scope               domain.Scopes              `form:"scope[],omitempty"`
 	}
 
 	AuthExchangeRequest struct {
@@ -95,7 +95,7 @@ func NewAuthAuthorizationRequest() *AuthAuthorizationRequest {
 	return &AuthAuthorizationRequest{
 		ClientID:            domain.ClientID{},
 		CodeChallenge:       "",
-		CodeChallengeMethod: &domain.CodeChallengeMethodUnd,
+		CodeChallengeMethod: domain.CodeChallengeMethodUnd,
 		Me:                  domain.Me{},
 		RedirectURI:         domain.URL{},
 		ResponseType:        domain.ResponseTypeUnd,
@@ -129,7 +129,7 @@ func NewAuthVerifyRequest() *AuthVerifyRequest {
 		Authorize:           "",
 		ClientID:            domain.ClientID{},
 		CodeChallenge:       "",
-		CodeChallengeMethod: &domain.CodeChallengeMethodUnd,
+		CodeChallengeMethod: domain.CodeChallengeMethodUnd,
 		Me:                  domain.Me{},
 		Provider:            "",
 		RedirectURI:         domain.URL{},

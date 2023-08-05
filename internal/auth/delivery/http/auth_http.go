@@ -166,7 +166,7 @@ func (h *Handler) handleAuthorize(w http.ResponseWriter, r *http.Request) {
 		Client:              client,
 		Me:                  &req.Me,
 		RedirectURI:         &req.RedirectURI,
-		CodeChallengeMethod: *req.CodeChallengeMethod,
+		CodeChallengeMethod: req.CodeChallengeMethod,
 		ResponseType:        req.ResponseType,
 		CodeChallenge:       req.CodeChallenge,
 		State:               req.State,
@@ -207,7 +207,7 @@ func (h *Handler) handleVerify(w http.ResponseWriter, r *http.Request) {
 		ClientID:            req.ClientID,
 		Me:                  req.Me,
 		RedirectURI:         req.RedirectURI.URL,
-		CodeChallengeMethod: *req.CodeChallengeMethod,
+		CodeChallengeMethod: req.CodeChallengeMethod,
 		Scope:               req.Scope,
 		CodeChallenge:       req.CodeChallenge,
 	})
