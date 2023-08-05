@@ -43,6 +43,18 @@ func (httpClientRepository) Create(_ context.Context, _ domain.Client) error {
 }
 
 func (repo httpClientRepository) Get(ctx context.Context, cid domain.ClientID) (*domain.Client, error) {
+	out := &domain.Client{
+		ID:          cid,
+		RedirectURI: make([]*url.URL, 0),
+		Logo:        make([]*url.URL, 0),
+		URL:         make([]*url.URL, 0),
+		Name:        make([]string, 0),
+	}
+
+	if cid.IsLocalhost() {
+		return out, nil
+	}
+
 	resp, err := repo.client.Get(cid.String())
 	if err != nil {
 		return nil, fmt.Errorf("failed to make a request to the client: %w", err)
@@ -52,17 +64,9 @@ func (repo httpClientRepository) Get(ctx context.Context, cid domain.ClientID) (
 		return nil, fmt.Errorf("%w: status on client page is not 200", client.ErrNotExist)
 	}
 
-	client := &domain.Client{
-		ID:          cid,
-		RedirectURI: make([]*url.URL, 0),
-		Logo:        make([]*url.URL, 0),
-		URL:         make([]*url.URL, 0),
-		Name:        make([]string, 0),
-	}
+	extract(resp.Body, resp.Request.URL, out, resp.Header.Get(common.HeaderLink))
 
-	extract(resp.Body, resp.Request.URL, client, resp.Header.Get(common.HeaderLink))
-
-	return client, nil
+	return out, nil
 }
 
 //nolint:gocognit,cyclop

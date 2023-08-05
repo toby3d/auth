@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+	"net"
 	"net/url"
 	"strconv"
 	"strings"
@@ -14,7 +15,8 @@ import (
 
 // ClientID is a URL client identifier.
 type ClientID struct {
-	clientID *url.URL
+	clientID    *url.URL
+	isLocalhost bool
 }
 
 //nolint:gochecknoglobals // slices cannot be constants
@@ -87,14 +89,27 @@ func ParseClientID(src string) (*ClientID, error) {
 	if err != nil {
 		ipPort, err := netaddr.ParseIPPort(domain)
 		if err != nil {
+			resolvedAddr, err := net.LookupIP(domain)
+			if err != nil {
+				return nil, fmt.Errorf("cannot resolve client_id domain: %w", err)
+			}
+
+			ip, _ = netaddr.FromStdIP(resolvedAddr[0])
+			isLocalhost := ip.Compare(localhostIPv4) == 0 || ip.Compare(localhostIPv6) == 0
+
 			//nolint:nilerr // ClientID does not contain an IP address, so it is valid
-			return &ClientID{clientID: cid}, nil
+			return &ClientID{
+				clientID:    cid,
+				isLocalhost: isLocalhost,
+			}, nil
 		}
 
 		ip = ipPort.IP()
 	}
 
-	if !ip.IsLoopback() && ip.Compare(localhostIPv4) != 0 && ip.Compare(localhostIPv6) != 0 {
+	isLocalhost := ip.Compare(localhostIPv4) == 0 || ip.Compare(localhostIPv6) == 0
+
+	if !ip.IsLoopback() && !isLocalhost {
 		return nil, NewError(
 			ErrorCodeInvalidRequest,
 			"client identifier URL MUST NOT be IPv4 or IPv6 addresses except for IPv4 "+
@@ -104,7 +119,8 @@ func ParseClientID(src string) (*ClientID, error) {
 	}
 
 	return &ClientID{
-		clientID: cid,
+		clientID:    cid,
+		isLocalhost: isLocalhost,
 	}, nil
 }
 
@@ -112,17 +128,18 @@ func ParseClientID(src string) (*ClientID, error) {
 func TestClientID(tb testing.TB, forceURL ...string) *ClientID {
 	tb.Helper()
 
-	in := "https://app.example.com/"
+	in := "https://127.0.0.1/"
+
 	if len(forceURL) > 0 {
 		in = forceURL[0]
 	}
 
-	clientID, err := ParseClientID(in)
-	if err != nil {
-		tb.Fatal(err)
-	}
+	u, _ := url.Parse(in)
 
-	return clientID
+	return &ClientID{
+		clientID:    u,
+		isLocalhost: len(forceURL) < 1,
+	}
 }
 
 // UnmarshalForm implements custom unmarshler for form values.
@@ -169,6 +186,10 @@ func (cid ClientID) URL() *url.URL {
 	out, _ := url.Parse(cid.clientID.String())
 
 	return out
+}
+
+func (cid ClientID) IsLocalhost() bool {
+	return cid.isLocalhost
 }
 
 // String returns string representation of client ID.
