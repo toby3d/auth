@@ -25,7 +25,7 @@ func NewHandler(tokens token.UseCase, config *domain.Config) *Handler {
 	}
 }
 
-func (h *Handler) Handler() http.Handler {
+func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	chain := middleware.Chain{
 		//nolint:exhaustivestruct
 		middleware.JWTWithConfig(middleware.JWTConfig{
@@ -38,7 +38,7 @@ func (h *Handler) Handler() http.Handler {
 		}),
 	}
 
-	return chain.Handler(h.handleFunc)
+	chain.Handler(h.handleFunc).ServeHTTP(w, r)
 }
 
 func (h *Handler) handleFunc(w http.ResponseWriter, r *http.Request) {

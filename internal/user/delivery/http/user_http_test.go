@@ -44,7 +44,6 @@ func TestUserInfo(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	delivery.NewHandler(deps.tokenService, deps.config).
-		Handler().
 		ServeHTTP(w, req)
 
 	resp := w.Result()

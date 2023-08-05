@@ -324,37 +324,37 @@ func (app *App) Handler() http.Handler {
 			domain.CodeChallengeMethodS512,
 		},
 		AuthorizationResponseIssParameterSupported: true,
-	}).Handler()
-	health := healthhttpdelivery.NewHandler().Handler()
+	})
+	health := healthhttpdelivery.NewHandler()
 	auth := authhttpdelivery.NewHandler(authhttpdelivery.NewHandlerOptions{
 		Auth:     app.auth,
 		Clients:  app.clients,
 		Config:   *config,
 		Matcher:  app.matcher,
 		Profiles: app.profiles,
-	}).Handler()
-	token := tokenhttpdelivery.NewHandler(app.tokens, app.tickets, config).Handler()
+	})
+	token := tokenhttpdelivery.NewHandler(app.tokens, app.tickets, config)
 	client := clienthttpdelivery.NewHandler(clienthttpdelivery.NewHandlerOptions{
 		Client:  *indieAuthClient,
 		Config:  *config,
 		Matcher: app.matcher,
 		Tokens:  app.tokens,
-	}).Handler()
-	user := userhttpdelivery.NewHandler(app.tokens, config).Handler()
-	ticket := tickethttpdelivery.NewHandler(app.tickets, app.matcher, *config).Handler()
+	})
+	user := userhttpdelivery.NewHandler(app.tokens, config)
+	ticket := tickethttpdelivery.NewHandler(app.tickets, app.matcher, *config)
 	staticHandler := http.FileServer(http.FS(app.static))
 
 	return http.HandlerFunc(middleware.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		head, tail := urlutil.ShiftPath(r.URL.Path)
 
 		switch head {
-		default:
+		default: // NOTE(toby3d): static or 404
 			staticHandler.ServeHTTP(w, r)
-		case "", "callback":
+		case "", "callback": // NOTE(toby3d): self-client
 			client.ServeHTTP(w, r)
 		case "token", "introspect", "revocation":
 			token.ServeHTTP(w, r)
-		case ".well-known":
+		case ".well-known": // NOTE(toby3d): public server config
 			r.URL.Path = tail
 
 			if head, _ = urlutil.ShiftPath(r.URL.Path); head == "oauth-authorization-server" {

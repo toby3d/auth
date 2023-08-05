@@ -19,11 +19,7 @@ func NewHandler(metadata *domain.Metadata) *Handler {
 	}
 }
 
-func (h *Handler) Handler() http.Handler {
-	return http.HandlerFunc(h.handleFunc)
-}
-
-func (h *Handler) handleFunc(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "" && r.Method != http.MethodGet {
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 

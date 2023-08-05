@@ -56,7 +56,6 @@ func TestIntrospection(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	delivery.NewHandler(deps.tokenService, deps.ticketService, deps.config).
-		Handler().
 		ServeHTTP(w, req)
 
 	resp := w.Result()
@@ -91,7 +90,6 @@ func TestRevocation(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	delivery.NewHandler(deps.tokenService, deps.ticketService, deps.config).
-		Handler().
 		ServeHTTP(w, req)
 
 	resp := w.Result()

@@ -85,7 +85,7 @@ func TestAuthorize(t *testing.T) {
 		Clients: deps.clientService,
 		Config:  *deps.config,
 		Matcher: deps.matcher,
-	}).Handler().ServeHTTP(w, req)
+	}).ServeHTTP(w, req)
 
 	resp := w.Result()
 

@@ -13,11 +13,7 @@ func NewHandler() *Handler {
 	return &Handler{}
 }
 
-func (h *Handler) Handler() http.Handler {
-	return http.HandlerFunc(h.handleFunc)
-}
-
-func (h *Handler) handleFunc(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set(common.HeaderContentType, common.MIMETextPlainCharsetUTF8)
 	fmt.Fprint(w, `👌`)
 	w.WriteHeader(http.StatusOK)

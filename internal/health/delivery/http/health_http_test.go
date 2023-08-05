@@ -16,7 +16,6 @@ func TestRequestHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	delivery.NewHandler().
-		Handler().
 		ServeHTTP(w, req)
 
 	resp := w.Result()

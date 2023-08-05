@@ -28,7 +28,7 @@ func NewHandler(tokens token.UseCase, tickets ticket.UseCase, config *domain.Con
 	}
 }
 
-func (h *Handler) Handler() http.Handler {
+func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	chain := middleware.Chain{
 		//nolint:exhaustivestruct
 		middleware.JWTWithConfig(middleware.JWTConfig{
@@ -45,27 +45,25 @@ func (h *Handler) Handler() http.Handler {
 		}),
 	}
 
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+	if r.Method != http.MethodPost {
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 
-			return
-		}
+		return
+	}
 
-		var head string
-		head, r.URL.Path = urlutil.ShiftPath(r.URL.Path)
+	var head string
+	head, r.URL.Path = urlutil.ShiftPath(r.URL.Path)
 
-		switch head {
-		default:
-			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-		case "token":
-			chain.Handler(h.handleAction).ServeHTTP(w, r)
-		case "introspect":
-			chain.Handler(h.handleIntrospect).ServeHTTP(w, r)
-		case "revocation":
-			chain.Handler(h.handleRevokation).ServeHTTP(w, r)
-		}
-	})
+	switch head {
+	default:
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+	case "token":
+		chain.Handler(h.handleAction).ServeHTTP(w, r)
+	case "introspect":
+		chain.Handler(h.handleIntrospect).ServeHTTP(w, r)
+	case "revocation":
+		chain.Handler(h.handleRevokation).ServeHTTP(w, r)
+	}
 }
 
 func (h *Handler) handleIntrospect(w http.ResponseWriter, r *http.Request) {
