@@ -98,7 +98,7 @@ func TestAuthorize(t *testing.T) {
 		t.Errorf("%s %s = %d, want %d", req.Method, u.String(), resp.StatusCode, http.StatusOK)
 	}
 
-	const expResult = `Authorize application`
+	expResult := `Authorize ` + client.GetName()
 	if result := string(body); !strings.Contains(result, expResult) {
 		t.Errorf("%s %s = %s, want %s", req.Method, u.String(), result, expResult)
 	}

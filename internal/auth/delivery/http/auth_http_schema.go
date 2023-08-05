@@ -122,6 +122,7 @@ func (r *AuthAuthorizationRequest) bind(req *http.Request) error {
 		r.ResponseType = domain.ResponseTypeCode
 	}
 
+	// NOTE(toby3d): fallback for multiple same-key form values
 	if req.URL.Query().Has("scope[]") {
 		for _, k := range req.URL.Query()["scope[]"] {
 			scope, err := domain.ParseScope(k)

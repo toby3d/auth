@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
-	github.com/brianvoe/gofakeit/v6 v6.22.0
+	github.com/brianvoe/gofakeit/v6 v6.23.1
 	github.com/caarlos0/env/v9 v9.0.0
 	github.com/goccy/go-json v0.10.2
 	github.com/google/go-cmp v0.5.9
@@ -19,17 +19,15 @@ require (
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2
 	inet.af/netaddr v0.0.0-20230525184311-b8eac61e914a
 	modernc.org/sqlite v1.25.0
-	source.toby3d.me/toby3d/form v0.3.0
+	source.toby3d.me/toby3d/form v0.4.0
 	willnorris.com/go/microformats v1.2.0
 )
 
 require (
-	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
-	github.com/klauspost/compress v1.16.7 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.1 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
 	github.com/lestrrat-go/httprc v1.0.4 // indirect
@@ -40,7 +38,6 @@ require (
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.48.0 // indirect
 	go4.org/intern v0.0.0-20230525184215-6c62f75575cb // indirect
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20230525183740-e7c30c78aeb2 // indirect
 	golang.org/x/crypto v0.12.0 // indirect
