@@ -10,10 +10,10 @@ import (
 
 type ClientCallbackRequest struct {
 	Error            domain.ErrorCode `form:"error,omitempty"`
-	Iss              domain.ClientID  `form:"iss"`
-	Code             string           `form:"code"`
+	Iss              domain.ClientID  `form:"iss,omitempty"`
+	Code             string           `form:"code,omitempty"`
 	ErrorDescription string           `form:"error_description,omitempty"`
-	State            string           `form:"state"`
+	State            string           `form:"state,omitempty"`
 }
 
 func (req *ClientCallbackRequest) bind(r *http.Request) error {
