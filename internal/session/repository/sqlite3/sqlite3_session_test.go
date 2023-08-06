@@ -12,7 +12,7 @@ import (
 	"source.toby3d.me/toby3d/auth/internal/testing/sqltest"
 )
 
-//nolint: gochecknoglobals // slices cannot be contants
+//nolint:gochecknoglobals // slices cannot be contants
 var tableColumns = []string{"created_at", "code", "data"}
 
 func TestCreate(t *testing.T) {

@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"time"
 
-	json "github.com/goccy/go-json"
+	"github.com/goccy/go-json"
 
 	"source.toby3d.me/toby3d/auth/internal/common"
 	"source.toby3d.me/toby3d/auth/internal/domain"
