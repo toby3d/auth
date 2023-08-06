@@ -156,6 +156,10 @@ func main() {
 	}
 
 	switch strings.ToLower(config.Database.Type) {
+	default:
+		opts.Tokens = tokenmemoryrepo.NewMemoryTokenRepository()
+		opts.Sessions = sessionmemoryrepo.NewMemorySessionRepository(*config)
+		opts.Tickets = ticketmemoryrepo.NewMemoryTicketRepository(*config)
 	case "sqlite3":
 		store, err := sqlx.Open("sqlite", config.Database.Path)
 		if err != nil {
@@ -169,12 +173,6 @@ func main() {
 		opts.Tokens = tokensqlite3repo.NewSQLite3TokenRepository(store)
 		opts.Sessions = sessionsqlite3repo.NewSQLite3SessionRepository(store)
 		opts.Tickets = ticketsqlite3repo.NewSQLite3TicketRepository(store, config)
-	case "memory":
-		opts.Tokens = tokenmemoryrepo.NewMemoryTokenRepository()
-		opts.Sessions = sessionmemoryrepo.NewMemorySessionRepository(*config)
-		opts.Tickets = ticketmemoryrepo.NewMemoryTicketRepository(*config)
-	default:
-		log.Fatalln("unsupported database type, use 'memory' or 'sqlite3'")
 	}
 
 	go opts.Sessions.GC()
