@@ -30,11 +30,11 @@ type HomePage struct {
 }
 
 //line web/home.qtpl:12
-func (p *HomePage) StreamHead(qw422016 *qt422016.Writer) {
+func (p *HomePage) streamhead(qw422016 *qt422016.Writer) {
 //line web/home.qtpl:12
 	qw422016.N().S(` `)
 //line web/home.qtpl:13
-	p.BaseOf.StreamHead(qw422016)
+	p.BaseOf.streamhead(qw422016)
 //line web/home.qtpl:13
 	qw422016.N().S(` `)
 //line web/home.qtpl:14
@@ -53,22 +53,22 @@ func (p *HomePage) StreamHead(qw422016 *qt422016.Writer) {
 }
 
 //line web/home.qtpl:18
-func (p *HomePage) WriteHead(qq422016 qtio422016.Writer) {
+func (p *HomePage) writehead(qq422016 qtio422016.Writer) {
 //line web/home.qtpl:18
 	qw422016 := qt422016.AcquireWriter(qq422016)
 //line web/home.qtpl:18
-	p.StreamHead(qw422016)
+	p.streamhead(qw422016)
 //line web/home.qtpl:18
 	qt422016.ReleaseWriter(qw422016)
 //line web/home.qtpl:18
 }
 
 //line web/home.qtpl:18
-func (p *HomePage) Head() string {
+func (p *HomePage) head() string {
 //line web/home.qtpl:18
 	qb422016 := qt422016.AcquireByteBuffer()
 //line web/home.qtpl:18
-	p.WriteHead(qb422016)
+	p.writehead(qb422016)
 //line web/home.qtpl:18
 	qs422016 := string(qb422016.B)
 //line web/home.qtpl:18
@@ -79,7 +79,7 @@ func (p *HomePage) Head() string {
 }
 
 //line web/home.qtpl:20
-func (p *HomePage) StreamBody(qw422016 *qt422016.Writer) {
+func (p *HomePage) streambody(qw422016 *qt422016.Writer) {
 //line web/home.qtpl:20
 	qw422016.N().S(` <header class="h-app h-x-app"> <img class="u-logo" src="`)
 //line web/home.qtpl:23
@@ -103,66 +103,52 @@ func (p *HomePage) StreamBody(qw422016 *qt422016.Writer) {
 		"client_id":     p.Client.ID.String(),
 		"redirect_uri":  p.Client.RedirectURI[0].String(),
 		"response_type": domain.ResponseTypeCode.String(),
+		"scope":         domain.Scopes{domain.ScopeEmail, domain.ScopeProfile}.String(),
 		"state":         p.State,
 	} {
-//line web/home.qtpl:54
+//line web/home.qtpl:55
 		qw422016.N().S(` <input type="hidden" name="`)
-//line web/home.qtpl:56
+//line web/home.qtpl:57
 		qw422016.E().S(name)
-//line web/home.qtpl:56
+//line web/home.qtpl:57
 		qw422016.N().S(`" value="`)
-//line web/home.qtpl:57
+//line web/home.qtpl:58
 		qw422016.E().S(value)
-//line web/home.qtpl:57
-		qw422016.N().S(`"> `)
 //line web/home.qtpl:58
-	}
-//line web/home.qtpl:58
-	qw422016.N().S(` `)
-//line web/home.qtpl:60
-	for _, scope := range []domain.Scope{
-		domain.ScopeEmail,
-		domain.ScopeProfile,
-	} {
-//line web/home.qtpl:63
-		qw422016.N().S(` <input type="hidden" name="scope[]" value="`)
-//line web/home.qtpl:66
-		qw422016.E().S(scope.String())
-//line web/home.qtpl:66
 		qw422016.N().S(`"> `)
-//line web/home.qtpl:67
+//line web/home.qtpl:59
 	}
-//line web/home.qtpl:67
+//line web/home.qtpl:59
 	qw422016.N().S(` <input type="url" name="me" placeholder="https://example.com/" inputmode="url" autocomplete="url" required> <button type="submit">`)
-//line web/home.qtpl:76
-	p.StreamT(qw422016, "Sign In")
-//line web/home.qtpl:76
+//line web/home.qtpl:68
+	p.streamt(qw422016, "Sign In")
+//line web/home.qtpl:68
 	qw422016.N().S(`</button> </form> </main> `)
-//line web/home.qtpl:79
+//line web/home.qtpl:71
 }
 
-//line web/home.qtpl:79
-func (p *HomePage) WriteBody(qq422016 qtio422016.Writer) {
-//line web/home.qtpl:79
+//line web/home.qtpl:71
+func (p *HomePage) writebody(qq422016 qtio422016.Writer) {
+//line web/home.qtpl:71
 	qw422016 := qt422016.AcquireWriter(qq422016)
-//line web/home.qtpl:79
-	p.StreamBody(qw422016)
-//line web/home.qtpl:79
+//line web/home.qtpl:71
+	p.streambody(qw422016)
+//line web/home.qtpl:71
 	qt422016.ReleaseWriter(qw422016)
-//line web/home.qtpl:79
+//line web/home.qtpl:71
 }
 
-//line web/home.qtpl:79
-func (p *HomePage) Body() string {
-//line web/home.qtpl:79
+//line web/home.qtpl:71
+func (p *HomePage) body() string {
+//line web/home.qtpl:71
 	qb422016 := qt422016.AcquireByteBuffer()
-//line web/home.qtpl:79
-	p.WriteBody(qb422016)
-//line web/home.qtpl:79
+//line web/home.qtpl:71
+	p.writebody(qb422016)
+//line web/home.qtpl:71
 	qs422016 := string(qb422016.B)
-//line web/home.qtpl:79
+//line web/home.qtpl:71
 	qt422016.ReleaseByteBuffer(qb422016)
-//line web/home.qtpl:79
+//line web/home.qtpl:71
 	return qs422016
-//line web/home.qtpl:79
+//line web/home.qtpl:71
 }

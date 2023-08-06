@@ -29,7 +29,7 @@ type CallbackPage struct {
 }
 
 //line web/callback.qtpl:11
-func (p *CallbackPage) StreamBody(qw422016 *qt422016.Writer) {
+func (p *CallbackPage) streambody(qw422016 *qt422016.Writer) {
 //line web/callback.qtpl:11
 	qw422016.N().S(` `)
 //line web/callback.qtpl:12
@@ -52,22 +52,22 @@ func (p *CallbackPage) StreamBody(qw422016 *qt422016.Writer) {
 }
 
 //line web/callback.qtpl:16
-func (p *CallbackPage) WriteBody(qq422016 qtio422016.Writer) {
+func (p *CallbackPage) writebody(qq422016 qtio422016.Writer) {
 //line web/callback.qtpl:16
 	qw422016 := qt422016.AcquireWriter(qq422016)
 //line web/callback.qtpl:16
-	p.StreamBody(qw422016)
+	p.streambody(qw422016)
 //line web/callback.qtpl:16
 	qt422016.ReleaseWriter(qw422016)
 //line web/callback.qtpl:16
 }
 
 //line web/callback.qtpl:16
-func (p *CallbackPage) Body() string {
+func (p *CallbackPage) body() string {
 //line web/callback.qtpl:16
 	qb422016 := qt422016.AcquireByteBuffer()
 //line web/callback.qtpl:16
-	p.WriteBody(qb422016)
+	p.writebody(qb422016)
 //line web/callback.qtpl:16
 	qs422016 := string(qb422016.B)
 //line web/callback.qtpl:16

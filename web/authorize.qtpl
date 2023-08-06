@@ -16,15 +16,15 @@
   State               string
 } %}
 
-{% func (p *AuthorizePage) Title() %}
+{% func (p *AuthorizePage) title() %}
 {% if name := p.Client.GetName(); name != "" %}
-{%= p.T("Authorize %s", name) %}
+{%= p.t("Authorize %s", name) %}
 {% else %}
-{%= p.T("Authorize application") %}
+{%= p.t("Authorize application") %}
 {% endif %}
 {% endfunc %}
 
-{% func (p *AuthorizePage) Body() %}
+{% func (p *AuthorizePage) body() %}
 <header>
   {% if p.Client.GetLogo() != nil %}
   <img class=""
@@ -62,7 +62,7 @@
             role="img"
             aria-label="closed lock with key">🔐</span>
 
-      {%= p.T(`This client uses %sPKCE%s with the %s%s%s method.`, `<abbr title="Proof of Key Code Exchange">`,
+      {%= p.t(`This client uses %sPKCE%s with the %s%s%s method.`, `<abbr title="Proof of Key Code Exchange">`,
         `</abbr>`, `<code>`, p.CodeChallengeMethod, `</code>`) %}
     </p>
     {% else %}
@@ -72,10 +72,10 @@
               role="img"
               aria-label="unlock">🔓</span>
 
-        {%= p.T(`This client does not use %sPKCE%s!`, `<abbr title="Proof of Key Code Exchange">`, `</abbr>`) %}
+        {%= p.t(`This client does not use %sPKCE%s!`, `<abbr title="Proof of Key Code Exchange">`, `</abbr>`) %}
       </summary>
       <p>
-        {%= p.T(`%sProof of Key Code Exchange%s is a mechanism that protects against attackers in the middle hijacking `+
+        {%= p.t(`%sProof of Key Code Exchange%s is a mechanism that protects against attackers in the middle hijacking `+
         `your application's authentication process. You can still authorize this application without this protection, `+
         `but you must independently verify the security of this connection. If you have any doubts - stop the process `+
         ` and contact the developers.`, `<dfn id="PKCE">`, `</dfn>`) %}
@@ -112,7 +112,7 @@
 
     {% if len(p.Scope) > 0 %}
     <fieldset>
-      <legend>{%= p.T("Scopes") %}</legend>
+      <legend>{%= p.t("Scopes") %}</legend>
 
       {% for _, scope := range p.Scope %}
       <div>
@@ -129,7 +129,7 @@
     </fieldset>
     {% else %}
     <aside>
-      <p>{%= p.T(`No scopes is requested: the application will only get your profile URL.`) %}</p>
+      <p>{%= p.t(`No scopes is requested: the application will only get your profile URL.`) %}</p>
     </aside>
     {% endif %}
 
@@ -173,18 +173,18 @@
             name="authorize"
             value="deny">
 
-      {%= p.T("Deny") %}
+      {%= p.t("Deny") %}
     </button>
 
     <button type="submit"
             name="authorize"
             value="allow">
 
-      {%= p.T("Allow") %}
+      {%= p.t("Allow") %}
     </button>
 
     <aside>
-      <p>{%= p.T(`You will be redirected to %s%s%s`, `<code>`, p.RedirectURI, `</code>`) %}</p>
+      <p>{%= p.t(`You will be redirected to %s%s%s`, `<code>`, p.RedirectURI, `</code>`) %}</p>
     </aside>
   </form>
 </main>

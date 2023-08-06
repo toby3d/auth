@@ -4,9 +4,9 @@
 } %}
 
 {% collapsespace %}
-{% func (p *TicketPage) Body() %}
+{% func (p *TicketPage) body() %}
 <header>
-  <h1>{%= p.T("TicketAuth") %}</h1>
+  <h1>{%= p.t("TicketAuth") %}</h1>
 </header>
 
 <main>
@@ -25,7 +25,7 @@
     {% endif %}
 
     <div>
-      <label for="subject">{%= p.T("Recipient") %}</label>
+      <label for="subject">{%= p.t("Recipient") %}</label>
       <input id="subject"
              type="url"
              name="subject"
@@ -35,7 +35,7 @@
     </div>
 
     <div>
-      <label for="resource">{%= p.T("Resource") %}</label>
+      <label for="resource">{%= p.t("Resource") %}</label>
       <input id="resource"
              type="url"
              name="resource"
@@ -44,7 +44,7 @@
              required>
     </div>
 
-    <button type="submit">{%= p.T("Send") %}</button>
+    <button type="submit">{%= p.t("Send") %}</button>
   </form>
 </main>
 {% endfunc %}

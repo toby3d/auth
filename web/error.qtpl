@@ -10,11 +10,11 @@
 } %}
 
 {% collapsespace %}
-{% func (p *ErrorPage) Title() %}
-{%s p.T("Error") %}
+{% func (p *ErrorPage) title() %}
+{%s p.t("Error") %}
 {% endfunc %}
 
-{% func (p *ErrorPage) Body() %}
+{% func (p *ErrorPage) body() %}
 <main>
   {% code err := new(domain.Error) %}
   {% if errors.As(p.Error, err) %}
@@ -29,11 +29,11 @@
      href="{%s err.URI %}"
      target="_blank">
 
-    {%s p.T("How do I fix it?") %}
+    {%s p.t("How do I fix it?") %}
   </a>
   {% endif %}
   {% else %}
-  <h1>{%s p.T("Error") %}</h1>
+  <h1>{%s p.t("Error") %}</h1>
   <p>{%s p.Error.Error() %}</p>
   {% endif %}
 </main>

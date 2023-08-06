@@ -38,7 +38,7 @@ type AuthorizePage struct {
 }
 
 //line web/authorize.qtpl:19
-func (p *AuthorizePage) StreamTitle(qw422016 *qt422016.Writer) {
+func (p *AuthorizePage) streamtitle(qw422016 *qt422016.Writer) {
 //line web/authorize.qtpl:19
 	qw422016.N().S(`
 `)
@@ -48,7 +48,7 @@ func (p *AuthorizePage) StreamTitle(qw422016 *qt422016.Writer) {
 		qw422016.N().S(`
 `)
 //line web/authorize.qtpl:21
-		p.StreamT(qw422016, "Authorize %s", name)
+		p.streamt(qw422016, "Authorize %s", name)
 //line web/authorize.qtpl:21
 		qw422016.N().S(`
 `)
@@ -58,7 +58,7 @@ func (p *AuthorizePage) StreamTitle(qw422016 *qt422016.Writer) {
 		qw422016.N().S(`
 `)
 //line web/authorize.qtpl:23
-		p.StreamT(qw422016, "Authorize application")
+		p.streamt(qw422016, "Authorize application")
 //line web/authorize.qtpl:23
 		qw422016.N().S(`
 `)
@@ -71,22 +71,22 @@ func (p *AuthorizePage) StreamTitle(qw422016 *qt422016.Writer) {
 }
 
 //line web/authorize.qtpl:25
-func (p *AuthorizePage) WriteTitle(qq422016 qtio422016.Writer) {
+func (p *AuthorizePage) writetitle(qq422016 qtio422016.Writer) {
 //line web/authorize.qtpl:25
 	qw422016 := qt422016.AcquireWriter(qq422016)
 //line web/authorize.qtpl:25
-	p.StreamTitle(qw422016)
+	p.streamtitle(qw422016)
 //line web/authorize.qtpl:25
 	qt422016.ReleaseWriter(qw422016)
 //line web/authorize.qtpl:25
 }
 
 //line web/authorize.qtpl:25
-func (p *AuthorizePage) Title() string {
+func (p *AuthorizePage) title() string {
 //line web/authorize.qtpl:25
 	qb422016 := qt422016.AcquireByteBuffer()
 //line web/authorize.qtpl:25
-	p.WriteTitle(qb422016)
+	p.writetitle(qb422016)
 //line web/authorize.qtpl:25
 	qs422016 := string(qb422016.B)
 //line web/authorize.qtpl:25
@@ -97,7 +97,7 @@ func (p *AuthorizePage) Title() string {
 }
 
 //line web/authorize.qtpl:27
-func (p *AuthorizePage) StreamBody(qw422016 *qt422016.Writer) {
+func (p *AuthorizePage) streambody(qw422016 *qt422016.Writer) {
 //line web/authorize.qtpl:27
 	qw422016.N().S(`
 <header>
@@ -199,7 +199,7 @@ func (p *AuthorizePage) StreamBody(qw422016 *qt422016.Writer) {
 
       `)
 //line web/authorize.qtpl:65
-		p.StreamT(qw422016, `This client uses %sPKCE%s with the %s%s%s method.`, `<abbr title="Proof of Key Code Exchange">`,
+		p.streamt(qw422016, `This client uses %sPKCE%s with the %s%s%s method.`, `<abbr title="Proof of Key Code Exchange">`,
 			`</abbr>`, `<code>`, p.CodeChallengeMethod, `</code>`)
 //line web/authorize.qtpl:66
 		qw422016.N().S(`
@@ -217,14 +217,14 @@ func (p *AuthorizePage) StreamBody(qw422016 *qt422016.Writer) {
 
         `)
 //line web/authorize.qtpl:75
-		p.StreamT(qw422016, `This client does not use %sPKCE%s!`, `<abbr title="Proof of Key Code Exchange">`, `</abbr>`)
+		p.streamt(qw422016, `This client does not use %sPKCE%s!`, `<abbr title="Proof of Key Code Exchange">`, `</abbr>`)
 //line web/authorize.qtpl:75
 		qw422016.N().S(`
       </summary>
       <p>
         `)
 //line web/authorize.qtpl:78
-		p.StreamT(qw422016, `%sProof of Key Code Exchange%s is a mechanism that protects against attackers in the middle hijacking `+
+		p.streamt(qw422016, `%sProof of Key Code Exchange%s is a mechanism that protects against attackers in the middle hijacking `+
 			`your application's authentication process. You can still authorize this application without this protection, `+
 			`but you must independently verify the security of this connection. If you have any doubts - stop the process `+
 			` and contact the developers.`, `<dfn id="PKCE">`, `</dfn>`)
@@ -301,7 +301,7 @@ func (p *AuthorizePage) StreamBody(qw422016 *qt422016.Writer) {
     <fieldset>
       <legend>`)
 //line web/authorize.qtpl:115
-		p.StreamT(qw422016, "Scopes")
+		p.streamt(qw422016, "Scopes")
 //line web/authorize.qtpl:115
 		qw422016.N().S(`</legend>
 
@@ -342,7 +342,7 @@ func (p *AuthorizePage) StreamBody(qw422016 *qt422016.Writer) {
     <aside>
       <p>`)
 //line web/authorize.qtpl:132
-		p.StreamT(qw422016, `No scopes is requested: the application will only get your profile URL.`)
+		p.streamt(qw422016, `No scopes is requested: the application will only get your profile URL.`)
 //line web/authorize.qtpl:132
 		qw422016.N().S(`</p>
     </aside>
@@ -466,7 +466,7 @@ func (p *AuthorizePage) StreamBody(qw422016 *qt422016.Writer) {
 
       `)
 //line web/authorize.qtpl:176
-	p.StreamT(qw422016, "Deny")
+	p.streamt(qw422016, "Deny")
 //line web/authorize.qtpl:176
 	qw422016.N().S(`
     </button>
@@ -477,7 +477,7 @@ func (p *AuthorizePage) StreamBody(qw422016 *qt422016.Writer) {
 
       `)
 //line web/authorize.qtpl:183
-	p.StreamT(qw422016, "Allow")
+	p.streamt(qw422016, "Allow")
 //line web/authorize.qtpl:183
 	qw422016.N().S(`
     </button>
@@ -485,7 +485,7 @@ func (p *AuthorizePage) StreamBody(qw422016 *qt422016.Writer) {
     <aside>
       <p>`)
 //line web/authorize.qtpl:187
-	p.StreamT(qw422016, `You will be redirected to %s%s%s`, `<code>`, p.RedirectURI, `</code>`)
+	p.streamt(qw422016, `You will be redirected to %s%s%s`, `<code>`, p.RedirectURI, `</code>`)
 //line web/authorize.qtpl:187
 	qw422016.N().S(`</p>
     </aside>
@@ -496,22 +496,22 @@ func (p *AuthorizePage) StreamBody(qw422016 *qt422016.Writer) {
 }
 
 //line web/authorize.qtpl:191
-func (p *AuthorizePage) WriteBody(qq422016 qtio422016.Writer) {
+func (p *AuthorizePage) writebody(qq422016 qtio422016.Writer) {
 //line web/authorize.qtpl:191
 	qw422016 := qt422016.AcquireWriter(qq422016)
 //line web/authorize.qtpl:191
-	p.StreamBody(qw422016)
+	p.streambody(qw422016)
 //line web/authorize.qtpl:191
 	qt422016.ReleaseWriter(qw422016)
 //line web/authorize.qtpl:191
 }
 
 //line web/authorize.qtpl:191
-func (p *AuthorizePage) Body() string {
+func (p *AuthorizePage) body() string {
 //line web/authorize.qtpl:191
 	qb422016 := qt422016.AcquireByteBuffer()
 //line web/authorize.qtpl:191
-	p.WriteBody(qb422016)
+	p.writebody(qb422016)
 //line web/authorize.qtpl:191
 	qs422016 := string(qb422016.B)
 //line web/authorize.qtpl:191

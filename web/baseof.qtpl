@@ -8,11 +8,11 @@
 ) %}
 
 {% interface Page {
-  Body()
-  Head()
-  Lang()
-  Title()
-  T(format message.Reference, args ...any)
+  body()
+  head()
+  lang()
+  t(format message.Reference, args ...any)
+  title()
 } %}
 
 {% code type BaseOf struct {
@@ -22,7 +22,7 @@
 } %}
 
 {% stripspace %}
-{% func (p *BaseOf) Lang() %}
+{% func (p *BaseOf) lang() %}
 {% if p.Language != language.Und %}
 {%s p.Language.String() %}
 {% else %}
@@ -32,11 +32,11 @@ en
 {% endstripspace %}
 
 {% collapsespace %}
-{% func (p *BaseOf) Title() %}
+{% func (p *BaseOf) title() %}
 {%s p.Config.Name %}
 {% endfunc %}
 
-{% func (p *BaseOf) Head() %}
+{% func (p *BaseOf) head() %}
 {% comment %}https://evilmartians.com/chronicles/how-to-favicon-in-2021-six-files-that-fit-most-needs{% endcomment %}
 <link rel="icon"
       href="/favicon.ico"
@@ -53,25 +53,25 @@ en
       href="/manifest.webmanifest">
 {% endfunc %}
 
-{% func (p *BaseOf) Body() %}{% endfunc %}
+{% func (p *BaseOf) body() %}{% endfunc %}
 
 {% func Template(p Page) %}
 <!DOCTYPE html>
 <html class="page"
-      lang="{%= p.Lang() %}">
+      lang="{%= p.lang() %}">
 
   <head>
     <meta charset="utf-8">
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0">
 
-    {%= p.Head() %}
+    {%= p.head() %}
 
-    <title>{%= p.Title() %}</title>
+    <title>{%= p.title() %}</title>
   </head>
 
   <body class="page__body body">
-    {%= p.Body() %}
+    {%= p.body() %}
 
     {% code
         var path, vcsRevision string
@@ -92,7 +92,7 @@ en
     {% if vcsRevision != "" %}
     <footer>
       <small>
-        {%= p.T("version") %}
+        {%= p.t("version") %}
         <a href="https://{%s path %}/commit/{%s vcsRevision %}"
            target="_blank">
           {%s vcsRevision[:7] -%}
@@ -104,7 +104,7 @@ en
 </html>
 {% endfunc %}
 
-{% func (p BaseOf) T(format message.Reference, args ...any) %}
+{% func (p BaseOf) t(format message.Reference, args ...any) %}
 {%s= p.Printer.Sprintf(format, args...) %}
 {% endfunc %}
 {% endcollapsespace %}
