@@ -2,7 +2,6 @@ package http
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -120,22 +119,6 @@ func (r *AuthAuthorizationRequest) bind(req *http.Request) error {
 
 	if r.ResponseType == domain.ResponseTypeID {
 		r.ResponseType = domain.ResponseTypeCode
-	}
-
-	// NOTE(toby3d): fallback for multiple same-key form values
-	if req.URL.Query().Has("scope[]") {
-		for _, k := range req.URL.Query()["scope[]"] {
-			scope, err := domain.ParseScope(k)
-			if err != nil {
-				return fmt.Errorf("cannot parse requested scope: %w", err)
-			}
-
-			if r.Scope.Has(scope) {
-				continue
-			}
-
-			r.Scope = append(r.Scope, scope)
-		}
 	}
 
 	return nil
