@@ -13,11 +13,9 @@ import (
 // ValuesExtractor defines a function for extracting values (keys/tokens) from the given context.
 type ValuesExtractor func(w http.ResponseWriter, r *http.Request) ([]string, error)
 
-const (
-	// extractorLimit is arbitrary number to limit values extractor can return. this limits possible resource
-	// exhaustion attack vector.
-	extractorLimit = 20
-)
+// extractorLimit is arbitrary number to limit values extractor can return. this limits possible resource
+// exhaustion attack vector.
+const extractorLimit = 20
 
 var (
 	errHeaderExtractorValueMissing = errors.New("missing value in request header")

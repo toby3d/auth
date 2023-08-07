@@ -42,8 +42,6 @@ type (
 	}
 )
 
-const relIndieauthMetadata = "indieauth-metadata"
-
 func NewHTTPMetadataRepository(client *http.Client) metadata.Repository {
 	return &httpMetadataRepository{
 		client: client,
