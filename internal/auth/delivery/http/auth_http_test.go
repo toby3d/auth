@@ -38,6 +38,7 @@ type Dependencies struct {
 	config        *domain.Config
 }
 
+//nolint:funlen
 func TestAuthorize(t *testing.T) {
 	t.Parallel()
 
@@ -98,7 +99,7 @@ func TestAuthorize(t *testing.T) {
 		t.Errorf("%s %s = %d, want %d", req.Method, u.String(), resp.StatusCode, http.StatusOK)
 	}
 
-	expResult := `Authorize ` + client.GetName()
+	expResult := `Authorize ` + client.Name
 	if result := string(body); !strings.Contains(result, expResult) {
 		t.Errorf("%s %s = %s, want %s", req.Method, u.String(), result, expResult)
 	}

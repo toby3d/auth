@@ -87,18 +87,14 @@ var (
 	// NOTE(toby3d): write logs in stdout, see: https://12factor.net/logs
 	logger = log.New(os.Stdout, "IndieAuth\t", log.Lmsgprefix|log.LstdFlags|log.LUTC)
 	// NOTE(toby3d): read configuration from environment, see: https://12factor.net/config
-	config          = new(domain.Config)
-	indieAuthClient = &domain.Client{
-		ID:          domain.ClientID{},
-		Logo:        make([]*url.URL, 1),
-		RedirectURI: make([]*url.URL, 1),
-		URL:         make([]*url.URL, 1),
-		Name:        make([]string, 0),
-	}
+	config = new(domain.Config)
 )
 
 //nolint:gochecknoglobals
-var cpuProfilePath, memProfilePath string
+var (
+	indieAuthClient                *domain.Client
+	cpuProfilePath, memProfilePath string
+)
 
 //go:embed web/static/*
 var static embed.FS
@@ -109,31 +105,27 @@ func init() {
 	flag.StringVar(&memProfilePath, "memprofile", "", "set path to saving pprof memory profile")
 	flag.Parse()
 
-	if err := env.ParseWithOptions(config, env.Options{Prefix: "AUTH_"}); err != nil {
+	if err := env.ParseWithOptions(config, env.Options{Prefix: "INDIEAUTH_"}); err != nil {
 		logger.Fatalln(err)
 	}
 
 	// NOTE(toby3d): The server instance itself can be as a client.
-	rootURL := config.Server.GetRootURL()
-	indieAuthClient.Name = []string{config.Name}
+	rootUrl, err := url.Parse(config.Server.GetRootURL())
+	if err != nil {
+		logger.Fatalln(err)
+	}
 
-	cid, err := domain.ParseClientID(rootURL)
+	cid, err := domain.ParseClientID(rootUrl.String())
 	if err != nil {
 		logger.Fatalln("fail to read config:", err)
 	}
 
-	indieAuthClient.ID = *cid
-
-	if indieAuthClient.URL[0], err = url.Parse(rootURL); err != nil {
-		logger.Fatalln("cannot parse root URL as client URL:", err)
-	}
-
-	if indieAuthClient.Logo[0], err = url.Parse(rootURL + "icon.svg"); err != nil {
-		logger.Fatalln("cannot parse root URL as client URL:", err)
-	}
-
-	if indieAuthClient.RedirectURI[0], err = url.Parse(rootURL + "callback"); err != nil {
-		logger.Fatalln("cannot parse root URL as client URL:", err)
+	indieAuthClient = &domain.Client{
+		Logo:        rootUrl.JoinPath("icon.svg"),
+		URL:         rootUrl,
+		ID:          *cid,
+		Name:        config.Name,
+		RedirectURI: []*url.URL{rootUrl.JoinPath("callback")},
 	}
 }
 
@@ -171,9 +163,7 @@ func main() {
 	opts.Client = new(http.Client)
 	opts.Clients = clienthttprepo.NewHTTPClientRepository(opts.Client)
 	opts.Profiles = profilehttprepo.NewHTPPClientRepository(opts.Client)
-
 	app := NewApp(opts)
-
 	server := &http.Server{
 		Addr:              config.Server.GetAddress(),
 		BaseContext:       nil,
@@ -210,7 +200,12 @@ func main() {
 		logger.Printf("started at %s, available at %s", config.Server.GetAddress(),
 			config.Server.GetRootURL())
 
-		err = server.ListenAndServe()
+		if config.Server.CertificateFile != "" && config.Server.KeyFile != "" {
+			err = server.ListenAndServeTLS(config.Server.CertificateFile, config.Server.KeyFile)
+		} else {
+			err = server.ListenAndServe()
+		}
+
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logger.Fatalln("cannot listen and serve:", err)
 		}
