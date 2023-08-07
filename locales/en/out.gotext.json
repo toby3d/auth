@@ -13,7 +13,7 @@
                     "type": "string",
                     "underlyingType": "string",
                     "argNum": 1,
-                    "expr": "name"
+                    "expr": "p.Client.Name"
                 }
             ],
             "fuzzy": true

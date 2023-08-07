@@ -17,8 +17,8 @@
 } %}
 
 {% func (p *AuthorizePage) title() %}
-{% if name := p.Client.GetName(); name != "" %}
-{%= p.t("Authorize %s", name) %}
+{% if p.Client.Name != "" %}
+{%= p.t("Authorize %s", p.Client.Name) %}
 {% else %}
 {%= p.t("Authorize application") %}
 {% endif %}
@@ -26,7 +26,7 @@
 
 {% func (p *AuthorizePage) body() %}
 <header>
-  {% if p.Client.GetLogo() != nil %}
+  {% if p.Client.Logo != nil %}
   <img class=""
        crossorigin="anonymous"
        decoding="async"
@@ -34,21 +34,21 @@
        importance="high"
        loading="lazy"
        referrerpolicy="no-referrer-when-downgrade"
-       src="{%s p.Client.GetLogo().String() %}"
-       alt="{%s p.Client.GetName() %}"
+       src="{%s p.Client.Logo.String() %}"
+       alt="{%s p.Client.Name %}"
        width="140">
   {% endif %}
 
   <h2>
-    {% if p.Client.GetURL() != nil %}
-    <a href="{%s p.Client.GetURL().String() %}">
+    {% if p.Client.URL != nil %}
+    <a href="{%s p.Client.URL.String() %}">
       {% endif %}
-      {% if p.Client.GetName() != "" %}
-      {%s p.Client.GetName() %}
+      {% if p.Client.Name != "" %}
+      {%s p.Client.Name %}
       {% else %}
       {%s p.Client.ID.String() %}
       {% endif %}
-      {% if p.Client.GetURL() != nil %}
+      {% if p.Client.URL != nil %}
     </a>
     {% endif %}
   </h2>

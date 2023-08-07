@@ -43,12 +43,12 @@ func (p *AuthorizePage) streamtitle(qw422016 *qt422016.Writer) {
 	qw422016.N().S(`
 `)
 //line web/authorize.qtpl:20
-	if name := p.Client.GetName(); name != "" {
+	if p.Client.Name != "" {
 //line web/authorize.qtpl:20
 		qw422016.N().S(`
 `)
 //line web/authorize.qtpl:21
-		p.streamt(qw422016, "Authorize %s", name)
+		p.streamt(qw422016, "Authorize %s", p.Client.Name)
 //line web/authorize.qtpl:21
 		qw422016.N().S(`
 `)
@@ -103,7 +103,7 @@ func (p *AuthorizePage) streambody(qw422016 *qt422016.Writer) {
 <header>
   `)
 //line web/authorize.qtpl:29
-	if p.Client.GetLogo() != nil {
+	if p.Client.Logo != nil {
 //line web/authorize.qtpl:29
 		qw422016.N().S(`
   <img class=""
@@ -115,12 +115,12 @@ func (p *AuthorizePage) streambody(qw422016 *qt422016.Writer) {
        referrerpolicy="no-referrer-when-downgrade"
        src="`)
 //line web/authorize.qtpl:37
-		qw422016.E().S(p.Client.GetLogo().String())
+		qw422016.E().S(p.Client.Logo.String())
 //line web/authorize.qtpl:37
 		qw422016.N().S(`"
        alt="`)
 //line web/authorize.qtpl:38
-		qw422016.E().S(p.Client.GetName())
+		qw422016.E().S(p.Client.Name)
 //line web/authorize.qtpl:38
 		qw422016.N().S(`"
        width="140">
@@ -133,12 +133,12 @@ func (p *AuthorizePage) streambody(qw422016 *qt422016.Writer) {
   <h2>
     `)
 //line web/authorize.qtpl:43
-	if p.Client.GetURL() != nil {
+	if p.Client.URL != nil {
 //line web/authorize.qtpl:43
 		qw422016.N().S(`
     <a href="`)
 //line web/authorize.qtpl:44
-		qw422016.E().S(p.Client.GetURL().String())
+		qw422016.E().S(p.Client.URL.String())
 //line web/authorize.qtpl:44
 		qw422016.N().S(`">
       `)
@@ -148,12 +148,12 @@ func (p *AuthorizePage) streambody(qw422016 *qt422016.Writer) {
 	qw422016.N().S(`
       `)
 //line web/authorize.qtpl:46
-	if p.Client.GetName() != "" {
+	if p.Client.Name != "" {
 //line web/authorize.qtpl:46
 		qw422016.N().S(`
       `)
 //line web/authorize.qtpl:47
-		qw422016.E().S(p.Client.GetName())
+		qw422016.E().S(p.Client.Name)
 //line web/authorize.qtpl:47
 		qw422016.N().S(`
       `)
@@ -173,7 +173,7 @@ func (p *AuthorizePage) streambody(qw422016 *qt422016.Writer) {
 	qw422016.N().S(`
       `)
 //line web/authorize.qtpl:51
-	if p.Client.GetURL() != nil {
+	if p.Client.URL != nil {
 //line web/authorize.qtpl:51
 		qw422016.N().S(`
     </a>
