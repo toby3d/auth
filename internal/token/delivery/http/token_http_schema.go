@@ -37,11 +37,6 @@ type (
 		Token  string        `form:"token"`
 	}
 
-	TokenTicketRequest struct {
-		Action domain.Action `form:"action"`
-		Ticket string        `form:"ticket"`
-	}
-
 	TokenIntrospectRequest struct {
 		Token string `form:"token"`
 	}
@@ -113,6 +108,35 @@ type (
 	TokenRevocationResponse struct{}
 )
 
+func NewTokenProfileResponse(in *domain.Profile) *TokenProfileResponse {
+	out := &TokenProfileResponse{
+		Name:  "",
+		URL:   "",
+		Photo: "",
+		Email: "",
+	}
+
+	if in == nil {
+		return out
+	}
+
+	out.Name = in.Name
+
+	if in.URL != nil {
+		out.URL = in.URL.String()
+	}
+
+	if in.Photo != nil {
+		out.Photo = in.Photo.String()
+	}
+
+	if in.Email != nil {
+		out.Email = in.Email.String()
+	}
+
+	return out
+}
+
 func (r *TokenExchangeRequest) bind(req *http.Request) error {
 	indieAuthError := new(domain.Error)
 
@@ -151,24 +175,6 @@ func (r *TokenRevocationRequest) bind(req *http.Request) error {
 
 	err := form.Unmarshal([]byte(req.PostForm.Encode()), r)
 	if err != nil {
-		if errors.As(err, indieAuthError) {
-			return indieAuthError
-		}
-
-		return domain.NewError(
-			domain.ErrorCodeInvalidRequest,
-			err.Error(),
-			"https://indieauth.net/source/#request",
-		)
-	}
-
-	return nil
-}
-
-func (r *TokenTicketRequest) bind(req *http.Request) error {
-	indieAuthError := new(domain.Error)
-
-	if err := form.Unmarshal([]byte(req.URL.Query().Encode()), r); err != nil {
 		if errors.As(err, indieAuthError) {
 			return indieAuthError
 		}

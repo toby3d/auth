@@ -12,13 +12,13 @@ import (
 )
 
 type authUseCase struct {
-	config   *domain.Config
 	sessions session.Repository
 	profiles profile.Repository
+	config   domain.Config
 }
 
 // NewAuthUseCase creates a new authentication use case.
-func NewAuthUseCase(sessions session.Repository, profiles profile.Repository, config *domain.Config) auth.UseCase {
+func NewAuthUseCase(sessions session.Repository, profiles profile.Repository, config domain.Config) auth.UseCase {
 	return &authUseCase{
 		config:   config,
 		sessions: sessions,

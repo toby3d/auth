@@ -43,11 +43,10 @@ func TestUserInfo(t *testing.T) {
 	req.Header.Set(common.HeaderAuthorization, "Bearer "+deps.token.AccessToken)
 
 	w := httptest.NewRecorder()
-	delivery.NewHandler(deps.tokenService, deps.config).
+	delivery.NewHandler(deps.tokenService, *deps.config).
 		ServeHTTP(w, req)
 
 	resp := w.Result()
-
 	if exp := http.StatusOK; resp.StatusCode != exp {
 		t.Errorf("%s %s = %d, want %d", req.Method, req.RequestURI, resp.StatusCode, exp)
 	}
@@ -57,13 +56,7 @@ func TestUserInfo(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	exp := &delivery.UserInformationResponse{
-		Name:  deps.profile.GetName(),
-		URL:   &domain.URL{URL: deps.profile.GetURL()},
-		Photo: &domain.URL{URL: deps.profile.GetPhoto()},
-		Email: deps.profile.GetEmail(),
-	}
-
+	exp := delivery.NewUserInformationResponse(deps.profile, true)
 	if diff := cmp.Diff(result, exp, cmp.AllowUnexported(domain.URL{}, domain.Email{})); diff != "" {
 		t.Errorf("%s %s = %+v, want %+v", req.Method, req.RequestURI, result, exp)
 	}
@@ -85,7 +78,7 @@ func NewDependencies(tb testing.TB) Dependencies {
 		token:    domain.TestToken(tb),
 		tokens:   tokens,
 		tokenService: tokenucase.NewTokenUseCase(tokenucase.Config{
-			Config:   config,
+			Config:   *config,
 			Profiles: profiles,
 			Sessions: sessions,
 			Tokens:   tokens,

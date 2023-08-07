@@ -45,7 +45,7 @@ func TestExchange(t *testing.T) {
 	}
 
 	tkn, userInfo, err := usecase.NewTokenUseCase(usecase.Config{
-		Config:   deps.config,
+		Config:   *deps.config,
 		Profiles: deps.profiles,
 		Sessions: deps.sessions,
 		Tokens:   deps.tokens,
@@ -68,7 +68,7 @@ func TestVerify(t *testing.T) {
 
 	deps := NewDependencies(t)
 	ucase := usecase.NewTokenUseCase(usecase.Config{
-		Config:   deps.config,
+		Config:   *deps.config,
 		Profiles: deps.profiles,
 		Sessions: deps.sessions,
 		Tokens:   deps.tokens,
@@ -115,7 +115,7 @@ func TestRevoke(t *testing.T) {
 
 	deps := NewDependencies(t)
 	if err := usecase.NewTokenUseCase(usecase.Config{
-		Config:   deps.config,
+		Config:   *deps.config,
 		Profiles: deps.profiles,
 		Sessions: deps.sessions,
 		Tokens:   deps.tokens,

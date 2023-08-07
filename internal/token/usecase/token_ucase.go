@@ -16,17 +16,17 @@ import (
 
 type (
 	Config struct {
-		Config   *domain.Config
 		Profiles profile.Repository
 		Sessions session.Repository
 		Tokens   token.Repository
+		Config   domain.Config
 	}
 
 	tokenUseCase struct {
-		config   *domain.Config
 		profiles profile.Repository
 		sessions session.Repository
 		tokens   token.Repository
+		config   domain.Config
 	}
 )
 
@@ -132,7 +132,7 @@ func (uc *tokenUseCase) Verify(ctx context.Context, accessToken string) (*domain
 		return result, nil, nil //nolint:nilerr // it's okay to return result without profile
 	}
 
-	if !result.Scope.Has(domain.ScopeEmail) && len(profile.Email) > 0 {
+	if !result.Scope.Has(domain.ScopeEmail) && profile.Email != nil {
 		profile.Email = nil
 	}
 

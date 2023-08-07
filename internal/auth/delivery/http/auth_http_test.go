@@ -31,11 +31,11 @@ type Dependencies struct {
 	authService   auth.UseCase
 	clients       client.Repository
 	clientService client.UseCase
-	config        *domain.Config
 	matcher       language.Matcher
 	profiles      profile.Repository
 	sessions      session.Repository
 	users         user.Repository
+	config        *domain.Config
 }
 
 func TestAuthorize(t *testing.T) {
@@ -113,7 +113,7 @@ func NewDependencies(tb testing.TB) Dependencies {
 	users := userrepo.NewMemoryUserRepository()
 	sessions := sessionrepo.NewMemorySessionRepository(*config)
 	profiles := profilerepo.NewMemoryProfileRepository()
-	authService := ucase.NewAuthUseCase(sessions, profiles, config)
+	authService := ucase.NewAuthUseCase(sessions, profiles, *config)
 	clientService := clientucase.NewClientUseCase(clients)
 
 	return Dependencies{
