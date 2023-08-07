@@ -58,7 +58,7 @@ func NewDependencies(tb testing.TB) Dependencies {
 	tokens := tokenrepo.NewMemoryTokenRepository()
 	profiles := profilerepo.NewMemoryProfileRepository()
 	tokenService := tokenucase.NewTokenUseCase(tokenucase.Config{
-		Config:   config,
+		Config:   *config,
 		Profiles: profiles,
 		Sessions: sessions,
 		Tokens:   tokens,

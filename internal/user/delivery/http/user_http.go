@@ -14,11 +14,11 @@ import (
 )
 
 type Handler struct {
-	config *domain.Config
+	config domain.Config
 	tokens token.UseCase
 }
 
-func NewHandler(tokens token.UseCase, config *domain.Config) *Handler {
+func NewHandler(tokens token.UseCase, config domain.Config) *Handler {
 	return &Handler{
 		tokens: tokens,
 		config: config,
@@ -78,8 +78,7 @@ func (h *Handler) handleFunc(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//nolint:errchkjson
-	_ = encoder.Encode(NewUserInformationResponse(userInfo,
-		userInfo.HasEmail() && tkn.Scope.Has(domain.ScopeEmail)))
+	_ = encoder.Encode(NewUserInformationResponse(userInfo, tkn.Scope.Has(domain.ScopeEmail)))
 
 	w.WriteHeader(http.StatusOK)
 }

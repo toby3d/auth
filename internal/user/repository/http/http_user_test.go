@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -39,14 +40,15 @@ func TestGet(t *testing.T) {
 	t.Parallel()
 
 	user := domain.TestUser(t)
+	user.Me = nil
 
 	srv := httptest.NewServer(testHandler(t, user))
 	t.Cleanup(srv.Close)
 
-	user.Me = domain.TestMe(t, srv.URL+"/")
+	user.IndieAuthMetadata, _ = url.Parse(srv.URL + user.IndieAuthMetadata.Path)
 
 	result, err := repository.NewHTTPUserRepository(srv.Client()).
-		Get(context.Background(), *user.Me)
+		Get(context.Background(), *domain.TestMe(t, srv.URL+"/"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -70,12 +72,12 @@ func testHandler(tb testing.TB, user *domain.User) http.Handler {
 			`<` + user.TokenEndpoint.String() + `>; rel="token_endpoint"`,
 		}, ", "))
 		w.Header().Set(common.HeaderContentType, common.MIMETextHTMLCharsetUTF8)
-		fmt.Fprintf(w, testBody, user.Name[0], user.URL[0].String(), user.Photo[0].String(), user.Email[0])
+		fmt.Fprintf(w, testBody, user.Name, user.URL, user.Photo, user.Email)
 	})
 	mux.HandleFunc(user.IndieAuthMetadata.Path, func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set(common.HeaderContentType, common.MIMEApplicationJSONCharsetUTF8)
 		fmt.Fprint(w, `{
-			"issuer": "`+user.Me.String()+`",
+			"issuer": "https://auth.example.com/",
 			"authorization_endpoint": "`+user.AuthorizationEndpoint.String()+`",
 			"token_endpoint": "`+user.TokenEndpoint.String()+`"
 		}`)

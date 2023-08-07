@@ -79,15 +79,15 @@ type (
 	}
 
 	AuthExchangeResponse struct {
-		Me      domain.Me            `json:"me"`
 		Profile *AuthProfileResponse `json:"profile,omitempty"`
+		Me      string               `json:"me"`
 	}
 
 	AuthProfileResponse struct {
-		Email *domain.Email `json:"email,omitempty"`
-		Photo *domain.URL   `json:"photo,omitempty"`
-		URL   *domain.URL   `json:"url,omitempty"`
-		Name  string        `json:"name,omitempty"`
+		Email string `json:"email,omitempty"`
+		Photo string `json:"photo,omitempty"`
+		URL   string `json:"url,omitempty"`
+		Name  string `json:"name,omitempty"`
 	}
 )
 
@@ -191,4 +191,28 @@ func (r *AuthExchangeRequest) bind(req *http.Request) error {
 	}
 
 	return nil
+}
+
+func NewAuthProfileResponse(in *domain.Profile) *AuthProfileResponse {
+	out := new(AuthProfileResponse)
+
+	if in == nil {
+		return out
+	}
+
+	out.Name = in.Name
+
+	if in.URL != nil {
+		out.URL = in.URL.String()
+	}
+
+	if in.Email != nil {
+		out.Email = in.Email.String()
+	}
+
+	if in.Photo != nil {
+		out.Photo = in.Photo.String()
+	}
+
+	return out
 }

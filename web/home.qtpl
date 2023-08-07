@@ -19,21 +19,23 @@
 
 {% func (p *HomePage) body() %}
 <header class="h-app h-x-app">
+  {% if p.Client.Logo != nil %}
   <img class="u-logo"
-       src="{%s p.Client.GetLogo().String() %}"
-       alt="{%s p.Client.GetName() %}"
+       src="{%s p.Client.Logo.String() %}"
+       alt="{%s p.Client.Name %}"
        crossorigin="anonymous"
        decoding="async"
        height="140"
        importance="high"
        referrerpolicy="no-referrer-when-downgrade"
        width="140">
+  {% endif %}
 
   <h1>
     <a class="p-name u-url"
-       href="{%s p.Client.GetURL().String() %}">
+       href="{%s p.Client.URL.String() %}">
 
-      {%s p.Client.GetName() %}
+      {%s p.Client.Name %}
     </a>
   </h1>
 </header>

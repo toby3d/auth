@@ -27,4 +27,29 @@ const (
 	HeaderXCSRFToken               string = "X-CSRF-Token"
 )
 
+const (
+	HApp  string = "h-app"
+	HCard string = "h-card"
+	HXApp string = "h-x-app"
+)
+
+const (
+	PropertyEmail string = "email"
+	PropertyLogo  string = "logo"
+	PropertyName  string = "name"
+	PropertyPhoto string = "photo"
+	PropertyURL   string = "url"
+)
+
+const (
+	RelAuthn                 string = "authn"
+	RelAuthorizationEndpoint string = "authorization_endpoint"
+	RelIndieAuthMetadata     string = "indieauth-metadata"
+	RelMicropub              string = "micropub"
+	RelMicrosub              string = "microsub"
+	RelRedirectURI           string = "redirect_uri"
+	RelTicketEndpoint        string = "ticket_endpoint"
+	RelTokenEndpoint         string = "token_endpoint"
+)
+
 const Und string = "und"

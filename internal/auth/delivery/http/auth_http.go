@@ -268,18 +268,8 @@ func (h *Handler) handleExchange(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var userInfo *AuthProfileResponse
-	if profile != nil {
-		userInfo = &AuthProfileResponse{
-			Email: profile.GetEmail(),
-			Photo: &domain.URL{URL: profile.GetPhoto()},
-			URL:   &domain.URL{URL: profile.GetURL()},
-			Name:  profile.GetName(),
-		}
-	}
-
 	_ = encoder.Encode(&AuthExchangeResponse{
-		Me:      *me,
-		Profile: userInfo,
+		Me:      me.String(),
+		Profile: NewAuthProfileResponse(profile),
 	})
 }

@@ -75,7 +75,7 @@ func testHandler(tb testing.TB, client domain.Client) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set(common.HeaderContentType, common.MIMETextHTMLCharsetUTF8)
-		w.Header().Set(common.HeaderLink, `<`+client.RedirectURI[0].String()+`>; rel="redirect_uri"`)
-		fmt.Fprintf(w, testBody, client.Name[0], client.URL[0], client.Logo[0], client.RedirectURI[1])
+		w.Header().Set(common.HeaderLink, `<`+client.RedirectURI[1].String()+`>; rel="redirect_uri"`)
+		fmt.Fprintf(w, testBody, client.Name, client.URL, client.Logo, client.RedirectURI[0])
 	})
 }

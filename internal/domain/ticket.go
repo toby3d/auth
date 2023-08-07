@@ -10,7 +10,7 @@ type Ticket struct {
 	Resource *url.URL
 
 	// The access token should be used when acting on behalf of this URL.
-	Subject *Me
+	Subject Me
 
 	// A random string that can be redeemed for an access token.
 	Ticket string
@@ -22,7 +22,7 @@ func TestTicket(tb testing.TB) *Ticket {
 
 	return &Ticket{
 		Resource: &url.URL{Scheme: "https", Host: "alice.example.com", Path: "/private/"},
-		Subject:  TestMe(tb, "https://bob.example.com/"),
+		Subject:  *TestMe(tb, "https://bob.example.com/"),
 		Ticket:   "32985723984723985792834",
 	}
 }

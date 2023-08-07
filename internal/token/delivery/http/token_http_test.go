@@ -17,9 +17,6 @@ import (
 	profilerepo "source.toby3d.me/toby3d/auth/internal/profile/repository/memory"
 	"source.toby3d.me/toby3d/auth/internal/session"
 	sessionrepo "source.toby3d.me/toby3d/auth/internal/session/repository/memory"
-	"source.toby3d.me/toby3d/auth/internal/ticket"
-	ticketrepo "source.toby3d.me/toby3d/auth/internal/ticket/repository/memory"
-	ticketucase "source.toby3d.me/toby3d/auth/internal/ticket/usecase"
 	"source.toby3d.me/toby3d/auth/internal/token"
 	delivery "source.toby3d.me/toby3d/auth/internal/token/delivery/http"
 	tokenrepo "source.toby3d.me/toby3d/auth/internal/token/repository/memory"
@@ -27,15 +24,13 @@ import (
 )
 
 type Dependencies struct {
-	client        *http.Client
-	config        *domain.Config
-	profiles      profile.Repository
-	sessions      session.Repository
-	tickets       ticket.Repository
-	ticketService ticket.UseCase
-	token         *domain.Token
-	tokens        token.Repository
-	tokenService  token.UseCase
+	client       *http.Client
+	config       *domain.Config
+	profiles     profile.Repository
+	sessions     session.Repository
+	token        *domain.Token
+	tokens       token.Repository
+	tokenService token.UseCase
 }
 
 /* TODO(toby3d)
@@ -55,7 +50,7 @@ func TestIntrospection(t *testing.T) {
 	req.Header.Set(common.HeaderContentType, common.MIMEApplicationForm)
 
 	w := httptest.NewRecorder()
-	delivery.NewHandler(deps.tokenService, deps.ticketService, deps.config).
+	delivery.NewHandler(deps.tokenService, *deps.config).
 		ServeHTTP(w, req)
 
 	resp := w.Result()
@@ -89,7 +84,7 @@ func TestRevocation(t *testing.T) {
 	req.Header.Set(common.HeaderAccept, common.MIMEApplicationJSON)
 
 	w := httptest.NewRecorder()
-	delivery.NewHandler(deps.tokenService, deps.ticketService, deps.config).
+	delivery.NewHandler(deps.tokenService, *deps.config).
 		ServeHTTP(w, req)
 
 	resp := w.Result()
@@ -126,25 +121,21 @@ func NewDependencies(tb testing.TB) Dependencies {
 	token := domain.TestToken(tb)
 	profiles := profilerepo.NewMemoryProfileRepository()
 	sessions := sessionrepo.NewMemorySessionRepository(*config)
-	tickets := ticketrepo.NewMemoryTicketRepository(*config)
 	tokens := tokenrepo.NewMemoryTokenRepository()
-	ticketService := ticketucase.NewTicketUseCase(tickets, client, config)
 	tokenService := tokenucase.NewTokenUseCase(tokenucase.Config{
-		Config:   config,
+		Config:   *config,
 		Profiles: profiles,
 		Sessions: sessions,
 		Tokens:   tokens,
 	})
 
 	return Dependencies{
-		client:        client,
-		config:        config,
-		profiles:      profiles,
-		sessions:      sessions,
-		tickets:       tickets,
-		ticketService: ticketService,
-		token:         token,
-		tokens:        tokens,
-		tokenService:  tokenService,
+		client:       client,
+		config:       config,
+		profiles:     profiles,
+		sessions:     sessions,
+		token:        token,
+		tokens:       tokens,
+		tokenService: tokenService,
 	}
 }
