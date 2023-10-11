@@ -8,8 +8,6 @@ github.com/andybalholm/brotli
 ## explicit; go 1.17
 github.com/brianvoe/gofakeit/v6
 github.com/brianvoe/gofakeit/v6/data
-# github.com/caarlos0/env/v6 v6.10.1
-## explicit; go 1.17
 # github.com/caarlos0/env/v7 v7.1.0
 ## explicit; go 1.17
 github.com/caarlos0/env/v7
@@ -128,7 +126,7 @@ go4.org/intern
 # go4.org/unsafe/assume-no-moving-gc v0.0.0-20230221090011-e4bae7ad2296
 ## explicit; go 1.11
 go4.org/unsafe/assume-no-moving-gc
-# golang.org/x/crypto v0.7.0
+# golang.org/x/crypto v0.14.0
 ## explicit; go 1.17
 golang.org/x/crypto/curve25519
 golang.org/x/crypto/curve25519/internal/field
@@ -141,17 +139,16 @@ golang.org/x/exp/slices
 # golang.org/x/mod v0.9.0
 ## explicit; go 1.17
 golang.org/x/mod/semver
-# golang.org/x/net v0.8.0
+# golang.org/x/net v0.17.0
 ## explicit; go 1.17
 golang.org/x/net/html
 golang.org/x/net/html/atom
-# golang.org/x/sys v0.6.0
+# golang.org/x/sys v0.13.0
 ## explicit; go 1.17
 golang.org/x/sys/execabs
-golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/text v0.8.0
+# golang.org/x/text v0.13.0
 ## explicit; go 1.17
 golang.org/x/text/feature/plural
 golang.org/x/text/internal
