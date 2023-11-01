@@ -33,8 +33,8 @@ def go_dependencies():
         name = "com_github_lestrrat_go_blackmagic",
         build_file_proto_mode = "disable_global",
         importpath = "github.com/lestrrat-go/blackmagic",
-        sum = "h1:lS5Zts+5HIC/8og6cGHb0uCcNCa3OUt1ygh3Qz2Fe80=",
-        version = "v1.0.1",
+        sum = "h1:Cg2gVSc9h7sz9NOByczrbUvLopQmXrfFx//N+AkAr5k=",
+        version = "v1.0.2",
     )
     go_repository(
         name = "com_github_lestrrat_go_httpcc",
@@ -122,8 +122,8 @@ def go_dependencies():
         name = "org_golang_x_crypto",
         build_file_proto_mode = "disable_global",
         importpath = "golang.org/x/crypto",
-        sum = "h1:LF6fAI+IutBocDJ2OT0Q1g8plpYljMZ4+lty+dsqw3g=",
-        version = "v0.9.0",
+        sum = "h1:wBqGXzWJW6m1XrIKlAH0Hs1JJ7+9KBwnIO8v66Q9cHc=",
+        version = "v0.14.0",
     )
     go_repository(
         name = "org_golang_x_mod",
@@ -152,23 +152,23 @@ def go_dependencies():
         name = "org_golang_x_sys",
         build_file_proto_mode = "disable_global",
         importpath = "golang.org/x/sys",
-        sum = "h1:EBmGv8NaZBZTWvrbjNoL6HVt+IVy3QDQpJs7VRIw3tU=",
-        version = "v0.8.0",
+        sum = "h1:Af8nKPmuFypiUBjVoU9V20FiaFXOcuZI21p0ycVYYGE=",
+        version = "v0.13.0",
     )
     go_repository(
         name = "org_golang_x_term",
         build_file_proto_mode = "disable_global",
         importpath = "golang.org/x/term",
-        sum = "h1:n5xxQn2i3PC0yLAbjTpNT85q/Kgzcr2gIoX9OrJUols=",
-        version = "v0.8.0",
+        sum = "h1:bb+I9cTfFazGW51MZqBVmZy7+JEJMouUHTUSKVQLBek=",
+        version = "v0.13.0",
     )
 
     go_repository(
         name = "org_golang_x_text",
         build_file_proto_mode = "disable_global",
         importpath = "golang.org/x/text",
-        sum = "h1:2sjJmO8cDvYveuX97RDLsxlyUxLl+GHoLxBiRdHllBE=",
-        version = "v0.9.0",
+        sum = "h1:ablQoSUd0tRdKxZewP80B+BaqeKJuVhuRxj/dkrun3k=",
+        version = "v0.13.0",
     )
     go_repository(
         name = "org_golang_x_tools",
