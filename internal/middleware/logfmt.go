@@ -2,13 +2,12 @@ package middleware
 
 import (
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
 	"sync/atomic"
 	"time"
-
-	"golang.org/x/exp/slog" // TODO(toby3d): use "log/slog" after go1.21 release
 )
 
 type (
