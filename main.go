@@ -23,7 +23,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/caarlos0/env/v7"
+	"github.com/caarlos0/env/v9"
 	"github.com/jmoiron/sqlx"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
@@ -47,11 +47,6 @@ import (
 	sessionmemoryrepo "source.toby3d.me/toby3d/auth/internal/session/repository/memory"
 	sessionsqlite3repo "source.toby3d.me/toby3d/auth/internal/session/repository/sqlite3"
 	sessionucase "source.toby3d.me/toby3d/auth/internal/session/usecase"
-	"source.toby3d.me/toby3d/auth/internal/ticket"
-	tickethttpdelivery "source.toby3d.me/toby3d/auth/internal/ticket/delivery/http"
-	ticketmemoryrepo "source.toby3d.me/toby3d/auth/internal/ticket/repository/memory"
-	ticketsqlite3repo "source.toby3d.me/toby3d/auth/internal/ticket/repository/sqlite3"
-	ticketucase "source.toby3d.me/toby3d/auth/internal/ticket/usecase"
 	"source.toby3d.me/toby3d/auth/internal/token"
 	tokenhttpdelivery "source.toby3d.me/toby3d/auth/internal/token/delivery/http"
 	tokenmemoryrepo "source.toby3d.me/toby3d/auth/internal/token/repository/memory"
@@ -67,7 +62,6 @@ type (
 		clients  client.UseCase
 		matcher  language.Matcher
 		sessions session.UseCase
-		tickets  ticket.UseCase
 		profiles profile.UseCase
 		tokens   token.UseCase
 		static   fs.FS
@@ -77,7 +71,6 @@ type (
 		Client   *http.Client
 		Clients  client.Repository
 		Sessions session.Repository
-		Tickets  ticket.Repository
 		Tokens   token.Repository
 		Profiles profile.Repository
 		Static   fs.FS
@@ -94,18 +87,14 @@ var (
 	// NOTE(toby3d): write logs in stdout, see: https://12factor.net/logs
 	logger = log.New(os.Stdout, "IndieAuth\t", log.Lmsgprefix|log.LstdFlags|log.LUTC)
 	// NOTE(toby3d): read configuration from environment, see: https://12factor.net/config
-	config          = new(domain.Config)
-	indieAuthClient = &domain.Client{
-		ID:          domain.ClientID{},
-		Logo:        make([]*url.URL, 1),
-		RedirectURI: make([]*url.URL, 1),
-		URL:         make([]*url.URL, 1),
-		Name:        make([]string, 0),
-	}
+	config = new(domain.Config)
 )
 
 //nolint:gochecknoglobals
-var cpuProfilePath, memProfilePath string
+var (
+	indieAuthClient                *domain.Client
+	cpuProfilePath, memProfilePath string
+)
 
 //go:embed web/static/*
 var static embed.FS
@@ -116,35 +105,27 @@ func init() {
 	flag.StringVar(&memProfilePath, "memprofile", "", "set path to saving pprof memory profile")
 	flag.Parse()
 
-	if err := env.Parse(config, env.Options{
-		Prefix:                "AUTH_",
-		TagName:               "env",
-		UseFieldNameByDefault: true,
-	}); err != nil {
+	if err := env.ParseWithOptions(config, env.Options{Prefix: "INDIEAUTH_"}); err != nil {
 		logger.Fatalln(err)
 	}
 
 	// NOTE(toby3d): The server instance itself can be as a client.
-	rootURL := config.Server.GetRootURL()
-	indieAuthClient.Name = []string{config.Name}
+	rootUrl, err := url.Parse(config.Server.GetRootURL())
+	if err != nil {
+		logger.Fatalln(err)
+	}
 
-	cid, err := domain.ParseClientID(rootURL)
+	cid, err := domain.ParseClientID(rootUrl.String())
 	if err != nil {
 		logger.Fatalln("fail to read config:", err)
 	}
 
-	indieAuthClient.ID = *cid
-
-	if indieAuthClient.URL[0], err = url.Parse(rootURL); err != nil {
-		logger.Fatalln("cannot parse root URL as client URL:", err)
-	}
-
-	if indieAuthClient.Logo[0], err = url.Parse(rootURL + "icon.svg"); err != nil {
-		logger.Fatalln("cannot parse root URL as client URL:", err)
-	}
-
-	if indieAuthClient.RedirectURI[0], err = url.Parse(rootURL + "callback"); err != nil {
-		logger.Fatalln("cannot parse root URL as client URL:", err)
+	indieAuthClient = &domain.Client{
+		Logo:        rootUrl.JoinPath("icon.svg"),
+		URL:         rootUrl,
+		ID:          *cid,
+		Name:        config.Name,
+		RedirectURI: []*url.URL{rootUrl.JoinPath("callback")},
 	}
 }
 
@@ -160,6 +141,9 @@ func main() {
 	}
 
 	switch strings.ToLower(config.Database.Type) {
+	default:
+		opts.Tokens = tokenmemoryrepo.NewMemoryTokenRepository()
+		opts.Sessions = sessionmemoryrepo.NewMemorySessionRepository(*config)
 	case "sqlite3":
 		store, err := sqlx.Open("sqlite", config.Database.Path)
 		if err != nil {
@@ -172,13 +156,6 @@ func main() {
 
 		opts.Tokens = tokensqlite3repo.NewSQLite3TokenRepository(store)
 		opts.Sessions = sessionsqlite3repo.NewSQLite3SessionRepository(store)
-		opts.Tickets = ticketsqlite3repo.NewSQLite3TicketRepository(store, config)
-	case "memory":
-		opts.Tokens = tokenmemoryrepo.NewMemoryTokenRepository()
-		opts.Sessions = sessionmemoryrepo.NewMemorySessionRepository(*config)
-		opts.Tickets = ticketmemoryrepo.NewMemoryTicketRepository(*config)
-	default:
-		log.Fatalln("unsupported database type, use 'memory' or 'sqlite3'")
 	}
 
 	go opts.Sessions.GC()
@@ -186,9 +163,7 @@ func main() {
 	opts.Client = new(http.Client)
 	opts.Clients = clienthttprepo.NewHTTPClientRepository(opts.Client)
 	opts.Profiles = profilehttprepo.NewHTPPClientRepository(opts.Client)
-
 	app := NewApp(opts)
-
 	server := &http.Server{
 		Addr:              config.Server.GetAddress(),
 		BaseContext:       nil,
@@ -225,7 +200,12 @@ func main() {
 		logger.Printf("started at %s, available at %s", config.Server.GetAddress(),
 			config.Server.GetRootURL())
 
-		err = server.ListenAndServe()
+		if config.Server.CertificateFile != "" && config.Server.KeyFile != "" {
+			err = server.ListenAndServeTLS(config.Server.CertificateFile, config.Server.KeyFile)
+		} else {
+			err = server.ListenAndServe()
+		}
+
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logger.Fatalln("cannot listen and serve:", err)
 		}
@@ -257,14 +237,13 @@ func main() {
 func NewApp(opts NewAppOptions) *App {
 	return &App{
 		static:   opts.Static,
-		auth:     authucase.NewAuthUseCase(opts.Sessions, opts.Profiles, config),
+		auth:     authucase.NewAuthUseCase(opts.Sessions, opts.Profiles, *config),
 		clients:  clientucase.NewClientUseCase(opts.Clients),
 		matcher:  language.NewMatcher(message.DefaultCatalog.Languages()),
 		profiles: profileucase.NewProfileUseCase(opts.Profiles),
 		sessions: sessionucase.NewSessionUseCase(opts.Sessions),
-		tickets:  ticketucase.NewTicketUseCase(opts.Tickets, opts.Client, config),
 		tokens: tokenucase.NewTokenUseCase(tokenucase.Config{
-			Config:   config,
+			Config:   *config,
 			Profiles: opts.Profiles,
 			Sessions: opts.Sessions,
 			Tokens:   opts.Tokens,
@@ -324,37 +303,36 @@ func (app *App) Handler() http.Handler {
 			domain.CodeChallengeMethodS512,
 		},
 		AuthorizationResponseIssParameterSupported: true,
-	}).Handler()
-	health := healthhttpdelivery.NewHandler().Handler()
+	})
+	health := healthhttpdelivery.NewHandler()
 	auth := authhttpdelivery.NewHandler(authhttpdelivery.NewHandlerOptions{
 		Auth:     app.auth,
 		Clients:  app.clients,
 		Config:   *config,
 		Matcher:  app.matcher,
 		Profiles: app.profiles,
-	}).Handler()
-	token := tokenhttpdelivery.NewHandler(app.tokens, app.tickets, config).Handler()
+	})
+	token := tokenhttpdelivery.NewHandler(app.tokens, *config)
 	client := clienthttpdelivery.NewHandler(clienthttpdelivery.NewHandlerOptions{
 		Client:  *indieAuthClient,
 		Config:  *config,
 		Matcher: app.matcher,
 		Tokens:  app.tokens,
-	}).Handler()
-	user := userhttpdelivery.NewHandler(app.tokens, config).Handler()
-	ticket := tickethttpdelivery.NewHandler(app.tickets, app.matcher, *config).Handler()
+	})
+	user := userhttpdelivery.NewHandler(app.tokens, *config)
 	staticHandler := http.FileServer(http.FS(app.static))
 
 	return http.HandlerFunc(middleware.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		head, tail := urlutil.ShiftPath(r.URL.Path)
 
 		switch head {
-		default:
+		default: // NOTE(toby3d): static or 404
 			staticHandler.ServeHTTP(w, r)
-		case "", "callback":
+		case "", "callback": // NOTE(toby3d): self-client
 			client.ServeHTTP(w, r)
 		case "token", "introspect", "revocation":
 			token.ServeHTTP(w, r)
-		case ".well-known":
+		case ".well-known": // NOTE(toby3d): public server config
 			r.URL.Path = tail
 
 			if head, _ = urlutil.ShiftPath(r.URL.Path); head == "oauth-authorization-server" {
@@ -374,10 +352,6 @@ func (app *App) Handler() http.Handler {
 			r.URL.Path = tail
 
 			user.ServeHTTP(w, r)
-		case "ticket":
-			r.URL.Path = tail
-
-			ticket.ServeHTTP(w, r)
 		}
 	}).Intercept(middleware.LogFmt()))
 }

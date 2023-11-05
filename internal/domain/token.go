@@ -20,19 +20,19 @@ type (
 		Expiry       time.Time
 		ClientID     ClientID
 		Me           Me
-		Scope        Scopes
 		AccessToken  string
 		RefreshToken string
+		Scope        Scopes
 	}
 
 	// NewTokenOptions contains options for NewToken function.
 	NewTokenOptions struct {
-		Expiration  time.Duration
 		Issuer      ClientID
 		Subject     Me
+		Algorithm   string
 		Scope       Scopes
 		Secret      []byte
-		Algorithm   string
+		Expiration  time.Duration
 		NonceLength uint8
 	}
 )

@@ -6,11 +6,10 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"net/url"
 	"reflect"
 	"strconv"
 	"strings"
-
-	http "github.com/valyala/fasthttp"
 )
 
 type (
@@ -21,9 +20,10 @@ type (
 	Unmarshaler interface {
 		UnmarshalForm(v []byte) error
 	}
+
 	Decoder struct {
+		args url.Values
 		tag  string
-		args *http.Args
 	}
 )
 
@@ -38,9 +38,7 @@ func NewDecoder(r io.Reader) *Decoder {
 	defer buf.Reset()
 
 	_, _ = buf.ReadFrom(r)
-
-	args := http.AcquireArgs()
-	args.ParseBytes(buf.Bytes())
+	args, _ := url.ParseQuery(buf.String())
 
 	return &Decoder{
 		tag:  "form",
@@ -94,40 +92,75 @@ func (d Decoder) Decode(dst any) (err error) {
 }
 
 func (d Decoder) decode(key string, dst reflect.Value, opts tagOptions) error {
-	src := http.AcquireArgs()
-	defer http.ReleaseArgs(src)
-	d.args.CopyTo(src)
+	src := d.args
 
 	if keyIndex := strings.LastIndex(key, ","); keyIndex != -1 {
 		if index, err := strconv.Atoi(key[keyIndex+1:]); err == nil {
 			key = key[:keyIndex]
 
-			src.Reset()
-			src.SetBytesV(key, d.args.PeekMulti(key)[index])
+			src = make(url.Values)
+			src.Set(key, d.args[key][index])
 		}
 	}
 
 	switch dst.Kind() {
 	case reflect.Bool:
-		dst.SetBool(src.GetBool(key))
+		out, err := strconv.ParseBool(src.Get(key))
+		if err != nil {
+			return err
+		}
+
+		dst.SetBool(out)
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		dst.SetInt(int64(src.GetUfloatOrZero(key)))
+		out, err := strconv.ParseInt(src.Get(key), 10, 64)
+		if err != nil {
+			return err
+		}
+
+		dst.SetInt(out)
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		dst.SetUint(uint64(src.GetUintOrZero(key)))
+		out, err := strconv.ParseUint(src.Get(key), 10, 64)
+		if err != nil {
+			return err
+		}
+
+		dst.SetUint(out)
 	case reflect.Float32, reflect.Float64:
-		dst.SetFloat(src.GetUfloatOrZero(key))
+		out, err := strconv.ParseFloat(src.Get(key), 64)
+		if err != nil {
+			return err
+		}
+
+		dst.SetFloat(out)
 	// case reflect.Array: // TODO(toby3d)
 	// case reflect.Interface: // TODO(toby3d)
 	case reflect.Slice:
 		// NOTE(toby3d): copy raw []byte value as is
 		if dst.Type().Elem().Kind() == reflect.Uint8 {
-			dst.SetBytes(src.Peek(key))
+			dst.SetBytes([]byte(src.Get(key)))
+
+			return nil
+		}
+
+		// NOTE(toby3d): if contains UnmarshalForm method
+		for i := 0; i < dst.Addr().NumMethod(); i++ {
+			if dst.Addr().Type().Method(i).Name != methodName {
+				continue
+			}
+
+			in := make([]reflect.Value, 1)
+			in[0] = reflect.ValueOf([]byte(src.Get(key)))
+
+			out := dst.Addr().Method(i).Call(in)
+			if len(out) > 0 && out[0].Interface() != nil && !opts.Contains(tagOmitempty) {
+				return out[0].Interface().(error)
+			}
 
 			return nil
 		}
 
 		if dst.IsNil() {
-			slice := d.args.PeekMulti(key)
+			slice := d.args[key]
 			dst.Set(reflect.MakeSlice(dst.Type(), len(slice), cap(slice)))
 		}
 
@@ -137,7 +170,7 @@ func (d Decoder) decode(key string, dst reflect.Value, opts tagOptions) error {
 			}
 		}
 	case reflect.String:
-		dst.SetString(string(src.Peek(key)))
+		dst.SetString(string(src.Get(key)))
 	case reflect.Pointer:
 		if dst.IsNil() {
 			dst.Set(reflect.New(dst.Type().Elem()))
@@ -150,7 +183,7 @@ func (d Decoder) decode(key string, dst reflect.Value, opts tagOptions) error {
 			}
 
 			in := make([]reflect.Value, 1)
-			in[0] = reflect.ValueOf(src.Peek(key))
+			in[0] = reflect.ValueOf([]byte(src.Get(key)))
 
 			out := dst.Method(i).Call(in)
 			if len(out) > 0 && out[0].Interface() != nil && !opts.Contains(tagOmitempty) {
@@ -171,7 +204,7 @@ func (d Decoder) decode(key string, dst reflect.Value, opts tagOptions) error {
 			}
 
 			in := make([]reflect.Value, 1)
-			in[0] = reflect.ValueOf(src.Peek(key))
+			in[0] = reflect.ValueOf([]byte(src.Get(key)))
 
 			out := dst.Addr().Method(i).Call(in)
 			if len(out) > 0 && out[0].Interface() != nil && !opts.Contains(tagOmitempty) {

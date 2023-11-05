@@ -8,25 +8,17 @@ import (
 	"net/http"
 	"net/url"
 
+	"golang.org/x/exp/slices"
+	"willnorris.com/go/microformats"
+
+	"source.toby3d.me/toby3d/auth/internal/common"
 	"source.toby3d.me/toby3d/auth/internal/domain"
-	"source.toby3d.me/toby3d/auth/internal/httputil"
 	"source.toby3d.me/toby3d/auth/internal/profile"
 )
 
 type httpProfileRepository struct {
 	client *http.Client
 }
-
-const (
-	ErrPrefix                string = "http"
-	DefaultMaxRedirectsCount int    = 10
-
-	hCard         string = "h-card"
-	propertyEmail string = "email"
-	propertyName  string = "name"
-	propertyPhoto string = "photo"
-	propertyURL   string = "url"
-)
 
 func NewHTPPClientRepository(client *http.Client) profile.Repository {
 	return &httpProfileRepository{
@@ -39,64 +31,69 @@ func (repo *httpProfileRepository) Create(_ context.Context, _ domain.Me, _ doma
 	return nil
 }
 
-//nolint:cyclop
-func (repo *httpProfileRepository) Get(ctx context.Context, me domain.Me) (*domain.Profile, error) {
+//nolint:cyclop,funlen
+func (repo *httpProfileRepository) Get(_ context.Context, me domain.Me) (*domain.Profile, error) {
 	resp, err := repo.client.Get(me.String())
 	if err != nil {
-		return nil, fmt.Errorf("%s: cannot fetch user by me: %w", ErrPrefix, err)
+		return nil, fmt.Errorf("%w: cannot fetch user by me: %w", profile.ErrNotExist, err)
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("cannot read response body: %w", err)
+		return nil, fmt.Errorf("%w: cannot read response body: %w", profile.ErrNotExist, err)
 	}
 
-	buf := bytes.NewReader(body)
-	result := domain.NewProfile()
+	mf2 := microformats.Parse(bytes.NewReader(body), resp.Request.URL)
+	out := new(domain.Profile)
 
-	for _, name := range httputil.ExtractProperty(buf, me.URL(), hCard, propertyName) {
-		if n, ok := name.(string); ok {
-			result.Name = append(result.Name, n)
+	for i := range mf2.Items {
+		if !slices.Contains(mf2.Items[i].Type, common.HCard) {
+			continue
 		}
+
+		parseProfile(mf2.Items[i].Properties, out)
 	}
 
-	for _, rawEmail := range httputil.ExtractProperty(buf, me.URL(), hCard, propertyEmail) {
-		email, ok := rawEmail.(string)
+	return out, nil
+}
+
+func parseProfile(src map[string][]any, dst *domain.Profile) {
+	for _, val := range src[common.PropertyName] {
+		v, ok := val.(string)
 		if !ok {
 			continue
 		}
 
-		if e, err := domain.ParseEmail(email); err == nil {
-			result.Email = append(result.Email, e)
-		}
+		dst.Name = v
+
+		break
 	}
 
-	for _, rawURL := range httputil.ExtractProperty(buf, me.URL(), hCard, propertyURL) {
-		rawURL, ok := rawURL.(string)
+	for _, val := range src[common.PropertyURL] {
+		v, ok := val.(string)
 		if !ok {
 			continue
 		}
 
-		if u, err := url.Parse(rawURL); err == nil {
-			result.URL = append(result.URL, u)
+		var err error
+		if dst.URL, err = url.Parse(v); err != nil {
+			continue
 		}
+
+		break
 	}
 
-	for _, rawPhoto := range httputil.ExtractProperty(buf, me.URL(), hCard, propertyPhoto) {
-		photo, ok := rawPhoto.(string)
+	for _, val := range src[common.PropertyPhoto] {
+		v, ok := val.(string)
 		if !ok {
 			continue
 		}
 
-		if p, err := url.Parse(photo); err == nil {
-			result.Photo = append(result.Photo, p)
+		var err error
+		if dst.Photo, err = url.Parse(v); err != nil {
+			continue
 		}
-	}
 
-	// TODO(toby3d): create method like result.Empty()?
-	if result.GetName() == "" && result.GetURL() == nil && result.GetPhoto() == nil && result.GetEmail() == nil {
-		return nil, profile.ErrNotExist
+		break
 	}
-
-	return result, nil
 }

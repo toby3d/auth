@@ -28,6 +28,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/rsa"
+	"errors"
 	"fmt"
 	"io"
 	"reflect"
@@ -107,6 +108,18 @@ const (
 var _ = fmtInvalid
 var _ = fmtMax
 
+func validateKeyBeforeUse(key interface{}) error {
+	jwkKey, ok := key.(jwk.Key)
+	if !ok {
+		converted, err := jwk.FromRaw(key)
+		if err != nil {
+			return fmt.Errorf(`could not convert key of type %T to jwk.Key for validation: %w`, key, err)
+		}
+		jwkKey = converted
+	}
+	return jwkKey.Validate()
+}
+
 // Sign generates a JWS message for the given payload and returns
 // it in serialized form, which can be in either compact or
 // JSON format. Default is compact.
@@ -125,11 +138,20 @@ var _ = fmtMax
 // Read the documentation for `jws.WithKey()` to learn more about the
 // possible values that can be used for `alg` and `key`.
 //
+// You may create JWS messages with the "none" (jwa.NoSignature) algorithm
+// if you use the `jws.WithInsecureNoSignature()` option. This option
+// can be combined with one or more signature keys, as well as the
+// `jws.WithJSON()` option to generate multiple signatures (though
+// the usefulness of such constructs is highly debatable)
+//
+// Note that this library does not allow you to successfully call `jws.Verify()` on
+// signatures with the "none" algorithm. To parse these, use `jws.Parse()` instead.
+//
 // If you want to use a detached payload, use `jws.WithDetachedPayload()` as
 // one of the options. When you use this option, you must always set the
 // first parameter (`payload`) to `nil`, or the function will return an error
 //
-// You may also wantt to look at how to pass protected headers to the
+// You may also want to look at how to pass protected headers to the
 // signing process, as you will likely be required to set the `b64` field
 // when using detached payload.
 //
@@ -139,11 +161,20 @@ func Sign(payload []byte, options ...SignOption) ([]byte, error) {
 	format := fmtCompact
 	var signers []*payloadSigner
 	var detached bool
+	var noneSignature *payloadSigner
+	var validateKey bool
 	for _, option := range options {
 		//nolint:forcetypeassert
 		switch option.Ident() {
 		case identSerialization{}:
 			format = option.Value().(int)
+		case identInsecureNoSignature{}:
+			data := option.Value().(*withInsecureNoSignature)
+			// only the last one is used (we overwrite previous values)
+			noneSignature = &payloadSigner{
+				signer:    noneSigner{},
+				protected: data.protected,
+			}
 		case identKey{}:
 			data := option.Value().(*withKey)
 
@@ -151,6 +182,12 @@ func Sign(payload []byte, options ...SignOption) ([]byte, error) {
 			if !ok {
 				return nil, fmt.Errorf(`jws.Sign: expected algorithm to be of type jwa.SignatureAlgorithm but got (%[1]q, %[1]T)`, data.alg)
 			}
+
+			// No, we don't accept "none" here.
+			if alg == jwa.NoSignature {
+				return nil, fmt.Errorf(`jws.Sign: "none" (jwa.NoSignature) cannot be used with jws.WithKey`)
+			}
+
 			signer, err := makeSigner(alg, data.key, data.public, data.protected)
 			if err != nil {
 				return nil, fmt.Errorf(`jws.Sign: failed to create signer: %w`, err)
@@ -162,7 +199,13 @@ func Sign(payload []byte, options ...SignOption) ([]byte, error) {
 				return nil, fmt.Errorf(`jws.Sign: payload must be nil when jws.WithDetachedPayload() is specified`)
 			}
 			payload = option.Value().([]byte)
+		case identValidateKey{}:
+			validateKey = option.Value().(bool)
 		}
+	}
+
+	if noneSignature != nil {
+		signers = append(signers, noneSignature)
 	}
 
 	lsigner := len(signers)
@@ -212,6 +255,12 @@ func Sign(payload []byte, options ...SignOption) ([]byte, error) {
 			// cheat. FIXXXXXXMEEEEEE
 			detached: detached,
 		}
+
+		if validateKey {
+			if err := validateKeyBeforeUse(signer.key); err != nil {
+				return nil, fmt.Errorf(`jws.Verify: %w`, err)
+			}
+		}
 		_, _, err := sig.Sign(payload, signer.signer, signer.key)
 		if err != nil {
 			return nil, fmt.Errorf(`failed to generate signature for signer #%d (alg=%s): %w`, i, signer.Algorithm(), err)
@@ -251,11 +300,19 @@ var allowNoneWhitelist = jwk.WhitelistFunc(func(string) bool {
 // `Verifier` in `verify` subpackage, and call `Verify` method on it.
 // If you need to access signatures and JOSE headers in a JWS message,
 // use `Parse` function to get `Message` object.
+//
+// Because the use of "none" (jwa.NoSignature) algorithm is strongly discouraged,
+// this function DOES NOT consider it a success when `{"alg":"none"}` is
+// encountered in the message (it would also be counter intuitive when the code says
+// you _verified_ something when in fact it did no such thing). If you want to
+// accept messages with "none" signature algorithm, use `jws.Parse` to get the
+// raw JWS message.
 func Verify(buf []byte, options ...VerifyOption) ([]byte, error) {
 	var dst *Message
 	var detachedPayload []byte
 	var keyProviders []KeyProvider
 	var keyUsed interface{}
+	var validateKey bool
 
 	ctx := context.Background()
 
@@ -282,6 +339,8 @@ func Verify(buf []byte, options ...VerifyOption) ([]byte, error) {
 			keyUsed = option.Value()
 		case identContext{}:
 			ctx = option.Value().(context.Context)
+		case identValidateKey{}:
+			validateKey = option.Value().(bool)
 		default:
 			return nil, fmt.Errorf(`invalid jws.VerifyOption %q passed`, `With`+strings.TrimPrefix(fmt.Sprintf(`%T`, option.Ident()), `jws.ident`))
 		}
@@ -316,6 +375,7 @@ func Verify(buf []byte, options ...VerifyOption) ([]byte, error) {
 	verifyBuf := pool.GetBytesBuffer()
 	defer pool.ReleaseBytesBuffer(verifyBuf)
 
+	var errs []error
 	for i, sig := range msg.signatures {
 		verifyBuf.Reset()
 
@@ -352,12 +412,19 @@ func Verify(buf []byte, options ...VerifyOption) ([]byte, error) {
 				//nolint:forcetypeassert
 				alg := pair.alg.(jwa.SignatureAlgorithm)
 				key := pair.key
+
+				if validateKey {
+					if err := validateKeyBeforeUse(key); err != nil {
+						return nil, fmt.Errorf(`jws.Verify: %w`, err)
+					}
+				}
 				verifier, err := NewVerifier(alg)
 				if err != nil {
 					return nil, fmt.Errorf(`failed to create verifier for algorithm %q: %w`, alg, err)
 				}
 
 				if err := verifier.Verify(verifyBuf.Bytes(), sig.signature, key); err != nil {
+					errs = append(errs, err)
 					continue
 				}
 
@@ -375,7 +442,33 @@ func Verify(buf []byte, options ...VerifyOption) ([]byte, error) {
 			}
 		}
 	}
-	return nil, fmt.Errorf(`could not verify message using any of the signatures or keys`)
+	return nil, &verifyError{errs: errs}
+}
+
+type verifyError struct {
+	// Note: when/if we can ditch Go < 1.20, we can change this to a simple
+	// `err error`, where the value is the result of `errors.Join()`
+	//
+	// We also need to implement Unwrap:
+	// func (e *verifyError) Unwrap() error {
+	//	return e.err
+	//}
+	//
+	// And finally, As() can go away
+	errs []error
+}
+
+func (e *verifyError) Error() string {
+	return `could not verify message using any of the signatures or keys`
+}
+
+func (e *verifyError) As(target interface{}) bool {
+	for _, err := range e.errs {
+		if errors.As(err, target) {
+			return true
+		}
+	}
+	return false
 }
 
 // get the value of b64 header field.
@@ -712,4 +805,52 @@ func AlgorithmsForKey(key interface{}) ([]jwa.SignatureAlgorithm, error) {
 		return nil, fmt.Errorf(`invalid key type %q`, kty)
 	}
 	return algs, nil
+}
+
+// Because the keys defined in github.com/lestrrat-go/jwx/jwk may also implement
+// crypto.Signer, it would be possible for to mix up key types when signing/verifying
+// for example, when we specify jws.WithKey(jwa.RSA256, cryptoSigner), the cryptoSigner
+// can be for RSA, or any other type that implements crypto.Signer... even if it's for the
+// wrong algorithm.
+//
+// These functions are there to differentiate between the valid KNOWN key types.
+// For any other key type that is outside of the Go std library and our own code,
+// we must rely on the user to be vigilant.
+//
+// Notes: symmetric keys are obviously not part of this. for v2 OKP keys,
+// x25519 does not implement Sign()
+func isValidRSAKey(key interface{}) bool {
+	switch key.(type) {
+	case
+		ecdsa.PrivateKey, *ecdsa.PrivateKey,
+		ed25519.PrivateKey,
+		jwk.ECDSAPrivateKey, jwk.OKPPrivateKey:
+		// these are NOT ok
+		return false
+	}
+	return true
+}
+
+func isValidECDSAKey(key interface{}) bool {
+	switch key.(type) {
+	case
+		ed25519.PrivateKey,
+		rsa.PrivateKey, *rsa.PrivateKey,
+		jwk.RSAPrivateKey, jwk.OKPPrivateKey:
+		// these are NOT ok
+		return false
+	}
+	return true
+}
+
+func isValidEDDSAKey(key interface{}) bool {
+	switch key.(type) {
+	case
+		ecdsa.PrivateKey, *ecdsa.PrivateKey,
+		rsa.PrivateKey, *rsa.PrivateKey,
+		jwk.RSAPrivateKey, jwk.ECDSAPrivateKey:
+		// these are NOT ok
+		return false
+	}
+	return true
 }

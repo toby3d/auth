@@ -9,26 +9,23 @@ import (
 	"source.toby3d.me/toby3d/auth/internal/common"
 	"source.toby3d.me/toby3d/auth/internal/domain"
 	"source.toby3d.me/toby3d/auth/internal/middleware"
-	"source.toby3d.me/toby3d/auth/internal/ticket"
 	"source.toby3d.me/toby3d/auth/internal/token"
 	"source.toby3d.me/toby3d/auth/internal/urlutil"
 )
 
 type Handler struct {
-	config  *domain.Config
-	tokens  token.UseCase
-	tickets ticket.UseCase
+	config domain.Config
+	tokens token.UseCase
 }
 
-func NewHandler(tokens token.UseCase, tickets ticket.UseCase, config *domain.Config) *Handler {
+func NewHandler(tokens token.UseCase, config domain.Config) *Handler {
 	return &Handler{
-		config:  config,
-		tokens:  tokens,
-		tickets: tickets,
+		config: config,
+		tokens: tokens,
 	}
 }
 
-func (h *Handler) Handler() http.Handler {
+func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	chain := middleware.Chain{
 		//nolint:exhaustivestruct
 		middleware.JWTWithConfig(middleware.JWTConfig{
@@ -45,27 +42,25 @@ func (h *Handler) Handler() http.Handler {
 		}),
 	}
 
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+	if r.Method != http.MethodPost {
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 
-			return
-		}
+		return
+	}
 
-		var head string
-		head, r.URL.Path = urlutil.ShiftPath(r.URL.Path)
+	var head string
+	head, r.URL.Path = urlutil.ShiftPath(r.URL.Path)
 
-		switch head {
-		default:
-			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-		case "token":
-			chain.Handler(h.handleAction).ServeHTTP(w, r)
-		case "introspect":
-			chain.Handler(h.handleIntrospect).ServeHTTP(w, r)
-		case "revocation":
-			chain.Handler(h.handleRevokation).ServeHTTP(w, r)
-		}
-	})
+	switch head {
+	default:
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+	case "token":
+		chain.Handler(h.handleAction).ServeHTTP(w, r)
+	case "introspect":
+		chain.Handler(h.handleIntrospect).ServeHTTP(w, r)
+	case "revocation":
+		chain.Handler(h.handleRevokation).ServeHTTP(w, r)
+	}
 }
 
 func (h *Handler) handleIntrospect(w http.ResponseWriter, r *http.Request) {
@@ -146,13 +141,10 @@ func (h *Handler) handleAction(w http.ResponseWriter, r *http.Request) {
 		switch action {
 		case domain.ActionRevoke:
 			h.handleRevokation(w, r)
-		case domain.ActionTicket:
-			h.handleTicket(w, r)
 		}
 	}
 }
 
-//nolint:funlen
 func (h *Handler) handleExchange(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
@@ -192,33 +184,8 @@ func (h *Handler) handleExchange(w http.ResponseWriter, r *http.Request) {
 		AccessToken:  token.AccessToken,
 		ExpiresIn:    token.Expiry.Unix(),
 		Me:           token.Me.String(),
-		Profile:      nil,
+		Profile:      NewTokenProfileResponse(profile),
 		RefreshToken: "", // TODO(toby3d)
-	}
-
-	if profile == nil {
-		_ = encoder.Encode(resp)
-
-		return
-	}
-
-	resp.Profile = &TokenProfileResponse{
-		Name:  profile.GetName(),
-		URL:   "",
-		Photo: "",
-		Email: "",
-	}
-
-	if url := profile.GetURL(); url != nil {
-		resp.Profile.URL = url.String()
-	}
-
-	if photo := profile.GetPhoto(); photo != nil {
-		resp.Profile.Photo = photo.String()
-	}
-
-	if email := profile.GetEmail(); email != nil {
-		resp.Profile.Email = email.String()
 	}
 
 	_ = encoder.Encode(resp)
@@ -255,47 +222,6 @@ func (h *Handler) handleRevokation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_ = encoder.Encode(&TokenRevocationResponse{})
-
-	w.WriteHeader(http.StatusOK)
-}
-
-func (h *Handler) handleTicket(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-
-		return
-	}
-
-	w.Header().Set(common.HeaderContentType, common.MIMEApplicationJSONCharsetUTF8)
-
-	encoder := json.NewEncoder(w)
-
-	req := new(TokenTicketRequest)
-	if err := req.bind(r); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-
-		_ = encoder.Encode(err)
-
-		return
-	}
-
-	tkn, err := h.tickets.Exchange(r.Context(), req.Ticket)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-
-		_ = encoder.Encode(domain.NewError(domain.ErrorCodeInvalidRequest, err.Error(),
-			"https://indieauth.net/source/#request"))
-
-		return
-	}
-
-	_ = encoder.Encode(&TokenExchangeResponse{
-		AccessToken:  tkn.AccessToken,
-		Me:           tkn.Me.String(),
-		Profile:      nil,
-		ExpiresIn:    tkn.Expiry.Unix(),
-		RefreshToken: "", // TODO(toby3d)
-	})
 
 	w.WriteHeader(http.StatusOK)
 }

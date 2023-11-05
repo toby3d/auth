@@ -22,7 +22,7 @@ type (
 		Me domain.Me `form:"me"`
 
 		// The hashing method used to calculate the code challenge.
-		CodeChallengeMethod *domain.CodeChallengeMethod `form:"code_challenge_method,omitempty"`
+		CodeChallengeMethod domain.CodeChallengeMethod `form:"code_challenge_method,omitempty"`
 
 		// Indicates to the authorization server that an authorization
 		// code should be returned as the response.
@@ -46,16 +46,16 @@ type (
 	}
 
 	AuthVerifyRequest struct {
-		ClientID            domain.ClientID             `form:"client_id"`
-		Me                  domain.Me                   `form:"me"`
-		RedirectURI         domain.URL                  `form:"redirect_uri"`
-		CodeChallengeMethod *domain.CodeChallengeMethod `form:"code_challenge_method,omitempty"`
-		ResponseType        domain.ResponseType         `form:"response_type"`
-		Authorize           string                      `form:"authorize"`
-		CodeChallenge       string                      `form:"code_challenge,omitempty"`
-		State               string                      `form:"state"`
-		Provider            string                      `form:"provider"`
-		Scope               domain.Scopes               `form:"scope[],omitempty"`
+		ClientID            domain.ClientID            `form:"client_id"`
+		Me                  domain.Me                  `form:"me"`
+		RedirectURI         domain.URL                 `form:"redirect_uri"`
+		CodeChallengeMethod domain.CodeChallengeMethod `form:"code_challenge_method,omitempty"`
+		ResponseType        domain.ResponseType        `form:"response_type"`
+		Authorize           string                     `form:"authorize"`
+		CodeChallenge       string                     `form:"code_challenge,omitempty"`
+		State               string                     `form:"state"`
+		Provider            string                     `form:"provider"`
+		Scope               domain.Scopes              `form:"scope[],omitempty"`
 	}
 
 	AuthExchangeRequest struct {
@@ -79,15 +79,15 @@ type (
 	}
 
 	AuthExchangeResponse struct {
-		Me      domain.Me            `json:"me"`
 		Profile *AuthProfileResponse `json:"profile,omitempty"`
+		Me      string               `json:"me"`
 	}
 
 	AuthProfileResponse struct {
-		Email *domain.Email `json:"email,omitempty"`
-		Photo *domain.URL   `json:"photo,omitempty"`
-		URL   *domain.URL   `json:"url,omitempty"`
-		Name  string        `json:"name,omitempty"`
+		Email string `json:"email,omitempty"`
+		Photo string `json:"photo,omitempty"`
+		URL   string `json:"url,omitempty"`
+		Name  string `json:"name,omitempty"`
 	}
 )
 
@@ -95,7 +95,7 @@ func NewAuthAuthorizationRequest() *AuthAuthorizationRequest {
 	return &AuthAuthorizationRequest{
 		ClientID:            domain.ClientID{},
 		CodeChallenge:       "",
-		CodeChallengeMethod: &domain.CodeChallengeMethodUnd,
+		CodeChallengeMethod: domain.CodeChallengeMethodUnd,
 		Me:                  domain.Me{},
 		RedirectURI:         domain.URL{},
 		ResponseType:        domain.ResponseTypeUnd,
@@ -129,7 +129,7 @@ func NewAuthVerifyRequest() *AuthVerifyRequest {
 		Authorize:           "",
 		ClientID:            domain.ClientID{},
 		CodeChallenge:       "",
-		CodeChallengeMethod: &domain.CodeChallengeMethodUnd,
+		CodeChallengeMethod: domain.CodeChallengeMethodUnd,
 		Me:                  domain.Me{},
 		Provider:            "",
 		RedirectURI:         domain.URL{},
@@ -139,7 +139,7 @@ func NewAuthVerifyRequest() *AuthVerifyRequest {
 	}
 }
 
-//nolint:funlen,cyclop
+//nolint:cyclop
 func (r *AuthVerifyRequest) bind(req *http.Request) error {
 	indieAuthError := new(domain.Error)
 
@@ -191,4 +191,28 @@ func (r *AuthExchangeRequest) bind(req *http.Request) error {
 	}
 
 	return nil
+}
+
+func NewAuthProfileResponse(in *domain.Profile) *AuthProfileResponse {
+	out := new(AuthProfileResponse)
+
+	if in == nil {
+		return out
+	}
+
+	out.Name = in.Name
+
+	if in.URL != nil {
+		out.URL = in.URL.String()
+	}
+
+	if in.Email != nil {
+		out.Email = in.Email.String()
+	}
+
+	if in.Photo != nil {
+		out.Photo = in.Photo.String()
+	}
+
+	return out
 }

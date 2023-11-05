@@ -30,35 +30,35 @@ var (
 //line web/baseof.qtpl:10
 type Page interface {
 //line web/baseof.qtpl:10
-	Body() string
+	body() string
 //line web/baseof.qtpl:10
-	StreamBody(qw422016 *qt422016.Writer)
+	streambody(qw422016 *qt422016.Writer)
 //line web/baseof.qtpl:10
-	WriteBody(qq422016 qtio422016.Writer)
+	writebody(qq422016 qtio422016.Writer)
 //line web/baseof.qtpl:10
-	Head() string
+	head() string
 //line web/baseof.qtpl:10
-	StreamHead(qw422016 *qt422016.Writer)
+	streamhead(qw422016 *qt422016.Writer)
 //line web/baseof.qtpl:10
-	WriteHead(qq422016 qtio422016.Writer)
+	writehead(qq422016 qtio422016.Writer)
 //line web/baseof.qtpl:10
-	Lang() string
+	lang() string
 //line web/baseof.qtpl:10
-	StreamLang(qw422016 *qt422016.Writer)
+	streamlang(qw422016 *qt422016.Writer)
 //line web/baseof.qtpl:10
-	WriteLang(qq422016 qtio422016.Writer)
+	writelang(qq422016 qtio422016.Writer)
 //line web/baseof.qtpl:10
-	Title() string
+	t(format message.Reference, args ...any) string
 //line web/baseof.qtpl:10
-	StreamTitle(qw422016 *qt422016.Writer)
+	streamt(qw422016 *qt422016.Writer, format message.Reference, args ...any)
 //line web/baseof.qtpl:10
-	WriteTitle(qq422016 qtio422016.Writer)
+	writet(qq422016 qtio422016.Writer, format message.Reference, args ...any)
 //line web/baseof.qtpl:10
-	T(format string, args ...interface{}) string
+	title() string
 //line web/baseof.qtpl:10
-	StreamT(qw422016 *qt422016.Writer, format string, args ...interface{})
+	streamtitle(qw422016 *qt422016.Writer)
 //line web/baseof.qtpl:10
-	WriteT(qq422016 qtio422016.Writer, format string, args ...interface{})
+	writetitle(qq422016 qtio422016.Writer)
 //line web/baseof.qtpl:10
 }
 
@@ -70,7 +70,7 @@ type BaseOf struct {
 }
 
 //line web/baseof.qtpl:25
-func (p *BaseOf) StreamLang(qw422016 *qt422016.Writer) {
+func (p *BaseOf) streamlang(qw422016 *qt422016.Writer) {
 //line web/baseof.qtpl:26
 	if p.Language != language.Und {
 //line web/baseof.qtpl:27
@@ -85,22 +85,22 @@ func (p *BaseOf) StreamLang(qw422016 *qt422016.Writer) {
 }
 
 //line web/baseof.qtpl:31
-func (p *BaseOf) WriteLang(qq422016 qtio422016.Writer) {
+func (p *BaseOf) writelang(qq422016 qtio422016.Writer) {
 //line web/baseof.qtpl:31
 	qw422016 := qt422016.AcquireWriter(qq422016)
 //line web/baseof.qtpl:31
-	p.StreamLang(qw422016)
+	p.streamlang(qw422016)
 //line web/baseof.qtpl:31
 	qt422016.ReleaseWriter(qw422016)
 //line web/baseof.qtpl:31
 }
 
 //line web/baseof.qtpl:31
-func (p *BaseOf) Lang() string {
+func (p *BaseOf) lang() string {
 //line web/baseof.qtpl:31
 	qb422016 := qt422016.AcquireByteBuffer()
 //line web/baseof.qtpl:31
-	p.WriteLang(qb422016)
+	p.writelang(qb422016)
 //line web/baseof.qtpl:31
 	qs422016 := string(qb422016.B)
 //line web/baseof.qtpl:31
@@ -111,7 +111,7 @@ func (p *BaseOf) Lang() string {
 }
 
 //line web/baseof.qtpl:35
-func (p *BaseOf) StreamTitle(qw422016 *qt422016.Writer) {
+func (p *BaseOf) streamtitle(qw422016 *qt422016.Writer) {
 //line web/baseof.qtpl:35
 	qw422016.N().S(` `)
 //line web/baseof.qtpl:36
@@ -122,22 +122,22 @@ func (p *BaseOf) StreamTitle(qw422016 *qt422016.Writer) {
 }
 
 //line web/baseof.qtpl:37
-func (p *BaseOf) WriteTitle(qq422016 qtio422016.Writer) {
+func (p *BaseOf) writetitle(qq422016 qtio422016.Writer) {
 //line web/baseof.qtpl:37
 	qw422016 := qt422016.AcquireWriter(qq422016)
 //line web/baseof.qtpl:37
-	p.StreamTitle(qw422016)
+	p.streamtitle(qw422016)
 //line web/baseof.qtpl:37
 	qt422016.ReleaseWriter(qw422016)
 //line web/baseof.qtpl:37
 }
 
 //line web/baseof.qtpl:37
-func (p *BaseOf) Title() string {
+func (p *BaseOf) title() string {
 //line web/baseof.qtpl:37
 	qb422016 := qt422016.AcquireByteBuffer()
 //line web/baseof.qtpl:37
-	p.WriteTitle(qb422016)
+	p.writetitle(qb422016)
 //line web/baseof.qtpl:37
 	qs422016 := string(qb422016.B)
 //line web/baseof.qtpl:37
@@ -148,7 +148,7 @@ func (p *BaseOf) Title() string {
 }
 
 //line web/baseof.qtpl:39
-func (p *BaseOf) StreamHead(qw422016 *qt422016.Writer) {
+func (p *BaseOf) streamhead(qw422016 *qt422016.Writer) {
 //line web/baseof.qtpl:39
 	qw422016.N().S(` `)
 //line web/baseof.qtpl:40
@@ -157,22 +157,22 @@ func (p *BaseOf) StreamHead(qw422016 *qt422016.Writer) {
 }
 
 //line web/baseof.qtpl:54
-func (p *BaseOf) WriteHead(qq422016 qtio422016.Writer) {
+func (p *BaseOf) writehead(qq422016 qtio422016.Writer) {
 //line web/baseof.qtpl:54
 	qw422016 := qt422016.AcquireWriter(qq422016)
 //line web/baseof.qtpl:54
-	p.StreamHead(qw422016)
+	p.streamhead(qw422016)
 //line web/baseof.qtpl:54
 	qt422016.ReleaseWriter(qw422016)
 //line web/baseof.qtpl:54
 }
 
 //line web/baseof.qtpl:54
-func (p *BaseOf) Head() string {
+func (p *BaseOf) head() string {
 //line web/baseof.qtpl:54
 	qb422016 := qt422016.AcquireByteBuffer()
 //line web/baseof.qtpl:54
-	p.WriteHead(qb422016)
+	p.writehead(qb422016)
 //line web/baseof.qtpl:54
 	qs422016 := string(qb422016.B)
 //line web/baseof.qtpl:54
@@ -183,27 +183,27 @@ func (p *BaseOf) Head() string {
 }
 
 //line web/baseof.qtpl:56
-func (p *BaseOf) StreamBody(qw422016 *qt422016.Writer) {
+func (p *BaseOf) streambody(qw422016 *qt422016.Writer) {
 //line web/baseof.qtpl:56
 }
 
 //line web/baseof.qtpl:56
-func (p *BaseOf) WriteBody(qq422016 qtio422016.Writer) {
+func (p *BaseOf) writebody(qq422016 qtio422016.Writer) {
 //line web/baseof.qtpl:56
 	qw422016 := qt422016.AcquireWriter(qq422016)
 //line web/baseof.qtpl:56
-	p.StreamBody(qw422016)
+	p.streambody(qw422016)
 //line web/baseof.qtpl:56
 	qt422016.ReleaseWriter(qw422016)
 //line web/baseof.qtpl:56
 }
 
 //line web/baseof.qtpl:56
-func (p *BaseOf) Body() string {
+func (p *BaseOf) body() string {
 //line web/baseof.qtpl:56
 	qb422016 := qt422016.AcquireByteBuffer()
 //line web/baseof.qtpl:56
-	p.WriteBody(qb422016)
+	p.writebody(qb422016)
 //line web/baseof.qtpl:56
 	qs422016 := string(qb422016.B)
 //line web/baseof.qtpl:56
@@ -218,19 +218,19 @@ func StreamTemplate(qw422016 *qt422016.Writer, p Page) {
 //line web/baseof.qtpl:58
 	qw422016.N().S(` <!DOCTYPE html> <html class="page" lang="`)
 //line web/baseof.qtpl:61
-	p.StreamLang(qw422016)
+	p.streamlang(qw422016)
 //line web/baseof.qtpl:61
 	qw422016.N().S(`"> <head> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> `)
 //line web/baseof.qtpl:68
-	p.StreamHead(qw422016)
+	p.streamhead(qw422016)
 //line web/baseof.qtpl:68
 	qw422016.N().S(` <title>`)
 //line web/baseof.qtpl:70
-	p.StreamTitle(qw422016)
+	p.streamtitle(qw422016)
 //line web/baseof.qtpl:70
 	qw422016.N().S(`</title> </head> <body class="page__body body"> `)
 //line web/baseof.qtpl:74
-	p.StreamBody(qw422016)
+	p.streambody(qw422016)
 //line web/baseof.qtpl:74
 	qw422016.N().S(` `)
 //line web/baseof.qtpl:77
@@ -255,7 +255,7 @@ func StreamTemplate(qw422016 *qt422016.Writer, p Page) {
 //line web/baseof.qtpl:92
 		qw422016.N().S(` <footer> <small> `)
 //line web/baseof.qtpl:95
-		p.StreamT(qw422016, "version")
+		p.streamt(qw422016, "version")
 //line web/baseof.qtpl:95
 		qw422016.N().S(` <a href="https://`)
 //line web/baseof.qtpl:96
@@ -304,33 +304,33 @@ func Template(p Page) string {
 }
 
 //line web/baseof.qtpl:107
-func (p *BaseOf) StreamT(qw422016 *qt422016.Writer, format string, args ...interface{}) {
+func (p BaseOf) streamt(qw422016 *qt422016.Writer, format message.Reference, args ...any) {
 //line web/baseof.qtpl:107
 	qw422016.N().S(` `)
 //line web/baseof.qtpl:108
-	qw422016.E().S(p.Printer.Sprintf(format, args...))
+	qw422016.N().S(p.Printer.Sprintf(format, args...))
 //line web/baseof.qtpl:108
 	qw422016.N().S(` `)
 //line web/baseof.qtpl:109
 }
 
 //line web/baseof.qtpl:109
-func (p *BaseOf) WriteT(qq422016 qtio422016.Writer, format string, args ...interface{}) {
+func (p BaseOf) writet(qq422016 qtio422016.Writer, format message.Reference, args ...any) {
 //line web/baseof.qtpl:109
 	qw422016 := qt422016.AcquireWriter(qq422016)
 //line web/baseof.qtpl:109
-	p.StreamT(qw422016, format, args...)
+	p.streamt(qw422016, format, args...)
 //line web/baseof.qtpl:109
 	qt422016.ReleaseWriter(qw422016)
 //line web/baseof.qtpl:109
 }
 
 //line web/baseof.qtpl:109
-func (p *BaseOf) T(format string, args ...interface{}) string {
+func (p BaseOf) t(format message.Reference, args ...any) string {
 //line web/baseof.qtpl:109
 	qb422016 := qt422016.AcquireByteBuffer()
 //line web/baseof.qtpl:109
-	p.WriteT(qb422016, format, args...)
+	p.writet(qb422016, format, args...)
 //line web/baseof.qtpl:109
 	qs422016 := string(qb422016.B)
 //line web/baseof.qtpl:109

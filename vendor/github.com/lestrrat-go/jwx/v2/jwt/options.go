@@ -11,16 +11,19 @@ import (
 	"github.com/lestrrat-go/option"
 )
 
+type identInsecureNoSignature struct{}
 type identKey struct{}
 type identKeySet struct{}
 type identTypedClaim struct{}
 type identVerifyAuto struct{}
 
 func toSignOptions(options ...Option) ([]jws.SignOption, error) {
-	var soptions []jws.SignOption
+	soptions := make([]jws.SignOption, 0, len(options))
 	for _, option := range options {
 		//nolint:forcetypeassert
 		switch option.Ident() {
+		case identInsecureNoSignature{}:
+			soptions = append(soptions, jws.WithInsecureNoSignature())
 		case identKey{}:
 			wk := option.Value().(*withKey) // this always succeeds
 			var wksoptions []jws.WithKeySuboption
@@ -33,13 +36,16 @@ func toSignOptions(options ...Option) ([]jws.SignOption, error) {
 			}
 
 			soptions = append(soptions, jws.WithKey(wk.alg, wk.key, wksoptions...))
+		case identSignOption{}:
+			sigOpt := option.Value().(jws.SignOption) // this always succeeds
+			soptions = append(soptions, sigOpt)
 		}
 	}
 	return soptions, nil
 }
 
 func toEncryptOptions(options ...Option) ([]jwe.EncryptOption, error) {
-	var soptions []jwe.EncryptOption
+	soptions := make([]jwe.EncryptOption, 0, len(options))
 	for _, option := range options {
 		//nolint:forcetypeassert
 		switch option.Ident() {
@@ -55,13 +61,16 @@ func toEncryptOptions(options ...Option) ([]jwe.EncryptOption, error) {
 			}
 
 			soptions = append(soptions, jwe.WithKey(wk.alg, wk.key, wksoptions...))
+		case identEncryptOption{}:
+			encOpt := option.Value().(jwe.EncryptOption) // this always succeeds
+			soptions = append(soptions, encOpt)
 		}
 	}
 	return soptions, nil
 }
 
 func toVerifyOptions(options ...Option) ([]jws.VerifyOption, error) {
-	var voptions []jws.VerifyOption
+	voptions := make([]jws.VerifyOption, 0, len(options))
 	for _, option := range options {
 		//nolint:forcetypeassert
 		switch option.Ident() {
@@ -110,10 +119,13 @@ type withKey struct {
 }
 
 // WithKey is a multi-purpose option. It can be used for either jwt.Sign, jwt.Parse (and
-// its siblings), and jwt.Serializer methods.
+// its siblings), and jwt.Serializer methods. For signatures, please see the documentation
+// for `jws.WithKey` for more details. For encryption, please see the documentation
+// for `jwe.WithKey`.
 //
 // It is the caller's responsibility to match the suboptions to the operation that they
-// are performing. For example, you are not allowed to do this:
+// are performing. For example, you are not allowed to do this, because the operation
+// is to generate a signature, and yet you are passing options for jwe:
 //
 //	jwt.Sign(token, jwt.WithKey(alg, key, jweOptions...))
 //
@@ -184,7 +196,7 @@ func WithJwtID(s string) ValidateOption {
 
 // WithAudience specifies that expected audience value.
 // `Validate()` will return true if one of the values in the `aud` element
-// matches this value.  If not specified, the value of issuer is not
+// matches this value. If not specified, the value of `aud` is not
 // verified at all.
 func WithAudience(s string) ValidateOption {
 	return WithValidator(audienceClaimContainsString(s))
@@ -293,4 +305,8 @@ func WithMinDelta(dur time.Duration, c1, c2 string) ValidateOption {
 // in the `jwk` package
 func WithVerifyAuto(f jwk.Fetcher, options ...jwk.FetchOption) ParseOption {
 	return &parseOption{option.New(identVerifyAuto{}, jws.WithVerifyAuto(f, options...))}
+}
+
+func WithInsecureNoSignature() SignOption {
+	return &signEncryptParseOption{option.New(identInsecureNoSignature{}, nil)}
 }

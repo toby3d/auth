@@ -14,18 +14,18 @@ import (
 )
 
 type Handler struct {
-	config *domain.Config
+	config domain.Config
 	tokens token.UseCase
 }
 
-func NewHandler(tokens token.UseCase, config *domain.Config) *Handler {
+func NewHandler(tokens token.UseCase, config domain.Config) *Handler {
 	return &Handler{
 		tokens: tokens,
 		config: config,
 	}
 }
 
-func (h *Handler) Handler() http.Handler {
+func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	chain := middleware.Chain{
 		//nolint:exhaustivestruct
 		middleware.JWTWithConfig(middleware.JWTConfig{
@@ -38,7 +38,7 @@ func (h *Handler) Handler() http.Handler {
 		}),
 	}
 
-	return chain.Handler(h.handleFunc)
+	chain.Handler(h.handleFunc).ServeHTTP(w, r)
 }
 
 func (h *Handler) handleFunc(w http.ResponseWriter, r *http.Request) {
@@ -78,8 +78,7 @@ func (h *Handler) handleFunc(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//nolint:errchkjson
-	_ = encoder.Encode(NewUserInformationResponse(userInfo,
-		userInfo.HasEmail() && tkn.Scope.Has(domain.ScopeEmail)))
+	_ = encoder.Encode(NewUserInformationResponse(userInfo, tkn.Scope.Has(domain.ScopeEmail)))
 
 	w.WriteHeader(http.StatusOK)
 }

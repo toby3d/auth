@@ -59,6 +59,15 @@ linters-settings:
       - "i int"
       - "r *http.Request"
       - "w http.ResponseWriter"
+  depguard:
+    rules:
+      main:
+        allow:
+          - $gostd
+          - github.com/toby3d
+          - gitlab.com/toby3d
+          - source.toby3d.me
+          - golang.org
 linters:
   enable-all: true
   disable:

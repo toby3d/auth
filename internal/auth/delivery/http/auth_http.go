@@ -23,16 +23,16 @@ type (
 	NewHandlerOptions struct {
 		Auth     auth.UseCase
 		Clients  client.UseCase
-		Config   domain.Config
 		Matcher  language.Matcher
 		Profiles profile.UseCase
+		Config   domain.Config
 	}
 
 	Handler struct {
 		clients client.UseCase
-		config  domain.Config
 		matcher language.Matcher
 		useCase auth.UseCase
+		config  domain.Config
 	}
 )
 
@@ -45,7 +45,7 @@ func NewHandler(opts NewHandlerOptions) *Handler {
 	}
 }
 
-func (h *Handler) Handler() http.Handler {
+func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	chain := middleware.Chain{
 		middleware.CSRFWithConfig(middleware.CSRFConfig{
 			Skipper: func(_ http.ResponseWriter, r *http.Request) bool {
@@ -68,8 +68,7 @@ func (h *Handler) Handler() http.Handler {
 			Skipper: func(_ http.ResponseWriter, r *http.Request) bool {
 				head, _ := urlutil.ShiftPath(r.URL.Path)
 
-				return r.Method != http.MethodPost ||
-					head != "verify" ||
+				return r.Method != http.MethodPost || head != "verify" ||
 					r.PostFormValue("authorize") == "deny"
 			},
 			Validator: func(_ http.ResponseWriter, _ *http.Request, login, password string) (bool, error) {
@@ -84,31 +83,29 @@ func (h *Handler) Handler() http.Handler {
 		}),
 	}
 
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		head, _ := urlutil.ShiftPath(r.URL.Path)
+	head, _ := urlutil.ShiftPath(r.URL.Path)
 
-		switch r.Method {
-		default:
-			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-		case http.MethodGet, "":
-			if head != "" {
-				http.NotFound(w, r)
+	switch r.Method {
+	default:
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+	case http.MethodGet, "":
+		if head != "" {
+			http.NotFound(w, r)
 
-				return
-			}
-
-			chain.Handler(h.handleAuthorize).ServeHTTP(w, r)
-		case http.MethodPost:
-			switch head {
-			default:
-				http.NotFound(w, r)
-			case "":
-				chain.Handler(h.handleExchange).ServeHTTP(w, r)
-			case "verify":
-				chain.Handler(h.handleVerify).ServeHTTP(w, r)
-			}
+			return
 		}
-	})
+
+		chain.Handler(h.handleAuthorize).ServeHTTP(w, r)
+	case http.MethodPost:
+		switch head {
+		default:
+			http.NotFound(w, r)
+		case "":
+			chain.Handler(h.handleExchange).ServeHTTP(w, r)
+		case "verify":
+			chain.Handler(h.handleVerify).ServeHTTP(w, r)
+		}
+	}
 }
 
 func (h *Handler) handleAuthorize(w http.ResponseWriter, r *http.Request) {
@@ -169,7 +166,7 @@ func (h *Handler) handleAuthorize(w http.ResponseWriter, r *http.Request) {
 		Client:              client,
 		Me:                  &req.Me,
 		RedirectURI:         &req.RedirectURI,
-		CodeChallengeMethod: *req.CodeChallengeMethod,
+		CodeChallengeMethod: req.CodeChallengeMethod,
 		ResponseType:        req.ResponseType,
 		CodeChallenge:       req.CodeChallenge,
 		State:               req.State,
@@ -210,7 +207,7 @@ func (h *Handler) handleVerify(w http.ResponseWriter, r *http.Request) {
 		ClientID:            req.ClientID,
 		Me:                  req.Me,
 		RedirectURI:         req.RedirectURI.URL,
-		CodeChallengeMethod: *req.CodeChallengeMethod,
+		CodeChallengeMethod: req.CodeChallengeMethod,
 		Scope:               req.Scope,
 		CodeChallenge:       req.CodeChallenge,
 	})
@@ -271,18 +268,8 @@ func (h *Handler) handleExchange(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var userInfo *AuthProfileResponse
-	if profile != nil {
-		userInfo = &AuthProfileResponse{
-			Email: profile.GetEmail(),
-			Photo: &domain.URL{URL: profile.GetPhoto()},
-			URL:   &domain.URL{URL: profile.GetURL()},
-			Name:  profile.GetName(),
-		}
-	}
-
 	_ = encoder.Encode(&AuthExchangeResponse{
-		Me:      *me,
-		Profile: userInfo,
+		Me:      me.String(),
+		Profile: NewAuthProfileResponse(profile),
 	})
 }

@@ -31,13 +31,14 @@ type Dependencies struct {
 	authService   auth.UseCase
 	clients       client.Repository
 	clientService client.UseCase
-	config        *domain.Config
 	matcher       language.Matcher
 	profiles      profile.Repository
 	sessions      session.Repository
 	users         user.Repository
+	config        *domain.Config
 }
 
+//nolint:funlen
 func TestAuthorize(t *testing.T) {
 	t.Parallel()
 
@@ -85,7 +86,7 @@ func TestAuthorize(t *testing.T) {
 		Clients: deps.clientService,
 		Config:  *deps.config,
 		Matcher: deps.matcher,
-	}).Handler().ServeHTTP(w, req)
+	}).ServeHTTP(w, req)
 
 	resp := w.Result()
 
@@ -98,7 +99,7 @@ func TestAuthorize(t *testing.T) {
 		t.Errorf("%s %s = %d, want %d", req.Method, u.String(), resp.StatusCode, http.StatusOK)
 	}
 
-	const expResult = `Authorize application`
+	expResult := `Authorize ` + client.Name
 	if result := string(body); !strings.Contains(result, expResult) {
 		t.Errorf("%s %s = %s, want %s", req.Method, u.String(), result, expResult)
 	}
@@ -113,7 +114,7 @@ func NewDependencies(tb testing.TB) Dependencies {
 	users := userrepo.NewMemoryUserRepository()
 	sessions := sessionrepo.NewMemorySessionRepository(*config)
 	profiles := profilerepo.NewMemoryProfileRepository()
-	authService := ucase.NewAuthUseCase(sessions, profiles, config)
+	authService := ucase.NewAuthUseCase(sessions, profiles, *config)
 	clientService := clientucase.NewClientUseCase(clients)
 
 	return Dependencies{

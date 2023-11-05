@@ -7,6 +7,7 @@ import (
 )
 
 type identHeaders struct{}
+type identInsecureNoSignature struct{}
 
 // WithHeaders allows you to specify extra header values to include in the
 // final JWS message
@@ -59,13 +60,27 @@ func (w *withKey) Protected(v Headers) Headers {
 // passed to the option. If you specify other algorithm types such as `jwa.ContentEncryptionAlgorithm`,
 // then you will get an error when `jws.Sign()` or `jws.Verify()` is executed.
 //
-// The algorithm specified in the `alg` parameter must be able to support
+// The `alg` parameter cannot be "none" (jwa.NoSignature) for security reasons.
+// You will have to use a separate, more explicit option to allow the use of "none"
+// algorithm.
+//
+// The algorithm specified in the `alg` parameter MUST be able to support
 // the type of key you provided, otherwise an error is returned.
 //
 // Any of the followin is accepted for the `key` parameter:
 // * A "raw" key (e.g. rsa.PrivateKey, ecdsa.PrivateKey, etc)
 // * A crypto.Signer
 // * A jwk.Key
+//
+// Note that due to technical reasons, this library is NOT able to differentiate
+// between a valid/invalid key for given algorithm if the key implements crypto.Signer
+// and the key is from an external library. For example, while we can tell that it is
+// invalid to use `jwk.WithKey(jwa.RSA256, ecdsaPrivateKey)` because the key is
+// presumably from `crypto/ecdsa` or this library, if you use a KMS wrapper
+// that implements crypto.Signer that is outside of the go standard library or this
+// library, we will not be able to properly catch the misuse of such keys --
+// the output will happily generate an ECDSA signature even in the presence of
+// `jwa.RSA256`
 //
 // A `crypto.Signer` is used when the private part of a key is
 // kept in an inaccessible location, such as hardware.
@@ -84,7 +99,7 @@ func (w *withKey) Protected(v Headers) Headers {
 // is respected when serializing. That is, if you specify a header with
 // `{"b64": false}`, then the payload is not base64 encoded.
 //
-// These suboptions are ignored whe the `jws.WithKey()` option is used with `jws.Verify()`.
+// These suboptions are ignored when the `jws.WithKey()` option is used with `jws.Verify()`.
 func WithKey(alg jwa.KeyAlgorithm, key interface{}, options ...WithKeySuboption) SignVerifyOption {
 	// Implementation note: this option is shared between Sign() and
 	// Verify(). As such we don't create a KeyProvider here because
@@ -112,11 +127,23 @@ func WithKey(alg jwa.KeyAlgorithm, key interface{}, options ...WithKeySuboption)
 
 // WithKeySet specifies a JWKS (jwk.Set) to use for verification.
 //
-// By default both `alg` and `kid` fields in the JWS _and_ the
-// key must match for a key in the JWKS to be considered to be used.
+// Because a JWKS can contain multiple keys and this library cannot tell
+// which one of the keys should be used for verification, we by default
+// require that both `alg` and `kid` fields in the JWS _and_ the
+// key match before a key is considered to be used.
 //
-// The behavior can be tweaked by using the `jws.WithKeySetSuboption`
-// suboption types.
+// There are ways to override this behavior, but they must be explicitly
+// specified by the caller.
+//
+// To work with keys/JWS messages not having a `kid` field, you may specify
+// the suboption `WithKeySetRequired` via `jws.WithKeySetSuboption(jws.WithKeySetRequireKid(false))`.
+// This will allow the library to proceed without having to match the `kid` field.
+//
+// However, it will still check if the `alg` fields in the JWS message and the key(s)
+// match. If you must work with JWS messages that do not have an `alg` field,
+// you will need to use `jws.WithKeySetSuboption(jws.WithInferAlgorithm(true))`.
+//
+// See the documentation for `WithInferAlgorithm()` for more details.
 func WithKeySet(set jwk.Set, options ...WithKeySetSuboption) VerifyOption {
 	requireKid := true
 	var useDefault, inferAlgorithm, multipleKeysPerKeyID bool
@@ -156,4 +183,44 @@ func WithVerifyAuto(f jwk.Fetcher, options ...jwk.FetchOption) VerifyOption {
 		fetcher: f,
 		options: options,
 	})
+}
+
+type withInsecureNoSignature struct {
+	protected Headers
+}
+
+// This exist as escape hatches to modify the header values after the fact
+func (w *withInsecureNoSignature) Protected(v Headers) Headers {
+	if w.protected == nil && v != nil {
+		w.protected = v
+	}
+	return w.protected
+}
+
+// WithInsecureNoSignature creates an option that allows the user to use the
+// "none" signature algorithm.
+//
+// Please note that this is insecure, and should never be used in production
+// (this is exactly why specifying "none"/jwa.NoSignature to `jws.WithKey()`
+// results in an error when `jws.Sign()` is called -- we do not allow using
+// "none" by accident)
+//
+// TODO: create specific sub-option set for this option
+func WithInsecureNoSignature(options ...WithKeySuboption) SignOption {
+	var protected Headers
+	for _, option := range options {
+		//nolint:forcetypeassert
+		switch option.Ident() {
+		case identProtectedHeaders{}:
+			protected = option.Value().(Headers)
+		}
+	}
+
+	return &signOption{
+		option.New(identInsecureNoSignature{},
+			&withInsecureNoSignature{
+				protected: protected,
+			},
+		),
+	}
 }

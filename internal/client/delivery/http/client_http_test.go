@@ -41,7 +41,7 @@ func TestRead(t *testing.T) {
 		Config:  *deps.config,
 		Matcher: deps.matcher,
 		Tokens:  deps.tokenService,
-	}).Handler().ServeHTTP(w, req)
+	}).ServeHTTP(w, req)
 
 	if resp := w.Result(); resp.StatusCode != http.StatusOK {
 		t.Errorf("%s %s = %d, want %d", req.Method, req.RequestURI, resp.StatusCode, http.StatusOK)
@@ -58,7 +58,7 @@ func NewDependencies(tb testing.TB) Dependencies {
 	tokens := tokenrepo.NewMemoryTokenRepository()
 	profiles := profilerepo.NewMemoryProfileRepository()
 	tokenService := tokenucase.NewTokenUseCase(tokenucase.Config{
-		Config:   config,
+		Config:   *config,
 		Profiles: profiles,
 		Sessions: sessions,
 		Tokens:   tokens,

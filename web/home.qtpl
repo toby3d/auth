@@ -9,31 +9,33 @@
 } %}
 
 {% collapsespace %}
-{% func (p *HomePage) Head() %}
-{%= p.BaseOf.Head() %}
+{% func (p *HomePage) head() %}
+{%= p.BaseOf.head() %}
 {% for i := range p.Client.RedirectURI %}
 <link rel="redirect_uri"
       href="{%s p.Client.RedirectURI[i].String() %}">
 {% endfor %}
 {% endfunc %}
 
-{% func (p *HomePage) Body() %}
+{% func (p *HomePage) body() %}
 <header class="h-app h-x-app">
+  {% if p.Client.Logo != nil %}
   <img class="u-logo"
-       src="{%s p.Client.GetLogo().String() %}"
-       alt="{%s p.Client.GetName() %}"
+       src="{%s p.Client.Logo.String() %}"
+       alt="{%s p.Client.Name %}"
        crossorigin="anonymous"
        decoding="async"
        height="140"
        importance="high"
        referrerpolicy="no-referrer-when-downgrade"
        width="140">
+  {% endif %}
 
   <h1>
     <a class="p-name u-url"
-       href="{%s p.Client.GetURL().String() %}">
+       href="{%s p.Client.URL.String() %}">
 
-      {%s p.Client.GetName() %}
+      {%s p.Client.Name %}
     </a>
   </h1>
 </header>
@@ -50,20 +52,12 @@
         "client_id":     p.Client.ID.String(),
         "redirect_uri":  p.Client.RedirectURI[0].String(),
         "response_type": domain.ResponseTypeCode.String(),
+        "scope":         domain.Scopes{domain.ScopeEmail, domain.ScopeProfile}.String(),
         "state":         p.State,
       } %}
     <input type="hidden"
            name="{%s name %}"
            value="{%s value %}">
-    {% endfor %}
-
-    {% for _, scope := range []domain.Scope{
-        domain.ScopeEmail,
-        domain.ScopeProfile,
-      } %}
-    <input type="hidden"
-           name="scope[]"
-           value="{%s scope.String() %}">
     {% endfor %}
 
     <input type="url"
@@ -73,7 +67,7 @@
            autocomplete="url"
            required>
 
-    <button type="submit">{%= p.T("Sign In") %}</button>
+    <button type="submit">{%= p.t("Sign In") %}</button>
   </form>
 </main>
 {% endfunc %}

@@ -20,6 +20,7 @@ Random data generator written in go
 - [Issue](https://github.com/brianvoe/gofakeit/issues)
 
 ## Contributors
+
 Thanks to everyone who has contributed to Gofakeit!
 
 <a href="https://github.com/brianvoe/gofakeit/graphs/contributors">
@@ -130,6 +131,7 @@ type Foo struct {
 	ArrayRange    []string       `fakesize:"2,6"`
     Bar           Bar
 	Skip          *string        `fake:"skip"`                // Set to "skip" to not generate data for
+	SkipAlt       *string        `fake:"-"`                   // Set to "-" to not generate data for
 	Created       time.Time                                   // Can take in a fake tag as well as a format tag
 	CreatedFormat time.Time      `fake:"{year}-{month}-{day}" format:"2006-01-02"`
 }
@@ -166,6 +168,47 @@ fmt.Println(f.Created.String()) // 1908-12-07 04:14:25.685339029 +0000 UTC
 // array, pointers, map
 // time.Time // If setting time you can also set a format tag
 // Nested Struct Fields and Embedded Fields
+```
+
+## Fakeable types
+
+It is possible to extend a struct by implementing the `Fakeable` interface
+in order to control the generation.
+
+For example, this is useful when it is not possible to modify the struct that you want to fake by adding struct tags to a field but you still need to be able to control the generation process.
+
+```go
+// Custom string that you want to generate your own data for
+// or just return a static value
+type CustomString string
+
+func (c *CustomString) Fake(faker *gofakeit.Faker) interface{} {
+	return CustomString("my custom string")
+}
+
+// Imagine a CustomTime type that is needed to support a custom JSON Marshaler
+type CustomTime time.Time
+
+func (c *CustomTime) Fake(faker *gofakeit.Faker) interface{} {
+	return CustomTime(time.Now())
+}
+
+func (c *CustomTime) MarshalJSON() ([]byte, error) {
+	//...
+}
+
+// This is the struct that we cannot modify to add struct tags
+type NotModifiable struct {
+	Token string
+	Value CustomString
+	Creation *CustomTime
+}
+
+var f NotModifiable
+gofakeit.Struct(&f)
+fmt.Printf("%s", f.Token) // yvqqdH
+fmt.Printf("%s", f.Value) // my custom string
+fmt.Printf("%s", f.Creation) // 2023-04-02 23:00:00 +0000 UTC m=+0.000000001
 ```
 
 ## Custom Functions
@@ -226,7 +269,10 @@ All functions also exist as methods on the Faker struct
 
 ### File
 
+Passing `nil` to `CSV`, `JSON` or `XML` it will auto generate data using a random set of generators.
+
 ```go
+CSV(co *CSVOptions) ([]byte, error)
 JSON(jo *JSONOptions) ([]byte, error)
 XML(xo *XMLOptions) ([]byte, error)
 FileExtension() string
@@ -241,6 +287,7 @@ Name() string
 NamePrefix() string
 NameSuffix() string
 FirstName() string
+MiddleName() string
 LastName() string
 Gender() string
 SSN() string
@@ -498,6 +545,7 @@ Svg(options *SVGOptions) string
 
 ```go
 Date() time.Time
+FutureDate() time.Time
 DateRange(start, end time.Time) time.Time
 NanoSecond() int
 Second() int
@@ -533,10 +581,18 @@ BitcoinAddress() string
 BitcoinPrivateKey() string
 ```
 
+### Finance
+
+```go
+Cusip() string
+Isin() string
+```
+
 ### Company
 
 ```go
 BS() string
+Blurb() string
 BuzzWord() string
 Company() string
 CompanySuffix() string
@@ -544,6 +600,7 @@ Job() *JobInfo
 JobDescriptor() string
 JobLevel() string
 JobTitle() string
+Slogan() string
 ```
 
 ### Hacker
@@ -672,6 +729,23 @@ MinecraftMobHostile() string
 MinecraftMobBoss() string
 MinecraftBiome() string
 MinecraftWeather() string
+```
+
+### Book
+
+```go
+Book() *BookInfo
+BookTitle() string
+BookAuthor() string
+BookGenre() string
+```
+
+### Movie
+
+```go
+Movie() *MovieInfo
+MovieName() string
+MovieGenre() string
 ```
 
 ### Error

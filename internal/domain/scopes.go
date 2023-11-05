@@ -11,22 +11,18 @@ type Scopes []Scope
 
 // UnmarshalForm implements custom unmarshler for form values.
 func (s *Scopes) UnmarshalForm(v []byte) error {
-	scopes := make(Scopes, 0)
-
 	for _, rawScope := range strings.Fields(string(v)) {
 		scope, err := ParseScope(rawScope)
 		if err != nil {
 			return fmt.Errorf("Scopes: UnmarshalForm: %w", err)
 		}
 
-		if scopes.Has(scope) {
+		if s.Has(scope) {
 			continue
 		}
 
-		scopes = append(scopes, scope)
+		*s = append(*s, scope)
 	}
-
-	*s = scopes
 
 	return nil
 }
@@ -38,22 +34,18 @@ func (s *Scopes) UnmarshalJSON(v []byte) error {
 		return fmt.Errorf("Scopes: UnmarshalJSON: %w", err)
 	}
 
-	result := make(Scopes, 0)
-
 	for _, rawScope := range strings.Fields(src) {
 		scope, err := ParseScope(rawScope)
 		if err != nil {
 			return fmt.Errorf("Scopes: UnmarshalJSON: %w", err)
 		}
 
-		if result.Has(scope) {
+		if s.Has(scope) {
 			continue
 		}
 
-		result = append(result, scope)
+		*s = append(*s, scope)
 	}
-
-	*s = result
 
 	return nil
 }

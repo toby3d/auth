@@ -9,21 +9,21 @@ import (
 
 // Client describes the client requesting data about the user.
 type Client struct {
+	Logo        *url.URL
+	URL         *url.URL
 	ID          ClientID
-	Logo        []*url.URL
+	Name        string
 	RedirectURI []*url.URL
-	URL         []*url.URL
-	Name        []string
 }
 
 // NewClient creates a new empty Client with provided ClientID, if any.
 func NewClient(cid ClientID) *Client {
 	return &Client{
 		ID:          cid,
-		Logo:        make([]*url.URL, 0),
+		Logo:        nil,
 		RedirectURI: make([]*url.URL, 0),
-		URL:         make([]*url.URL, 0),
-		Name:        make([]string, 0),
+		URL:         nil,
+		Name:        "",
 	}
 }
 
@@ -33,9 +33,9 @@ func TestClient(tb testing.TB) *Client {
 
 	return &Client{
 		ID:   *TestClientID(tb),
-		Name: []string{"Example App"},
-		URL:  []*url.URL{{Scheme: "https", Host: "app.example.com", Path: "/"}},
-		Logo: []*url.URL{{Scheme: "https", Host: "app.example.com", Path: "/logo.png"}},
+		Name: "Example App",
+		URL:  &url.URL{Scheme: "https", Host: "app.example.com", Path: "/"},
+		Logo: &url.URL{Scheme: "https", Host: "app.example.com", Path: "/logo.png"},
 		RedirectURI: []*url.URL{
 			{Scheme: "https", Host: "app.example.com", Path: "/redirect"},
 			{Scheme: "https", Host: "app.example.net", Path: "/redirect"},
@@ -80,31 +80,4 @@ func (c *Client) ValidateRedirectURI(redirectURI *url.URL) bool {
 	}
 
 	return false
-}
-
-// GetName safe returns first name, if any.
-func (c Client) GetName() string {
-	if len(c.Name) == 0 {
-		return ""
-	}
-
-	return c.Name[0]
-}
-
-// GetURL safe returns first URL, if any.
-func (c Client) GetURL() *url.URL {
-	if len(c.URL) == 0 {
-		return nil
-	}
-
-	return c.URL[0]
-}
-
-// GetLogo safe returns first logo, if any.
-func (c Client) GetLogo() *url.URL {
-	if len(c.Logo) == 0 {
-		return nil
-	}
-
-	return c.Logo[0]
 }

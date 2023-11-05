@@ -39,43 +39,65 @@ func init() {
 }
 
 var messageKeyToIndex = map[string]int{
-	"Allow":                 4,
+	"%sProof of Key Code Exchange%s is a mechanism that protects against attackers in the middle hijacking your application's authentication process. You can still authorize this application without this protection, but you must independently verify the security of this connection. If you have any doubts - stop the process  and contact the developers.": 4,
+	"Allow":                 8,
 	"Authorize %s":          0,
 	"Authorize application": 1,
-	"Choose your scopes":    2,
-	"Deny":                  3,
-	"Error":                 6,
-	"How do I fix it?":      7,
-	"Recipient":             10,
-	"Resource":              11,
-	"Send":                  12,
-	"Sign In":               8,
-	"TicketAuth":            9,
-	"version":               5,
+	"Deny":                  7,
+	"Error":                 10,
+	"How do I fix it?":      11,
+	"No scopes is requested: the application will only get your profile URL.": 6,
+	"Recipient":                          14,
+	"Resource":                           15,
+	"Scopes":                             5,
+	"Send":                               16,
+	"Sign In":                            12,
+	"This client does not use %sPKCE%s!": 3,
+	"This client uses %sPKCE%s with the %s%s%s method.": 2,
+	"TicketAuth":                       13,
+	"You will be redirected to %s%s%s": 9,
 }
 
-var enIndex = []uint32{ // 14 elements
-	0x00000000, 0x00000010, 0x00000026, 0x00000039,
-	0x0000003e, 0x00000044, 0x0000004c, 0x00000052,
-	0x00000063, 0x0000006b, 0x00000076, 0x00000080,
-	0x00000089, 0x0000008e,
-} // Size: 80 bytes
+var enIndex = []uint32{ // 18 elements
+	0x00000000, 0x00000010, 0x00000026, 0x00000067,
+	0x00000090, 0x000001f3, 0x000001fa, 0x00000242,
+	0x00000247, 0x0000024d, 0x00000277, 0x0000027d,
+	0x0000028e, 0x00000296, 0x000002a1, 0x000002ab,
+	0x000002b4, 0x000002b9,
+} // Size: 96 bytes
 
-const enData string = "" + // Size: 142 bytes
-	"\x02Authorize %[1]s\x02Authorize application\x02Choose your scopes\x02De" +
-	"ny\x02Allow\x02version\x02Error\x02How do I fix it?\x02Sign In\x02Ticket" +
-	"Auth\x02Recipient\x02Resource\x02Send"
+const enData string = "" + // Size: 697 bytes
+	"\x02Authorize %[1]s\x02Authorize application\x02This client uses %[1]sPK" +
+	"CE%[2]s with the %[3]s%[4]s%[5]s method.\x02This client does not use %[1" +
+	"]sPKCE%[2]s!\x02%[1]sProof of Key Code Exchange%[2]s is a mechanism that" +
+	" protects against attackers in the middle hijacking your application's a" +
+	"uthentication process. You can still authorize this application without " +
+	"this protection, but you must independently verify the security of this " +
+	"connection. If you have any doubts - stop the process  and contact the d" +
+	"evelopers.\x02Scopes\x02No scopes is requested: the application will onl" +
+	"y get your profile URL.\x02Deny\x02Allow\x02You will be redirected to %[" +
+	"1]s%[2]s%[3]s\x02Error\x02How do I fix it?\x02Sign In\x02TicketAuth\x02R" +
+	"ecipient\x02Resource\x02Send"
 
-var ruIndex = []uint32{ // 14 elements
-	0x00000000, 0x0000001f, 0x0000004d, 0x0000008e,
-	0x0000009f, 0x000000b2, 0x000000bf, 0x000000cc,
-	0x000000ee, 0x000000f9, 0x00000104, 0x00000119,
-	0x00000126, 0x00000139,
-} // Size: 80 bytes
+var ruIndex = []uint32{ // 18 elements
+	0x00000000, 0x0000001f, 0x0000004d, 0x000000a1,
+	0x000000d8, 0x00000343, 0x00000352, 0x000003e9,
+	0x000003fa, 0x0000040d, 0x00000451, 0x0000045e,
+	0x00000480, 0x0000048b, 0x00000496, 0x000004ab,
+	0x000004b8, 0x000004cb,
+} // Size: 96 bytes
 
-const ruData string = "" + // Size: 313 bytes
-	"\x02Авторизовать %[1]s\x02Авторизовать приложение\x02Выбери предоставляе" +
-	"мые разрешения\x02Отказать\x02Разрешить\x02версия\x02Ошибка\x02Как испр" +
-	"авить это?\x02Войти\x02TicketAuth\x02Получатель\x02Ресурс\x02Отправить"
+const ruData string = "" + // Size: 1227 bytes
+	"\x02Авторизовать %[1]s\x02Авторизовать приложение\x02Клиент использует %" +
+	"[1]sPKCE%[2]s с методом %[3]s%[4]s%[5]s.\x02Клиент не использует %[1]sPK" +
+	"CE%[2]s!\x02%[1]sProof of Key Code Exchange%[2]s это механизм, защищающи" +
+	"й от злоумышленников, перехватывающих процесс аутентификации вашего при" +
+	"ложения. Вы можете авторизовать данное приложение и без этой защиты, но" +
+	" при этом вы должны самостоятельно проверить безопасность этого соединен" +
+	"ия. Если у вас есть сомнения - прервите процесс и свяжитесь с разработч" +
+	"иками.\x02Области\x02Никакие разрешения не запрашиваются: приложение по" +
+	"лучит только URL вашего профиля.\x02Отказать\x02Разрешить\x02Вы будете " +
+	"перенаправлены на %[1]s%[2]s%[3]s\x02Ошибка\x02Как исправить это?\x02Во" +
+	"йти\x02TicketAuth\x02Получатель\x02Ресурс\x02Отправить"
 
-	// Total table size 615 bytes (0KiB); checksum: 66FB60EC
+	// Total table size 2116 bytes (2KiB); checksum: 848DD07E

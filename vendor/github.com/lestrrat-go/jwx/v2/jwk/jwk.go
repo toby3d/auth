@@ -12,6 +12,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io"
 	"math/big"
@@ -43,7 +44,7 @@ func bigIntToBytes(n *big.Int) ([]byte, error) {
 //   - []byte creates a symmetric key
 func FromRaw(key interface{}) (Key, error) {
 	if key == nil {
-		return nil, fmt.Errorf(`jwk.New requires a non-nil key`)
+		return nil, fmt.Errorf(`jwk.FromRaw requires a non-nil key`)
 	}
 
 	var ptr interface{}
@@ -234,8 +235,11 @@ func PublicRawKeyOf(v interface{}) (interface{}, error) {
 }
 
 const (
-	pmPrivateKey = `PRIVATE KEY`
-	pmPublicKey  = `PUBLIC KEY`
+	pmPrivateKey    = `PRIVATE KEY`
+	pmPublicKey     = `PUBLIC KEY`
+	pmECPrivateKey  = `EC PRIVATE KEY`
+	pmRSAPublicKey  = `RSA PUBLIC KEY`
+	pmRSAPrivateKey = `RSA PRIVATE KEY`
 )
 
 // EncodeX509 encodes the key into a byte sequence in ASN.1 DER format
@@ -263,13 +267,13 @@ func EncodeX509(v interface{}) (string, []byte, error) {
 	// Try to convert it into a certificate
 	switch v := v.(type) {
 	case *rsa.PrivateKey:
-		return "RSA PRIVATE KEY", x509.MarshalPKCS1PrivateKey(v), nil
+		return pmRSAPrivateKey, x509.MarshalPKCS1PrivateKey(v), nil
 	case *ecdsa.PrivateKey:
 		marshaled, err := x509.MarshalECPrivateKey(v)
 		if err != nil {
 			return "", nil, err
 		}
-		return "ECDSA PRIVATE KEY", marshaled, nil
+		return pmECPrivateKey, marshaled, nil
 	case ed25519.PrivateKey:
 		marshaled, err := x509.MarshalPKCS8PrivateKey(v)
 		if err != nil {
@@ -316,19 +320,19 @@ func DecodePEM(src []byte) (interface{}, []byte, error) {
 
 	switch block.Type {
 	// Handle the semi-obvious cases
-	case "RSA PRIVATE KEY":
+	case pmRSAPrivateKey:
 		key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 		if err != nil {
 			return nil, nil, fmt.Errorf(`failed to parse PKCS1 private key: %w`, err)
 		}
 		return key, rest, nil
-	case "RSA PUBLIC KEY":
+	case pmRSAPublicKey:
 		key, err := x509.ParsePKCS1PublicKey(block.Bytes)
 		if err != nil {
 			return nil, nil, fmt.Errorf(`failed to parse PKCS1 public key: %w`, err)
 		}
 		return key, rest, nil
-	case "EC PRIVATE KEY":
+	case pmECPrivateKey:
 		key, err := x509.ParseECPrivateKey(block.Bytes)
 		if err != nil {
 			return nil, nil, fmt.Errorf(`failed to parse EC private key: %w`, err)
@@ -723,4 +727,63 @@ func AvailableCurves() []elliptic.Curve {
 
 func CurveForAlgorithm(alg jwa.EllipticCurveAlgorithm) (elliptic.Curve, bool) {
 	return ecutil.CurveForAlgorithm(alg)
+}
+
+// Equal compares two keys and returns true if they are equal. The comparison
+// is solely done against the thumbprints of k1 and k2. It is possible for keys
+// that have, for example, different key IDs, key usage, etc, to be considered equal.
+func Equal(k1, k2 Key) bool {
+	h := crypto.SHA256
+	tp1, err := k1.Thumbprint(h)
+	if err != nil {
+		return false // can't report error
+	}
+	tp2, err := k2.Thumbprint(h)
+	if err != nil {
+		return false // can't report error
+	}
+
+	return bytes.Equal(tp1, tp2)
+}
+
+// IsPrivateKey returns true if the supplied key is a private key of an
+// asymmetric key pair. The argument `k` must implement the `AsymmetricKey`
+// interface.
+//
+// An error is returned if the supplied key is not an `AsymmetricKey`.
+func IsPrivateKey(k Key) (bool, error) {
+	asymmetric, ok := k.(AsymmetricKey)
+	if ok {
+		return asymmetric.IsPrivate(), nil
+	}
+	return false, fmt.Errorf("jwk.IsPrivateKey: %T is not an asymmetric key", k)
+}
+
+type keyValidationError struct {
+	err error
+}
+
+func (e *keyValidationError) Error() string {
+	return fmt.Sprintf(`key validation failed: %s`, e.err)
+}
+
+func (e *keyValidationError) Unwrap() error {
+	return e.err
+}
+
+func (e *keyValidationError) Is(target error) bool {
+	_, ok := target.(*keyValidationError)
+	return ok
+}
+
+// NewKeyValidationError wraps the given error with an error that denotes
+// `key.Validate()` has failed. This error type should ONLY be used as
+// return value from the `Validate()` method.
+func NewKeyValidationError(err error) error {
+	return &keyValidationError{err: err}
+}
+
+func IsKeyValidationError(err error) bool {
+	var kve keyValidationError
+	return errors.Is(err, &kve)
 }

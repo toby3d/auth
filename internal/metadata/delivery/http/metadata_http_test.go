@@ -20,7 +20,6 @@ func TestMetadata(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	delivery.NewHandler(metadata).
-		Handler().
 		ServeHTTP(w, req)
 
 	resp := w.Result()

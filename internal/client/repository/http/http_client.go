@@ -8,27 +8,40 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/tomnomnom/linkheader"
 	"golang.org/x/exp/slices"
+	"willnorris.com/go/microformats"
 
 	"source.toby3d.me/toby3d/auth/internal/client"
 	"source.toby3d.me/toby3d/auth/internal/common"
 	"source.toby3d.me/toby3d/auth/internal/domain"
-	"source.toby3d.me/toby3d/auth/internal/httputil"
 )
 
-type httpClientRepository struct {
-	client *http.Client
-}
+type (
+	//nolint:tagliatelle,lll
+	Response struct {
+		TicketEndpoint                             domain.URL                   `json:"ticket_endpoint"`
+		AuthorizationEndpoint                      domain.URL                   `json:"authorization_endpoint"`
+		IntrospectionEndpoint                      domain.URL                   `json:"introspection_endpoint"`
+		RevocationEndpoint                         domain.URL                   `json:"revocation_endpoint,omitempty"`
+		ServiceDocumentation                       domain.URL                   `json:"service_documentation,omitempty"`
+		TokenEndpoint                              domain.URL                   `json:"token_endpoint"`
+		UserinfoEndpoint                           domain.URL                   `json:"userinfo_endpoint,omitempty"`
+		Microsub                                   domain.URL                   `json:"microsub"`
+		Issuer                                     domain.URL                   `json:"issuer"`
+		Micropub                                   domain.URL                   `json:"micropub"`
+		GrantTypesSupported                        []domain.GrantType           `json:"grant_types_supported,omitempty"`
+		IntrospectionEndpointAuthMethodsSupported  []string                     `json:"introspection_endpoint_auth_methods_supported,omitempty"`
+		RevocationEndpointAuthMethodsSupported     []string                     `json:"revocation_endpoint_auth_methods_supported,omitempty"`
+		ScopesSupported                            []domain.Scope               `json:"scopes_supported,omitempty"`
+		ResponseTypesSupported                     []domain.ResponseType        `json:"response_types_supported,omitempty"`
+		CodeChallengeMethodsSupported              []domain.CodeChallengeMethod `json:"code_challenge_methods_supported"`
+		AuthorizationResponseIssParameterSupported bool                         `json:"authorization_response_iss_parameter_supported,omitempty"`
+	}
 
-const (
-	DefaultMaxRedirectsCount int = 10
-
-	hApp           string = "h-app"
-	hXApp          string = "h-x-app"
-	propertyLogo   string = "logo"
-	propertyName   string = "name"
-	propertyURL    string = "url"
-	relRedirectURI string = "redirect_uri"
+	httpClientRepository struct {
+		client *http.Client
+	}
 )
 
 func NewHTTPClientRepository(c *http.Client) client.Repository {
@@ -43,6 +56,18 @@ func (httpClientRepository) Create(_ context.Context, _ domain.Client) error {
 }
 
 func (repo httpClientRepository) Get(ctx context.Context, cid domain.ClientID) (*domain.Client, error) {
+	out := &domain.Client{
+		ID:          cid,
+		RedirectURI: make([]*url.URL, 0),
+		Logo:        nil,
+		URL:         nil,
+		Name:        "",
+	}
+
+	if cid.IsLocalhost() {
+		return out, nil
+	}
+
 	resp, err := repo.client.Get(cid.String())
 	if err != nil {
 		return nil, fmt.Errorf("failed to make a request to the client: %w", err)
@@ -52,77 +77,82 @@ func (repo httpClientRepository) Get(ctx context.Context, cid domain.ClientID) (
 		return nil, fmt.Errorf("%w: status on client page is not 200", client.ErrNotExist)
 	}
 
-	client := &domain.Client{
-		ID:          cid,
-		RedirectURI: make([]*url.URL, 0),
-		Logo:        make([]*url.URL, 0),
-		URL:         make([]*url.URL, 0),
-		Name:        make([]string, 0),
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read response body: %w", err)
 	}
 
-	extract(resp.Body, resp.Request.URL, client, resp.Header.Get(common.HeaderLink))
+	// NOTE(toby3d): fetch redirect uri's and application profile from HTML nodes
+	mf2 := microformats.Parse(bytes.NewReader(body), resp.Request.URL)
 
-	return client, nil
-}
-
-//nolint:gocognit,cyclop
-func extract(r io.Reader, u *url.URL, dst *domain.Client, header string) {
-	body, _ := io.ReadAll(r)
-
-	for _, endpoint := range httputil.ExtractEndpoints(bytes.NewReader(body), u, header, relRedirectURI) {
-		if !containsUrl(dst.RedirectURI, endpoint) {
-			dst.RedirectURI = append(dst.RedirectURI, endpoint)
-		}
-	}
-
-	for _, itemType := range []string{hApp, hXApp} {
-		for _, name := range httputil.ExtractProperty(bytes.NewReader(body), u, itemType, propertyName) {
-			if n, ok := name.(string); ok && !slices.Contains(dst.Name, n) {
-				dst.Name = append(dst.Name, n)
-			}
-		}
-
-		for _, logo := range httputil.ExtractProperty(bytes.NewReader(body), u, itemType, propertyLogo) {
-			var logoURL *url.URL
-			var err error
-
-			switch l := logo.(type) {
-			case string:
-				logoURL, err = url.Parse(l)
-			case map[string]string:
-				if value, ok := l["value"]; ok {
-					logoURL, err = url.Parse(value)
-				}
-			}
-
-			if err != nil || containsUrl(dst.Logo, logoURL) {
-				continue
-			}
-
-			dst.Logo = append(dst.Logo, logoURL)
-		}
-
-		for _, property := range httputil.ExtractProperty(bytes.NewReader(body), u, itemType, propertyURL) {
-			prop, ok := property.(string)
-			if !ok {
-				continue
-			}
-
-			if u, err := url.Parse(prop); err == nil && !containsUrl(dst.URL, u) {
-				dst.URL = append(dst.URL, u)
-			}
-		}
-	}
-}
-
-func containsUrl(src []*url.URL, find *url.URL) bool {
-	for i := range src {
-		if src[i].String() != find.String() {
+	for i := range mf2.Items {
+		if !slices.Contains(mf2.Items[i].Type, common.HApp) &&
+			!slices.Contains(mf2.Items[i].Type, common.HXApp) {
 			continue
 		}
 
-		return true
+		parseProfile(mf2.Items[i].Properties, out)
 	}
 
-	return false
+	for _, val := range mf2.Rels[common.RelRedirectURI] {
+		var u *url.URL
+		if u, err = url.Parse(val); err == nil {
+			out.RedirectURI = append(out.RedirectURI, u)
+		}
+	}
+
+	// NOTE(toby3d): fetch redirect uri's from Link header
+	for _, link := range linkheader.Parse(resp.Header.Get(common.HeaderLink)) {
+		if link.Rel != common.RelRedirectURI {
+			continue
+		}
+
+		var u *url.URL
+		if u, err = url.Parse(link.URL); err == nil {
+			out.RedirectURI = append(out.RedirectURI, u)
+		}
+	}
+
+	return out, nil
+}
+
+func parseProfile(src map[string][]any, dst *domain.Client) {
+	for _, val := range src[common.PropertyName] {
+		v, ok := val.(string)
+		if !ok {
+			continue
+		}
+
+		dst.Name = v
+
+		break
+	}
+
+	for _, val := range src[common.PropertyURL] {
+		v, ok := val.(string)
+		if !ok {
+			continue
+		}
+
+		var err error
+		if dst.URL, err = url.Parse(v); err != nil {
+			continue
+		}
+
+		break
+	}
+
+	for _, val := range src[common.PropertyLogo] {
+		v, ok := val.(string)
+		if !ok {
+			continue
+		}
+
+		var err error
+		if dst.Logo, err = url.Parse(v); err != nil {
+			continue
+		}
+
+		break
+	}
 }

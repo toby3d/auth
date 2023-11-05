@@ -39,26 +39,24 @@ func NewHandler(opts NewHandlerOptions) *Handler {
 	}
 }
 
-func (h *Handler) Handler() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "" && r.Method != http.MethodGet {
-			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "" && r.Method != http.MethodGet {
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 
-			return
-		}
+		return
+	}
 
-		var head string
-		head, r.URL.Path = urlutil.ShiftPath(r.URL.Path)
+	var head string
+	head, r.URL.Path = urlutil.ShiftPath(r.URL.Path)
 
-		switch head {
-		default:
-			http.NotFound(w, r)
-		case "":
-			h.handleRender(w, r)
-		case "callback":
-			h.handleCallback(w, r)
-		}
-	})
+	switch head {
+	default:
+		http.NotFound(w, r)
+	case "":
+		h.handleRender(w, r)
+	case "callback":
+		h.handleCallback(w, r)
+	}
 }
 
 func (h *Handler) handleRender(w http.ResponseWriter, r *http.Request) {
@@ -93,7 +91,7 @@ func (h *Handler) handleRender(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-//nolint:unlen
+//nolint:funlen
 func (h *Handler) handleCallback(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "" && r.Method != http.MethodGet {
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)

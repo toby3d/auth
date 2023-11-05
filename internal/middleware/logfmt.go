@@ -2,13 +2,12 @@ package middleware
 
 import (
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
 	"sync/atomic"
 	"time"
-
-	"github.com/go-logfmt/logfmt"
 )
 
 type (
@@ -27,6 +26,7 @@ type (
 		http.ResponseWriter
 		error          error
 		start          time.Time
+		end            time.Time
 		statusCode     int
 		responseLength int
 		id             uint64
@@ -57,10 +57,10 @@ func LogFmtWithConfig(config LogFmtConfig) Interceptor {
 		config.Output = DefaultLogFmtConfig.Output
 	}
 
-	encoder := logfmt.NewEncoder(config.Output)
+	encoder := slog.New(slog.NewTextHandler(config.Output, nil))
 
 	return func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-		rw := &logFmtResponse{
+		tx := &logFmtResponse{
 			id:             nextConnID(),
 			responseLength: 0,
 			ResponseWriter: w,
@@ -68,43 +68,47 @@ func LogFmtWithConfig(config LogFmtConfig) Interceptor {
 			statusCode:     0,
 		}
 
-		next(rw, r)
+		next(tx, r)
 
-		end := time.Now().UTC()
-
-		encoder.EncodeKeyvals(
-			"bytes_in", r.ContentLength,
-			"bytes_out", rw.responseLength,
-			"error", rw.error,
-			"host", r.Host,
-			"id", rw.id,
-			"latency", end.Sub(rw.start).Nanoseconds(),
-			"latency_human", end.Sub(rw.start).String(),
-			"method", r.Method,
-			"path", r.URL.Path,
-			"protocol", r.Proto,
-			"referer", r.Referer(),
-			"remote_ip", r.RemoteAddr,
-			"status", rw.statusCode,
-			"time_rfc3339", rw.start.Format(time.RFC3339),
-			"time_rfc3339_nano", rw.start.Format(time.RFC3339Nano),
-			"time_unix", rw.start.Unix(),
-			"time_unix_nano", rw.start.UnixNano(),
-			"uri", r.RequestURI,
-			"user_agent", r.UserAgent(),
-		)
+		tx.end = time.Now().UTC()
+		payload := []any{
+			slog.Int64("bytes_in", r.ContentLength),
+			slog.Int("bytes_out", tx.responseLength),
+			slog.Any("error", tx.error),
+			slog.String("host", r.Host),
+			slog.Uint64("id", tx.id),
+			slog.Int64("latency", tx.end.Sub(tx.start).Nanoseconds()),
+			slog.String("latency_human", tx.end.Sub(tx.start).String()),
+			slog.String("method", r.Method),
+			slog.String("path", r.URL.Path),
+			slog.String("protocol", r.Proto),
+			slog.String("referer", r.Referer()),
+			slog.String("remote_ip", r.RemoteAddr),
+			slog.Int("status", tx.statusCode),
+			slog.String("time_rfc3339", tx.start.Format(time.RFC3339)),
+			slog.String("time_rfc3339_nano", tx.start.Format(time.RFC3339Nano)),
+			slog.Int64("time_unix", tx.start.Unix()),
+			slog.Int64("time_unix_nano", tx.start.UnixNano()),
+			slog.String("uri", r.RequestURI),
+			slog.String("user_agent", r.UserAgent()),
+		}
 
 		for name, src := range map[string]map[string][]string{
 			"form":   r.PostForm,
 			"header": r.Header,
 			"query":  r.URL.Query(),
 		} {
+			values := make([]any, 0)
+
 			for k, v := range src {
-				encoder.EncodeKeyval(name+"_"+strings.ReplaceAll(strings.ToLower(k), "-", "_"), v)
+				values = append(values, slog.String(strings.ReplaceAll(strings.ToLower(k), " ", "_"),
+					strings.Join(v, " ")))
 			}
+
+			payload = append(payload, slog.Group(name, values...))
 		}
 
-		encoder.EndRecord()
+		encoder.Log(r.Context(), slog.LevelInfo, "" /* msg */, payload...)
 	}
 }
 

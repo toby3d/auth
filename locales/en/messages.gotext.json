@@ -13,7 +13,7 @@
                     "type": "string",
                     "underlyingType": "string",
                     "argNum": 1,
-                    "expr": "p.Client.GetName()"
+                    "expr": "p.Client.Name"
                 }
             ],
             "fuzzy": true
@@ -26,9 +26,115 @@
             "fuzzy": true
         },
         {
-            "id": "Choose your scopes",
-            "message": "Choose your scopes",
-            "translation": "Choose your scopes",
+            "id": "This client uses {Abbr_titleProof_of_Key_Code_Exchange}PKCE{Abbr} with the {Code}{CodeChallengeMethod}{Code_1} method.",
+            "message": "This client uses {Abbr_titleProof_of_Key_Code_Exchange}PKCE{Abbr} with the {Code}{CodeChallengeMethod}{Code_1} method.",
+            "translation": "This client uses {Abbr_titleProof_of_Key_Code_Exchange}PKCE{Abbr} with the {Code}{CodeChallengeMethod}{Code_1} method.",
+            "translatorComment": "Copied from source.",
+            "placeholders": [
+                {
+                    "id": "Abbr_titleProof_of_Key_Code_Exchange",
+                    "string": "%[1]s",
+                    "type": "string",
+                    "underlyingType": "string",
+                    "argNum": 1,
+                    "expr": "`\u003cabbr title=\"Proof of Key Code Exchange\"\u003e`"
+                },
+                {
+                    "id": "Abbr",
+                    "string": "%[2]s",
+                    "type": "string",
+                    "underlyingType": "string",
+                    "argNum": 2,
+                    "expr": "`\u003c/abbr\u003e`"
+                },
+                {
+                    "id": "Code",
+                    "string": "%[3]s",
+                    "type": "string",
+                    "underlyingType": "string",
+                    "argNum": 3,
+                    "expr": "`\u003ccode\u003e`"
+                },
+                {
+                    "id": "CodeChallengeMethod",
+                    "string": "%[4]s",
+                    "type": "source.toby3d.me/toby3d/auth/internal/domain.CodeChallengeMethod",
+                    "underlyingType": "struct{codeChallengeMethod string}",
+                    "argNum": 4,
+                    "expr": "p.CodeChallengeMethod"
+                },
+                {
+                    "id": "Code_1",
+                    "string": "%[5]s",
+                    "type": "string",
+                    "underlyingType": "string",
+                    "argNum": 5,
+                    "expr": "`\u003c/code\u003e`"
+                }
+            ],
+            "fuzzy": true
+        },
+        {
+            "id": "This client does not use {Abbr_titleProof_of_Key_Code_Exchange}PKCE{Abbr}!",
+            "message": "This client does not use {Abbr_titleProof_of_Key_Code_Exchange}PKCE{Abbr}!",
+            "translation": "This client does not use {Abbr_titleProof_of_Key_Code_Exchange}PKCE{Abbr}!",
+            "translatorComment": "Copied from source.",
+            "placeholders": [
+                {
+                    "id": "Abbr_titleProof_of_Key_Code_Exchange",
+                    "string": "%[1]s",
+                    "type": "string",
+                    "underlyingType": "string",
+                    "argNum": 1,
+                    "expr": "`\u003cabbr title=\"Proof of Key Code Exchange\"\u003e`"
+                },
+                {
+                    "id": "Abbr",
+                    "string": "%[2]s",
+                    "type": "string",
+                    "underlyingType": "string",
+                    "argNum": 2,
+                    "expr": "`\u003c/abbr\u003e`"
+                }
+            ],
+            "fuzzy": true
+        },
+        {
+            "id": "{Dfn_idPKCE}Proof of Key Code Exchange{Dfn} is a mechanism that protects against attackers in the middle hijacking your application's authentication process. You can still authorize this application without this protection, but you must independently verify the security of this connection. If you have any doubts - stop the process  and contact the developers.",
+            "message": "{Dfn_idPKCE}Proof of Key Code Exchange{Dfn} is a mechanism that protects against attackers in the middle hijacking your application's authentication process. You can still authorize this application without this protection, but you must independently verify the security of this connection. If you have any doubts - stop the process  and contact the developers.",
+            "translation": "{Dfn_idPKCE}Proof of Key Code Exchange{Dfn} is a mechanism that protects against attackers in the middle hijacking your application's authentication process. You can still authorize this application without this protection, but you must independently verify the security of this connection. If you have any doubts - stop the process  and contact the developers.",
+            "translatorComment": "Copied from source.",
+            "placeholders": [
+                {
+                    "id": "Dfn_idPKCE",
+                    "string": "%[1]s",
+                    "type": "string",
+                    "underlyingType": "string",
+                    "argNum": 1,
+                    "expr": "`\u003cdfn id=\"PKCE\"\u003e`"
+                },
+                {
+                    "id": "Dfn",
+                    "string": "%[2]s",
+                    "type": "string",
+                    "underlyingType": "string",
+                    "argNum": 2,
+                    "expr": "`\u003c/dfn\u003e`"
+                }
+            ],
+            "fuzzy": true
+        },
+        {
+            "id": "Scopes",
+            "message": "Scopes",
+            "translation": "Scopes",
+            "translatorComment": "Copied from source.",
+            "fuzzy": true
+        },
+        {
+            "id": "No scopes is requested: the application will only get your profile URL.",
+            "message": "No scopes is requested: the application will only get your profile URL.",
+            "translation": "No scopes is requested: the application will only get your profile URL.",
             "translatorComment": "Copied from source.",
             "fuzzy": true
         },
@@ -44,6 +150,39 @@
             "message": "Allow",
             "translation": "Allow",
             "translatorComment": "The name of the button to continue the application authorization process",
+            "fuzzy": true
+        },
+        {
+            "id": "You will be redirected to {Code}{RedirectURI}{Code_1}",
+            "message": "You will be redirected to {Code}{RedirectURI}{Code_1}",
+            "translation": "You will be redirected to {Code}{RedirectURI}{Code_1}",
+            "translatorComment": "Copied from source.",
+            "placeholders": [
+                {
+                    "id": "Code",
+                    "string": "%[1]s",
+                    "type": "string",
+                    "underlyingType": "string",
+                    "argNum": 1,
+                    "expr": "`\u003ccode\u003e`"
+                },
+                {
+                    "id": "RedirectURI",
+                    "string": "%[2]s",
+                    "type": "*source.toby3d.me/toby3d/auth/internal/domain.URL",
+                    "underlyingType": "*source.toby3d.me/toby3d/auth/internal/domain.URL",
+                    "argNum": 2,
+                    "expr": "p.RedirectURI"
+                },
+                {
+                    "id": "Code_1",
+                    "string": "%[3]s",
+                    "type": "string",
+                    "underlyingType": "string",
+                    "argNum": 3,
+                    "expr": "`\u003c/code\u003e`"
+                }
+            ],
             "fuzzy": true
         },
         {

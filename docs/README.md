@@ -1,4 +1,4 @@
-# auth [![Build Status](https://drone.toby3d.me/api/badges/toby3d/auth/status.svg)](https://drone.toby3d.me/toby3d/auth)
+# auth
 
 > Personal [IndieAuth](https://indieauth.net/source/) server.
 

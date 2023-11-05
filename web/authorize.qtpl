@@ -16,17 +16,17 @@
   State               string
 } %}
 
-{% func (p *AuthorizePage) Title() %}
-{% if p.Client.GetName() == "" %}
-{%= p.T("Authorize %s", p.Client.GetName()) %}
+{% func (p *AuthorizePage) title() %}
+{% if p.Client.Name != "" %}
+{%= p.t("Authorize %s", p.Client.Name) %}
 {% else %}
-{%= p.T("Authorize application") %}
+{%= p.t("Authorize application") %}
 {% endif %}
 {% endfunc %}
 
-{% func (p *AuthorizePage) Body() %}
+{% func (p *AuthorizePage) body() %}
 <header>
-  {% if p.Client.GetLogo() != nil %}
+  {% if p.Client.Logo != nil %}
   <img class=""
        crossorigin="anonymous"
        decoding="async"
@@ -34,27 +34,56 @@
        importance="high"
        loading="lazy"
        referrerpolicy="no-referrer-when-downgrade"
-       src="{%s p.Client.GetLogo().String() %}"
-       alt="{%s p.Client.GetName() %}"
+       src="{%s p.Client.Logo.String() %}"
+       alt="{%s p.Client.Name %}"
        width="140">
   {% endif %}
 
   <h2>
-    {% if p.Client.GetURL() != nil %}
-    <a href="{%s p.Client.GetURL().String() %}">
+    {% if p.Client.URL != nil %}
+    <a href="{%s p.Client.URL.String() %}">
       {% endif %}
-      {% if p.Client.GetName() != "" %}
-      {%s p.Client.GetName() %}
+      {% if p.Client.Name != "" %}
+      {%s p.Client.Name %}
       {% else %}
       {%s p.Client.ID.String() %}
       {% endif %}
-      {% if p.Client.GetURL() != nil %}
+      {% if p.Client.URL != nil %}
     </a>
     {% endif %}
   </h2>
 </header>
 
 <main>
+  <aside>
+    {% if p.CodeChallengeMethod != domain.CodeChallengeMethodUnd && p.CodeChallenge != "" %}
+    <p class="with-icon">
+      <span class="icon"
+            role="img"
+            aria-label="closed lock with key">🔐</span>
+
+      {%= p.t(`This client uses %sPKCE%s with the %s%s%s method.`, `<abbr title="Proof of Key Code Exchange">`,
+        `</abbr>`, `<code>`, p.CodeChallengeMethod, `</code>`) %}
+    </p>
+    {% else %}
+    <details>
+      <summary class="with-icon">
+        <span class="icon"
+              role="img"
+              aria-label="unlock">🔓</span>
+
+        {%= p.t(`This client does not use %sPKCE%s!`, `<abbr title="Proof of Key Code Exchange">`, `</abbr>`) %}
+      </summary>
+      <p>
+        {%= p.t(`%sProof of Key Code Exchange%s is a mechanism that protects against attackers in the middle hijacking `+
+        `your application's authentication process. You can still authorize this application without this protection, `+
+        `but you must independently verify the security of this connection. If you have any doubts - stop the process `+
+        ` and contact the developers.`, `<dfn id="PKCE">`, `</dfn>`) %}
+      </p>
+    </details>
+    {% endif %}
+  </aside>
+
   <form class=""
         accept-charset="utf-8"
         action="/authorize/verify"
@@ -83,7 +112,7 @@
 
     {% if len(p.Scope) > 0 %}
     <fieldset>
-      <legend>{%= p.T("Choose your scopes") %}</legend>
+      <legend>{%= p.t("Scopes") %}</legend>
 
       {% for _, scope := range p.Scope %}
       <div>
@@ -98,6 +127,10 @@
       </div>
       {% endfor %}
     </fieldset>
+    {% else %}
+    <aside>
+      <p>{%= p.t(`No scopes is requested: the application will only get your profile URL.`) %}</p>
+    </aside>
     {% endif %}
 
     {% if p.CodeChallenge != "" %}
@@ -140,15 +173,19 @@
             name="authorize"
             value="deny">
 
-      {%= p.T("Deny") %}
+      {%= p.t("Deny") %}
     </button>
 
     <button type="submit"
             name="authorize"
             value="allow">
 
-      {%= p.T("Allow") %}
+      {%= p.t("Allow") %}
     </button>
+
+    <aside>
+      <p>{%= p.t(`You will be redirected to %s%s%s`, `<code>`, p.RedirectURI, `</code>`) %}</p>
+    </aside>
   </form>
 </main>
 {% endfunc %}

@@ -13,11 +13,9 @@ import (
 // ValuesExtractor defines a function for extracting values (keys/tokens) from the given context.
 type ValuesExtractor func(w http.ResponseWriter, r *http.Request) ([]string, error)
 
-const (
-	// extractorLimit is arbitrary number to limit values extractor can return. this limits possible resource
-	// exhaustion attack vector.
-	extractorLimit = 20
-)
+// extractorLimit is arbitrary number to limit values extractor can return. this limits possible resource
+// exhaustion attack vector.
+const extractorLimit = 20
 
 var (
 	errHeaderExtractorValueMissing = errors.New("missing value in request header")
@@ -58,7 +56,7 @@ func createExtractors(lookups, authScheme string) ([]ValuesExtractor, error) {
 	for _, source := range sources {
 		parts := strings.Split(source, ":")
 
-		if len(parts) < 2 {
+		if len(parts) <= 1 {
 			return nil, fmt.Errorf("extractor source for lookup could not be split into needed parts: %v",
 				source)
 		}
@@ -105,7 +103,7 @@ func valuesFromHeader(header, valuePrefix string) ValuesExtractor {
 	// this
 	header = textproto.CanonicalMIMEHeaderKey(header)
 
-	return func(w http.ResponseWriter, r *http.Request) ([]string, error) {
+	return func(_ http.ResponseWriter, r *http.Request) ([]string, error) {
 		values := r.Header.Values(header)
 		if len(values) == 0 {
 			return nil, errHeaderExtractorValueMissing
@@ -147,7 +145,7 @@ func valuesFromHeader(header, valuePrefix string) ValuesExtractor {
 
 // valuesFromQuery returns a function that extracts values from the query string.
 func valuesFromQuery(param string) ValuesExtractor {
-	return func(w http.ResponseWriter, r *http.Request) ([]string, error) {
+	return func(_ http.ResponseWriter, r *http.Request) ([]string, error) {
 		result := r.URL.Query()[param]
 
 		if len(result) == 0 {
@@ -162,7 +160,7 @@ func valuesFromQuery(param string) ValuesExtractor {
 
 // valuesFromCookie returns a function that extracts values from the named cookie.
 func valuesFromCookie(name string) ValuesExtractor {
-	return func(w http.ResponseWriter, r *http.Request) ([]string, error) {
+	return func(_ http.ResponseWriter, r *http.Request) ([]string, error) {
 		cookies := r.Cookies()
 		if len(cookies) == 0 {
 			return nil, errCookieExtractorValueMissing
@@ -190,7 +188,7 @@ func valuesFromCookie(name string) ValuesExtractor {
 
 // valuesFromForm returns a function that extracts values from the form field.
 func valuesFromForm(name string) ValuesExtractor {
-	return func(w http.ResponseWriter, r *http.Request) ([]string, error) {
+	return func(_ http.ResponseWriter, r *http.Request) ([]string, error) {
 		if r.Form == nil {
 			_ = r.ParseMultipartForm(32 << 20) // same what `r.FormValue(name)` does
 		}

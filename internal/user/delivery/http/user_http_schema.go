@@ -3,10 +3,10 @@ package http
 import "source.toby3d.me/toby3d/auth/internal/domain"
 
 type UserInformationResponse struct {
-	URL   *domain.URL   `json:"url,omitempty"`
-	Photo *domain.URL   `json:"photo,omitempty"`
-	Email *domain.Email `json:"email,omitempty"`
-	Name  string        `json:"name,omitempty"`
+	URL   string `json:"url,omitempty"`
+	Photo string `json:"photo,omitempty"`
+	Email string `json:"email,omitempty"`
+	Name  string `json:"name,omitempty"`
 }
 
 func NewUserInformationResponse(in *domain.Profile, hasEmail bool) *UserInformationResponse {
@@ -16,20 +16,18 @@ func NewUserInformationResponse(in *domain.Profile, hasEmail bool) *UserInformat
 		return out
 	}
 
-	if in.HasName() {
-		out.Name = in.GetName()
+	out.Name = in.Name
+
+	if in.URL != nil {
+		out.URL = in.URL.String()
 	}
 
-	if in.HasURL() {
-		out.URL = &domain.URL{URL: in.GetURL()}
+	if in.Photo != nil {
+		out.Photo = in.Photo.String()
 	}
 
-	if in.HasPhoto() {
-		out.Photo = &domain.URL{URL: in.GetPhoto()}
-	}
-
-	if hasEmail {
-		out.Email = in.GetEmail()
+	if hasEmail && in.Email != nil {
+		out.Email = in.Email.String()
 	}
 
 	return out

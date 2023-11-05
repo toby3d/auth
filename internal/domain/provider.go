@@ -8,7 +8,6 @@ import (
 
 // Provider represent 3rd party RelMeAuth provider.
 type Provider struct {
-	Scopes       []string
 	AuthURL      string
 	ClientID     string
 	ClientSecret string
@@ -18,6 +17,7 @@ type Provider struct {
 	TokenURL     string
 	UID          string
 	URL          string
+	Scopes       []string
 }
 
 //nolint:gochecknoglobals // structs cannot be contants
@@ -33,19 +33,6 @@ var (
 		TokenURL:     "/token",
 		UID:          "direct",
 		URL:          "/",
-	}
-
-	ProviderTwitter = Provider{
-		AuthURL:      "https://twitter.com/i/oauth2/authorize",
-		ClientID:     "",
-		ClientSecret: "",
-		Name:         "Twitter",
-		Photo:        path.Join("static", "providers", "twitter.svg"),
-		RedirectURL:  path.Join("callback", "twitter"),
-		Scopes:       []string{"tweet.read", "users.read"},
-		TokenURL:     "https://api.twitter.com/2/oauth2/token",
-		UID:          "twitter",
-		URL:          "https://twitter.com/",
 	}
 
 	ProviderGitHub = Provider{
@@ -95,6 +82,8 @@ func (p Provider) AuthCodeURL(state string) string {
 		return ""
 	}
 
+	q := u.Query()
+
 	for key, val := range map[string]string{
 		"client_id":     p.ClientID,
 		"redirect_uri":  p.RedirectURL,
@@ -102,8 +91,10 @@ func (p Provider) AuthCodeURL(state string) string {
 		"scope":         strings.Join(p.Scopes, " "),
 		"state":         state,
 	} {
-		u.Query().Set(key, val)
+		q.Set(key, val)
 	}
+
+	u.RawQuery = q.Encode()
 
 	return u.String()
 }

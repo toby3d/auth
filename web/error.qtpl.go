@@ -31,33 +31,33 @@ type ErrorPage struct {
 }
 
 //line web/error.qtpl:13
-func (p *ErrorPage) StreamTitle(qw422016 *qt422016.Writer) {
+func (p *ErrorPage) streamtitle(qw422016 *qt422016.Writer) {
 //line web/error.qtpl:13
 	qw422016.N().S(` `)
 //line web/error.qtpl:14
-	qw422016.E().S(p.T("Error"))
+	qw422016.E().S(p.t("Error"))
 //line web/error.qtpl:14
 	qw422016.N().S(` `)
 //line web/error.qtpl:15
 }
 
 //line web/error.qtpl:15
-func (p *ErrorPage) WriteTitle(qq422016 qtio422016.Writer) {
+func (p *ErrorPage) writetitle(qq422016 qtio422016.Writer) {
 //line web/error.qtpl:15
 	qw422016 := qt422016.AcquireWriter(qq422016)
 //line web/error.qtpl:15
-	p.StreamTitle(qw422016)
+	p.streamtitle(qw422016)
 //line web/error.qtpl:15
 	qt422016.ReleaseWriter(qw422016)
 //line web/error.qtpl:15
 }
 
 //line web/error.qtpl:15
-func (p *ErrorPage) Title() string {
+func (p *ErrorPage) title() string {
 //line web/error.qtpl:15
 	qb422016 := qt422016.AcquireByteBuffer()
 //line web/error.qtpl:15
-	p.WriteTitle(qb422016)
+	p.writetitle(qb422016)
 //line web/error.qtpl:15
 	qs422016 := string(qb422016.B)
 //line web/error.qtpl:15
@@ -68,7 +68,7 @@ func (p *ErrorPage) Title() string {
 }
 
 //line web/error.qtpl:17
-func (p *ErrorPage) StreamBody(qw422016 *qt422016.Writer) {
+func (p *ErrorPage) streambody(qw422016 *qt422016.Writer) {
 //line web/error.qtpl:17
 	qw422016.N().S(` <main> `)
 //line web/error.qtpl:19
@@ -105,7 +105,7 @@ func (p *ErrorPage) StreamBody(qw422016 *qt422016.Writer) {
 //line web/error.qtpl:29
 			qw422016.N().S(`" target="_blank"> `)
 //line web/error.qtpl:32
-			qw422016.E().S(p.T("How do I fix it?"))
+			qw422016.E().S(p.t("How do I fix it?"))
 //line web/error.qtpl:32
 			qw422016.N().S(` </a> `)
 //line web/error.qtpl:34
@@ -117,7 +117,7 @@ func (p *ErrorPage) StreamBody(qw422016 *qt422016.Writer) {
 //line web/error.qtpl:35
 		qw422016.N().S(` <h1>`)
 //line web/error.qtpl:36
-		qw422016.E().S(p.T("Error"))
+		qw422016.E().S(p.t("Error"))
 //line web/error.qtpl:36
 		qw422016.N().S(`</h1> <p>`)
 //line web/error.qtpl:37
@@ -132,22 +132,22 @@ func (p *ErrorPage) StreamBody(qw422016 *qt422016.Writer) {
 }
 
 //line web/error.qtpl:40
-func (p *ErrorPage) WriteBody(qq422016 qtio422016.Writer) {
+func (p *ErrorPage) writebody(qq422016 qtio422016.Writer) {
 //line web/error.qtpl:40
 	qw422016 := qt422016.AcquireWriter(qq422016)
 //line web/error.qtpl:40
-	p.StreamBody(qw422016)
+	p.streambody(qw422016)
 //line web/error.qtpl:40
 	qt422016.ReleaseWriter(qw422016)
 //line web/error.qtpl:40
 }
 
 //line web/error.qtpl:40
-func (p *ErrorPage) Body() string {
+func (p *ErrorPage) body() string {
 //line web/error.qtpl:40
 	qb422016 := qt422016.AcquireByteBuffer()
 //line web/error.qtpl:40
-	p.WriteBody(qb422016)
+	p.writebody(qb422016)
 //line web/error.qtpl:40
 	qs422016 := string(qb422016.B)
 //line web/error.qtpl:40

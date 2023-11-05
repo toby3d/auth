@@ -60,8 +60,7 @@ type Metadata struct {
 	GrantTypesSupported []GrantType
 
 	// JSON array containing the methods supported for PKCE. This parameter
-	// parameter differs from RFC8414 in that it is not optional as PKCE is
-	// REQUIRED.
+	// differs from RFC8414 in that it is not optional as PKCE is REQUIRED.
 	CodeChallengeMethodsSupported []CodeChallengeMethod
 
 	// List of client authentication methods supported by this introspection endpoint.
