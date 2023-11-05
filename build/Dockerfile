@@ -7,7 +7,7 @@ FROM golang:alpine AS builder
 WORKDIR /app
 
 ENV CGO_ENABLED=0
-ENV GOFLAGS=-mod=vendor
+ENV GOFLAGS="-mod=vendor -buildvcs=true"
 
 COPY go.mod go.sum *.go ./
 COPY internal ./internal/

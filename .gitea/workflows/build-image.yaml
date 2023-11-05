@@ -1,0 +1,44 @@
+---
+on:
+  push:
+    branches:
+      - master
+      - develop
+
+env:
+  DOCKER_REGISTRY: source.toby3d.me
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    container:
+      image: catthehacker/ubuntu:act-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: https://gitea.com/actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: https://gitea.com/docker/setup-qemu-action@v2
+
+      - name: Set up Docker BuildX
+        uses: https://gitea.com/docker/setup-buildx-action@v2
+
+      - name: Login to registry
+        uses: https://gitea.com/docker/login-action@v2
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ gitea.repository_owner }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build and push
+        uses: https://gitea.com/docker/build-push-action@v4
+        env:
+          ACTIONS_RUNTIME_TOKEN: "" # See https://gitea.com/gitea/act_runner/issues/119
+        with:
+          context: .
+          file: ./build/Dockerfile
+          push: true
+          tags: ${{ env.DOCKER_REGISTRY }}/${{ gitea.repository }}:${{ gitea.ref_name }}
