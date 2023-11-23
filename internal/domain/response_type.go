@@ -18,14 +18,18 @@ type ResponseType struct {
 var (
 	ResponseTypeUnd = ResponseType{responseType: ""} // "und"
 
-	// Deprecated(toby3d): Only accept response_type=code requests, and for
+	// ResponseTypeID indicates to the authorization server that this is an
+	// authentication request. If this parameter is missing, the
+	// authorization endpoint MUST default to id.
+	//
+	// Deprecated: Only accept response_type=code requests, and for
 	// backwards-compatible support, treat response_type=id requests as
 	// response_type=code requests:
 	// https://aaronparecki.com/2020/12/03/1/indieauth-2020#response-type
 	ResponseTypeID = ResponseType{responseType: "id"} // "id"
 
-	// Indicates to the authorization server that an authorization code
-	// should be returned as the response:
+	// ResponseTypeCode indicates to the authorization server that an
+	// authorization code should be returned as the response:
 	// https://indieauth.net/source/#authorization-request-li-1
 	ResponseTypeCode = ResponseType{responseType: "code"} // "code"
 )
