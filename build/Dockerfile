@@ -14,6 +14,7 @@ COPY internal ./internal/
 COPY vendor ./vendor/
 COPY web ./web/
 
+RUN apk --no-cache add ca-certificates
 RUN go build -o ./auth
 
 # Run
@@ -21,6 +22,7 @@ FROM scratch
 
 WORKDIR /
 
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /app/auth /auth
 
 EXPOSE 3000
