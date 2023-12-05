@@ -36,7 +36,7 @@ var (
 
 var ErrCodeChallengeMethodUnknown error = NewError(
 	ErrorCodeInvalidRequest,
-	"unknown code_challene_method",
+	"unknown code_challenge_method",
 	"https://indieauth.net/source/#authorization-request",
 )
 
