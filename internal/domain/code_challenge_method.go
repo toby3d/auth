@@ -8,6 +8,7 @@ import (
 	"crypto/sha256"
 	"crypto/sha512"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"hash"
 	"strconv"
@@ -36,7 +37,7 @@ var (
 
 var ErrCodeChallengeMethodUnknown error = NewError(
 	ErrorCodeInvalidRequest,
-	"unknown code_challene_method",
+	"unknown code_challenge_method",
 	"https://indieauth.net/source/#authorization-request",
 )
 
@@ -61,26 +62,29 @@ func ParseCodeChallengeMethod(uid string) (CodeChallengeMethod, error) {
 
 // UnmarshalForm implements custom unmarshler for form values.
 func (ccm *CodeChallengeMethod) UnmarshalForm(v []byte) error {
-	method, err := ParseCodeChallengeMethod(string(v))
+	parsed, err := ParseCodeChallengeMethod(string(v))
 	if err != nil {
 		return fmt.Errorf("CodeChallengeMethod: UnmarshalForm: %w", err)
 	}
 
-	*ccm = method
+	*ccm = parsed
 
 	return nil
 }
 
 // UnmarshalJSON implements custom unmarshler for JSON.
 func (ccm *CodeChallengeMethod) UnmarshalJSON(v []byte) error {
-	src, err := strconv.Unquote(string(v))
+	unquoted, err := strconv.Unquote(string(v))
 	if err != nil {
 		return fmt.Errorf("CodeChallengeMethod: UnmarshalJSON: %w", err)
 	}
 
-	if *ccm, err = ParseCodeChallengeMethod(src); err != nil {
+	parsed, err := ParseCodeChallengeMethod(unquoted)
+	if err != nil && !errors.Is(err, ErrCodeChallengeMethodUnknown) {
 		return fmt.Errorf("CodeChallengeMethod: UnmarshalJSON: %w", err)
 	}
+
+	*ccm = parsed
 
 	return nil
 }
