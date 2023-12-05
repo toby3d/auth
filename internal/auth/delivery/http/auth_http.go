@@ -3,6 +3,7 @@ package http
 import (
 	"crypto/subtle"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/goccy/go-json"
@@ -219,7 +220,8 @@ func (h *Handler) handleVerify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	q := req.RedirectURI.Query()
+	redirect, _ := url.Parse(req.RedirectURI.String())
+	q := redirect.Query()
 
 	for key, val := range map[string]string{
 		"code":  code,
@@ -229,9 +231,9 @@ func (h *Handler) handleVerify(w http.ResponseWriter, r *http.Request) {
 		q.Set(key, val)
 	}
 
-	req.RedirectURI.RawQuery = q.Encode()
+	redirect.RawQuery = q.Encode()
 
-	http.Redirect(w, r, req.RedirectURI.String(), http.StatusFound)
+	http.Redirect(w, r, redirect.String(), http.StatusFound)
 }
 
 func (h *Handler) handleExchange(w http.ResponseWriter, r *http.Request) {
