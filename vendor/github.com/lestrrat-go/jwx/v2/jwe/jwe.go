@@ -10,6 +10,7 @@ import (
 	"crypto/rsa"
 	"fmt"
 	"io"
+	"sync"
 
 	"github.com/lestrrat-go/blackmagic"
 	"github.com/lestrrat-go/jwx/v2/internal/base64"
@@ -18,11 +19,32 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwk"
 
 	"github.com/lestrrat-go/jwx/v2/jwa"
+	"github.com/lestrrat-go/jwx/v2/jwe/internal/aescbc"
 	"github.com/lestrrat-go/jwx/v2/jwe/internal/content_crypt"
 	"github.com/lestrrat-go/jwx/v2/jwe/internal/keyenc"
 	"github.com/lestrrat-go/jwx/v2/jwe/internal/keygen"
 	"github.com/lestrrat-go/jwx/v2/x25519"
 )
+
+var muSettings sync.RWMutex
+var maxPBES2Count = 10000
+var maxDecompressBufferSize int64 = 10 * 1024 * 1024 // 10MB
+
+func Settings(options ...GlobalOption) {
+	muSettings.Lock()
+	defer muSettings.Unlock()
+	//nolint:forcetypeassert
+	for _, option := range options {
+		switch option.Ident() {
+		case identMaxPBES2Count{}:
+			maxPBES2Count = option.Value().(int)
+		case identMaxDecompressBufferSize{}:
+			maxDecompressBufferSize = option.Value().(int64)
+		case identMaxBufferSize{}:
+			aescbc.SetMaxBufferSize(option.Value().(int64))
+		}
+	}
+}
 
 const (
 	fmtInvalid = iota
@@ -247,6 +269,29 @@ func (b *recipientBuilder) Build(cek []byte, calg jwa.ContentEncryptionAlgorithm
 // Look for options that return `jwe.EncryptOption` or `jws.EncryptDecryptOption`
 // for a complete list of options that can be passed to this function.
 func Encrypt(payload []byte, options ...EncryptOption) ([]byte, error) {
+	return encrypt(payload, nil, options...)
+}
+
+// Encryptstatic is exactly like Encrypt, except it accepts a static
+// content encryption key (CEK). It is separated out from the main
+// Encrypt function such that the latter does not accidentally use a static
+// CEK.
+//
+// DO NOT attempt to use this function unless you completely understand the
+// security implications to using static CEKs. You have been warned.
+//
+// This function is currently considered EXPERIMENTAL, and is subject to
+// future changes across minor/micro versions.
+func EncryptStatic(payload, cek []byte, options ...EncryptOption) ([]byte, error) {
+	if len(cek) <= 0 {
+		return nil, fmt.Errorf(`jwe.EncryptStatic: empty CEK`)
+	}
+	return encrypt(payload, cek, options...)
+}
+
+// encrypt is separate so it can receive cek from outside.
+// (but we don't want to receive it in the options slice)
+func encrypt(payload, cek []byte, options ...EncryptOption) ([]byte, error) {
 	// default content encryption algorithm
 	calg := jwa.A256GCM
 
@@ -327,12 +372,14 @@ func Encrypt(payload []byte, options ...EncryptOption) ([]byte, error) {
 		return nil, fmt.Errorf(`jwe.Encrypt: failed to create AES encrypter: %w`, err)
 	}
 
-	generator := keygen.NewRandom(contentcrypt.KeySize())
-	bk, err := generator.Generate()
-	if err != nil {
-		return nil, fmt.Errorf(`jwe.Encrypt: failed to generate key: %w`, err)
+	if len(cek) <= 0 {
+		generator := keygen.NewRandom(contentcrypt.KeySize())
+		bk, err := generator.Generate()
+		if err != nil {
+			return nil, fmt.Errorf(`jwe.Encrypt: failed to generate key: %w`, err)
+		}
+		cek = bk.Bytes()
 	}
-	cek := bk.Bytes()
 
 	recipients := make([]Recipient, len(builders))
 	for i, builder := range builders {
@@ -419,27 +466,50 @@ func Encrypt(payload []byte, options ...EncryptOption) ([]byte, error) {
 }
 
 type decryptCtx struct {
-	msg              *Message
-	aad              []byte
-	computedAad      []byte
-	keyProviders     []KeyProvider
-	protectedHeaders Headers
+	msg                     *Message
+	aad                     []byte
+	cek                     *[]byte
+	computedAad             []byte
+	keyProviders            []KeyProvider
+	protectedHeaders        Headers
+	maxDecompressBufferSize int64
 }
 
-// Decrypt takes the key encryption algorithm and the corresponding
-// key to decrypt the JWE message, and returns the decrypted payload.
+// Decrypt takes encrypted payload, and information required to decrypt the
+// payload (e.g. the key encryption algorithm and the corresponding
+// key to decrypt the JWE message) in its optional arguments. See
+// the examples and list of options that return a DecryptOption for possible
+// values. Upon successful decryptiond returns the decrypted payload.
+//
 // The JWE message can be either compact or full JSON format.
 //
-// `alg` accepts a `jwa.KeyAlgorithm` for convenience so you can directly pass
-// the result of `(jwk.Key).Algorithm()`, but in practice it must be of type
+// When using `jwe.WithKeyEncryptionAlgorithm()`, you can pass a `jwa.KeyAlgorithm`
+// for convenience: this is mainly to allow you to directly pass the result of `(jwk.Key).Algorithm()`.
+// However, do note that while `(jwk.Key).Algorithm()` could very well contain key encryption
+// algorithms, it could also contain other types of values, such as _signature algorithms_.
+// In order for `jwe.Decrypt` to work properly, the `alg` parameter must be of type
 // `jwa.KeyEncryptionAlgorithm` or otherwise it will cause an error.
 //
-// `key` must be a private key. It can be either in its raw format (e.g. *rsa.PrivateKey) or a jwk.Key
+// When using `jwe.WithKey()`, the value must be a private key.
+// It can be either in its raw format (e.g. *rsa.PrivateKey) or a jwk.Key
+//
+// When the encrypted message is also compressed, the decompressed payload must be
+// smaller than the size specified by the `jwe.WithMaxDecompressBufferSize` setting,
+// which defaults to 10MB. If the decompressed payload is larger than this size,
+// an error is returned.
+//
+// You can opt to change the MaxDecompressBufferSize setting globally, or on a
+// per-call basis by passing the `jwe.WithMaxDecompressBufferSize` option to
+// either `jwe.Settings()` or `jwe.Decrypt()`:
+//
+//	jwe.Settings(jwe.WithMaxDecompressBufferSize(10*1024*1024)) // changes value globally
+//	jwe.Decrypt(..., jwe.WithMaxDecompressBufferSize(250*1024)) // changes just for this call
 func Decrypt(buf []byte, options ...DecryptOption) ([]byte, error) {
 	var keyProviders []KeyProvider
 	var keyUsed interface{}
-
+	var cek *[]byte
 	var dst *Message
+	perCallMaxDecompressBufferSize := maxDecompressBufferSize
 	//nolint:forcetypeassert
 	for _, option := range options {
 		switch option.Ident() {
@@ -459,6 +529,10 @@ func Decrypt(buf []byte, options ...DecryptOption) ([]byte, error) {
 				alg: alg,
 				key: pair.key,
 			})
+		case identCEK{}:
+			cek = option.Value().(*[]byte)
+		case identMaxDecompressBufferSize{}:
+			perCallMaxDecompressBufferSize = option.Value().(int64)
 		}
 	}
 
@@ -517,6 +591,8 @@ func Decrypt(buf []byte, options ...DecryptOption) ([]byte, error) {
 	dctx.msg = msg
 	dctx.keyProviders = keyProviders
 	dctx.protectedHeaders = h
+	dctx.cek = cek
+	dctx.maxDecompressBufferSize = perCallMaxDecompressBufferSize
 
 	var lastError error
 	for _, recipient := range recipients {
@@ -583,7 +659,8 @@ func (dctx *decryptCtx) decryptContent(ctx context.Context, alg jwa.KeyEncryptio
 		AuthenticatedData(dctx.aad).
 		ComputedAuthenticatedData(dctx.computedAad).
 		InitializationVector(dctx.msg.initializationVector).
-		Tag(dctx.msg.tag)
+		Tag(dctx.msg.tag).
+		CEK(dctx.cek)
 
 	if recipient.Headers().Algorithm() != alg {
 		// algorithms don't match
@@ -672,6 +749,12 @@ func (dctx *decryptCtx) decryptContent(ctx context.Context, alg jwa.KeyEncryptio
 		if !ok {
 			return nil, fmt.Errorf("unexpected type for 'p2c': %T", count)
 		}
+		muSettings.RLock()
+		maxCount := maxPBES2Count
+		muSettings.RUnlock()
+		if countFlt > float64(maxCount) {
+			return nil, fmt.Errorf("invalid 'p2c' value")
+		}
 		salt, err := base64.DecodeString(saltB64Str)
 		if err != nil {
 			return nil, fmt.Errorf(`failed to b64-decode 'salt': %w`, err)
@@ -686,7 +769,7 @@ func (dctx *decryptCtx) decryptContent(ctx context.Context, alg jwa.KeyEncryptio
 	}
 
 	if h2.Compression() == jwa.Deflate {
-		buf, err := uncompress(plaintext)
+		buf, err := uncompress(plaintext, dctx.maxDecompressBufferSize)
 		if err != nil {
 			return nil, fmt.Errorf(`jwe.Derypt: failed to uncompress payload: %w`, err)
 		}

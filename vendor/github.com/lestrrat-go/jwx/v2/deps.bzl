@@ -47,8 +47,8 @@ def go_dependencies():
         name = "com_github_lestrrat_go_httprc",
         build_file_proto_mode = "disable_global",
         importpath = "github.com/lestrrat-go/httprc",
-        sum = "h1:bAZymwoZQb+Oq8MEbyipag7iSq6YIga8Wj6GOiJGdI8=",
-        version = "v1.0.4",
+        sum = "h1:bsTfiH8xaKOJPrg1R+E3iE/AWZr/x0Phj9PBTG/OLUk=",
+        version = "v1.0.5",
     )
     go_repository(
         name = "com_github_lestrrat_go_iter",
@@ -85,22 +85,15 @@ def go_dependencies():
         name = "com_github_stretchr_objx",
         build_file_proto_mode = "disable_global",
         importpath = "github.com/stretchr/objx",
-        sum = "h1:1zr/of2m5FGMsad5YfcqgdqdWrIhu+EBEJRhR1U7z/c=",
-        version = "v0.5.0",
+        sum = "h1:xuMeJ0Sdp5ZMRXx/aWO6RZxdr3beISkG5/G/aIRr3pY=",
+        version = "v0.5.2",
     )
     go_repository(
         name = "com_github_stretchr_testify",
         build_file_proto_mode = "disable_global",
         importpath = "github.com/stretchr/testify",
-        sum = "h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcUk=",
-        version = "v1.8.4",
-    )
-    go_repository(
-        name = "com_github_yuin_goldmark",
-        build_file_proto_mode = "disable_global",
-        importpath = "github.com/yuin/goldmark",
-        sum = "h1:fVcFKWvrslecOb/tg+Cc05dkeYx540o0FuFt3nUVDoE=",
-        version = "v1.4.13",
+        sum = "h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsTg=",
+        version = "v1.9.0",
     )
 
     go_repository(
@@ -122,65 +115,37 @@ def go_dependencies():
         name = "org_golang_x_crypto",
         build_file_proto_mode = "disable_global",
         importpath = "golang.org/x/crypto",
-        sum = "h1:wBqGXzWJW6m1XrIKlAH0Hs1JJ7+9KBwnIO8v66Q9cHc=",
-        version = "v0.14.0",
-    )
-    go_repository(
-        name = "org_golang_x_mod",
-        build_file_proto_mode = "disable_global",
-        importpath = "golang.org/x/mod",
-        sum = "h1:LUYupSeNrTNCGzR/hVBk2NHZO4hXcVaW1k4Qx7rjPx8=",
-        version = "v0.8.0",
+        sum = "h1:X31++rzVUdKhX5sWmSOFZxx8UW/ldWx55cbf08iNAMA=",
+        version = "v0.21.0",
     )
 
     go_repository(
         name = "org_golang_x_net",
         build_file_proto_mode = "disable_global",
         importpath = "golang.org/x/net",
-        sum = "h1:X2//UzNDwYmtCLn7To6G58Wr6f5ahEAQgKNzv9Y951M=",
-        version = "v0.10.0",
-    )
-    go_repository(
-        name = "org_golang_x_sync",
-        build_file_proto_mode = "disable_global",
-        importpath = "golang.org/x/sync",
-        sum = "h1:wsuoTGHzEhffawBOhz5CYhcrV4IdKZbEyZjBMuTp12o=",
-        version = "v0.1.0",
+        sum = "h1:AQyQV4dYCvJ7vGmJyKki9+PBdyvhkSd8EIx/qb0AYv4=",
+        version = "v0.21.0",
     )
 
     go_repository(
         name = "org_golang_x_sys",
         build_file_proto_mode = "disable_global",
         importpath = "golang.org/x/sys",
-        sum = "h1:Af8nKPmuFypiUBjVoU9V20FiaFXOcuZI21p0ycVYYGE=",
-        version = "v0.13.0",
+        sum = "h1:DBdB3niSjOA/O0blCZBqDefyWNYveAYMNF1Wum0DYQ4=",
+        version = "v0.18.0",
     )
     go_repository(
         name = "org_golang_x_term",
         build_file_proto_mode = "disable_global",
         importpath = "golang.org/x/term",
-        sum = "h1:bb+I9cTfFazGW51MZqBVmZy7+JEJMouUHTUSKVQLBek=",
-        version = "v0.13.0",
+        sum = "h1:FcHjZXDMxI8mM3nwhX9HlKop4C0YQvCVCdwYl2wOtE8=",
+        version = "v0.18.0",
     )
 
     go_repository(
         name = "org_golang_x_text",
         build_file_proto_mode = "disable_global",
         importpath = "golang.org/x/text",
-        sum = "h1:ablQoSUd0tRdKxZewP80B+BaqeKJuVhuRxj/dkrun3k=",
-        version = "v0.13.0",
-    )
-    go_repository(
-        name = "org_golang_x_tools",
-        build_file_proto_mode = "disable_global",
-        importpath = "golang.org/x/tools",
-        sum = "h1:BOw41kyTf3PuCW1pVQf8+Cyg8pMlkYB1oo9iJ6D/lKM=",
-        version = "v0.6.0",
-    )
-    go_repository(
-        name = "org_golang_x_xerrors",
-        build_file_proto_mode = "disable_global",
-        importpath = "golang.org/x/xerrors",
-        sum = "h1:9zdDQZ7Thm29KFXgAX/+yaf3eVbP7djjWp/dXAppNCc=",
-        version = "v0.0.0-20190717185122-a985d3407aa7",
+        sum = "h1:ScX5w1eTa3QqT8oi6+ziP7dTV1S2+ALU0bI+0zXKWiQ=",
+        version = "v0.14.0",
     )
